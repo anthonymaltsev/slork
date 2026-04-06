@@ -88,8 +88,8 @@ public class Sparrow {
 
     fun void be_loose() {
         while (true) {
-            chirp(Math.random2f(0.95, 1.05) * BASE_CHIRP_FREQ, Math.random2f(0.8, 1.2) * BASE_CHIRP_DURATION, Math.random2f(0.8, 1.2) * BASE_GAIN);
             Math.random2f(0.5, 2) * BASE_INTER_CHIRP_DURATION => now;
+            chirp(Math.random2f(0.95, 1.05) * BASE_CHIRP_FREQ, Math.random2f(0.8, 1.2) * BASE_CHIRP_DURATION, Math.random2f(0.8, 1.2) * BASE_GAIN);
         }
     }
 
@@ -103,6 +103,7 @@ public class Sparrow {
     }
 
     fun void set_gain(float gain) {
+        Math.clampf(gain, 0., 1.) => gain;
         gain => BASE_GAIN;
     }
     fun float get_gain() {
@@ -110,6 +111,7 @@ public class Sparrow {
     }
 
     fun void set_chirp_freq(float chirp_freq) {
+        Math.clampf(chirp_freq, 30., 20000.) => chirp_freq;
         chirp_freq => BASE_CHIRP_FREQ;
     }
     fun float get_chirp_freq() {
@@ -117,6 +119,8 @@ public class Sparrow {
     }
 
     fun void set_chirp_dur(dur chirp_dur) {
+        if (chirp_dur < 15::ms ) {15::ms => chirp_dur;}
+        else if (chirp_dur > 2::second) {2::second => chirp_dur;}
         chirp_dur => BASE_CHIRP_DURATION;
     }
     fun dur get_chirp_dur() {
@@ -124,6 +128,8 @@ public class Sparrow {
     }
 
     fun void set_inter_chirp_dur(dur inter_chirp_dur) {
+        if (inter_chirp_dur < 15::ms ) {15::ms => inter_chirp_dur;}
+        else if (inter_chirp_dur > 2::second) {2::second => inter_chirp_dur;}
         inter_chirp_dur => BASE_INTER_CHIRP_DURATION;
     }
     fun dur get_inter_chirp_dur() {

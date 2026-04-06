@@ -20,6 +20,7 @@ public class Siparow {
     1. => float cur_dur_mul;
     1. => float cur_inter_dur_mul;
     1. => float cur_gain_mul;
+    0.01 => float cur_mix;
 
 
     fun void init(float base_freqs_in[], dur base_durs_in[], dur base_inter_durs_in[], float base_gains_in[], UGen out_chans_in[]) {
@@ -67,7 +68,7 @@ public class Siparow {
         }
     }
 
-    fun float get_inter_durmul() {
+    fun float get_inter_dur_mul() {
         return cur_inter_dur_mul;
     }
     fun void propagate_inter_dur_mul(float inter_dur) {
@@ -86,21 +87,31 @@ public class Siparow {
             s[i].set_gain(cur_gain_mul * base_gains[i]);
         }
     }
+    
+    fun float get_rev() {
+        return cur_mix;
+    }
+    fun void propagate_rev(float mix) {
+        mix => cur_mix;
+        for(0 => int i; i < s.size(); 1+=>i) {
+            s[i].set_rev(cur_mix);
+        }
+    }
 
 }
 
 
-// Siparow sipar;
-// sipar.init(
-//     [100., 150., 200.], // freq
-//     [160::ms, 150::ms, 140::ms], // durs
-//     [200::ms, 225::ms, 250::ms], // inter_durs
-//     [0.3, 0.3, 0.23], // gains
-//     [dac, dac, dac] // out channels
-// );
+//Siparow sipar;
+//sipar.init(
+//    [3500., 4500., 4000.], // freq
+//    [160::ms, 150::ms, 140::ms], // durs
+//    [200::ms, 225::ms, 250::ms], // inter_durs
+//    [0.3, 0.3, 0.23], // gains
+//    [dac.chan(0), dac.chan(1), dac.chan(2)] // out channels
+//);
 
-// sipar.set_them_loose();
+//sipar.set_them_loose();
 
-// while (true) {
-//     1::second => now;
-// }
+//while (true) {
+//    1::second => now;
+//}
