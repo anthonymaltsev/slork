@@ -89,7 +89,7 @@ public class Sparrow {
     fun void be_loose() {
         while (true) {
             Math.random2f(0.5, 2) * BASE_INTER_CHIRP_DURATION => now;
-            chirp(Math.random2f(0.95, 1.05) * BASE_CHIRP_FREQ, Math.random2f(0.8, 1.2) * BASE_CHIRP_DURATION, Math.random2f(0.8, 1.2) * BASE_GAIN);
+            spork ~ chirp(Math.random2f(0.95, 1.05) * BASE_CHIRP_FREQ, Math.random2f(0.8, 1.2) * BASE_CHIRP_DURATION, Math.random2f(0.8, 1.2) * BASE_GAIN);
         }
     }
 

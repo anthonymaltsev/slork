@@ -7,6 +7,9 @@
 // date: spring 2026
 //-----------------------------------------------------------------------------
 
+@import {"siparow.ck", "perlin.ck", "bird_obj.ck"}
+
+// --------------------------------------
 
 0.1 => float DEADZONE;
 0 => int device;
@@ -201,7 +204,7 @@ class FlockBird{
         new Perlin3D[size] @=> p;
         for(0 => int i; i < size; i++) {
             new FlyingBird(0.5, scale) @=> b[i];
-            sun.shadowAdd(b[i], false);
+            sun.shadowAdd(b[i], true);
             // b[i] --> GG.scene();
 
             p[i].init(id*1003 + i, freq * (1 + i * 0.07), amp);
@@ -220,12 +223,12 @@ class FlockBird{
 }
 
 FlockBird bleft;
-bleft.init(3, 0, 1::second, 1., 0.33);
+bleft.init(3, 0, 1::second, 2., 0.6);
 @(-1., 0., 0.) => vec3 left_base;
 bleft.pos(left_base);
 
 FlockBird bright;
-bright.init(3, 1, 1::second, 1., 0.33);
+bright.init(3, 1, 1::second, 2., 0.6);
 @(1., 0., 0.) => vec3 right_base;
 bright.pos(right_base);
 
