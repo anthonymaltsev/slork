@@ -142,6 +142,81 @@ fun float freq_norm(float neg1_to_1) {
     //return Math.sexp(1.85*(neg1_to_1 - 1.));
 }
 
+// ----------------------- chugl visualizer --------------------------
+GG.fullscreen();
+GG.camera() @=> GCamera cam;
+GG.scene().backgroundColor(Color.BLACK);
+GG.bloom(1);
+
+GGen bleft;
+GGen bright;
+
+GSphere l1 --> bleft;
+GSphere l2 --> bleft;
+GSphere l3 --> bleft;
+
+
+GPlane floor;
+GDirLight sun;
+
+bleft.color(Color.WHITE);
+bleft.emission(Color.WHITE);
+bleft.mat(new FlatMaterial());
+bleft.shadowed(true);
+@(-1., 0., 0.) => vec3 left_off;
+
+bright.color(Color.WHITE);
+bright.emission(Color.WHITE);
+bright.mat(new FlatMaterial());
+bright.shadowed(true);
+@(1., 0., 0.) => vec3 right_off;
+
+sun.pos(@(5., 8., 5.));
+sun.lookAt(@(0., 0., 0.));
+sun.shadow(true);
+sun.shadowAdd(bleft, false);
+sun.shadowAdd(bright, false);
+
+floor.color(Color.GREEN);
+//floor.lookAt(@(0., 1., 0.));
+floor.pos(@(0., -1., 0.));
+floor.scaX(40.);
+floor.scaY(25.);
+floor.rotateX(-Math.PI / 2.);
+floor.shadowed(true);
+
+bleft --> GG.scene();
+bright --> GG.scene();
+sun --> GG.scene();
+floor --> GG.scene();
+
+//<<< cam.pos() >>>;
+cam.pos(@(0., 5., 15.));
+cam.lookAt(@(0., 4., 0.));
+
+fun vec3 gt_pos_to_xyz(float lr, float fb, float mag) {
+    mag * Math.sin(Math.pi / 4. * lr) => float x;
+    0 - mag * Math.sin(Math.pi / 4. * fb) => float z;
+    mag * (1 - Math.pow(Math.sin(Math.pi / 4. * lr), 2) - Math.pow(Math.sin(Math.pi / 4. * fb), 2))=> float y;
+    10. => float scale;
+    @(scale*x, scale*y, scale*z) => vec3 ret;
+    return ret;
+}
+
+fun void update() {
+    bleft.pos(left_off + gt_pos_to_xyz(gt.axis[0], gt.axis[1], gt.axis[2]));
+    bright.pos(right_off + gt_pos_to_xyz(gt.axis[3], gt.axis[4], gt.axis[5]));
+}
+fun void update_loop() {
+    while (true) {
+        update();
+        GG.nextFrame() => now;
+    }
+}
+spork ~ update_loop();
+
+// -------------------------- main loop ------------------------------
+while(true){1::second => now;}
 while(true) {
     //<<< gt.axis[0], gt.axis[1], gt.axis[2], gt.axis[3], gt.axis[4], gt.axis[5] >>> ;
     <<< "left: \n    freq:      ", left.get_freq_mul()*left.base_freqs[1],
@@ -156,5 +231,6 @@ while(true) {
     >>>;
     
     333::ms => now;
+    
 }
 
