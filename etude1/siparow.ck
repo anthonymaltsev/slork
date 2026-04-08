@@ -101,17 +101,17 @@ public class Siparow {
 }
 
 
-//Siparow sipar;
-//sipar.init(
+// Siparow sipar;
+// sipar.init(
 //    [3500., 4500., 4000.], // freq
 //    [160::ms, 150::ms, 140::ms], // durs
 //    [200::ms, 225::ms, 250::ms], // inter_durs
 //    [0.3, 0.3, 0.23], // gains
-//    [dac.chan(0), dac.chan(1), dac.chan(2)] // out channels
-//);
+//    [dac.left, dac, dac.right] // out channels
+// );
 
-//sipar.set_them_loose();
+// sipar.set_them_loose();
 
-//while (true) {
+// while (true) {
 //    1::second => now;
-//}
+// }
