@@ -65,12 +65,7 @@ fun void gametrak()
     }
 }
 
-//while (true) {
-//    <<< gt.axis[0], gt.axis[1], gt.axis[2], gt.axis[3], gt.axis[4], gt.axis[5] >>> ;
-//    500::ms => now;
-//}
-
-//-----------------------------------------------------------------------------
+//------------------------- siparow setup ----------------------------------
 
 Siparow left;
 Siparow right;
@@ -145,54 +140,95 @@ fun float freq_norm(float neg1_to_1) {
 // ----------------------- chugl visualizer --------------------------
 GG.fullscreen();
 GG.camera() @=> GCamera cam;
-GG.scene().backgroundColor(Color.BLACK);
+GG.scene().backgroundColor(Color.SKYBLUE);
 GG.bloom(1);
 
-GGen bleft;
-GGen bright;
+cam.pos(@(0., 5., 15.));
+cam.lookAt(@(0., 4., 0.));
 
-GSphere l1 --> bleft;
-GSphere l2 --> bleft;
-GSphere l3 --> bleft;
-
-
-GPlane floor;
 GDirLight sun;
-
-bleft.color(Color.WHITE);
-bleft.emission(Color.WHITE);
-bleft.mat(new FlatMaterial());
-bleft.shadowed(true);
-@(-1., 0., 0.) => vec3 left_off;
-
-bright.color(Color.WHITE);
-bright.emission(Color.WHITE);
-bright.mat(new FlatMaterial());
-bright.shadowed(true);
-@(1., 0., 0.) => vec3 right_off;
-
 sun.pos(@(5., 8., 5.));
 sun.lookAt(@(0., 0., 0.));
 sun.shadow(true);
-sun.shadowAdd(bleft, false);
-sun.shadowAdd(bright, false);
 
+GPlane floor;
 floor.color(Color.GREEN);
-//floor.lookAt(@(0., 1., 0.));
 floor.pos(@(0., -1., 0.));
 floor.scaX(40.);
 floor.scaY(25.);
 floor.rotateX(-Math.PI / 2.);
 floor.shadowed(true);
 
-bleft --> GG.scene();
-bright --> GG.scene();
 sun --> GG.scene();
 floor --> GG.scene();
 
-//<<< cam.pos() >>>;
-cam.pos(@(0., 5., 15.));
-cam.lookAt(@(0., 4., 0.));
+class Flock{
+    GSphere b[];
+    Perlin3D p[];
+
+    fun void init(int size, int id, dur freq, float amp, float scale) {
+        new GSphere[size] @=> b;
+        new Perlin3D[size] @=> p;
+        for(0 => int i; i < size; i++) {
+            b[i].color(Color.WHITE);
+            b[i].emission(Color.WHITE);
+            b[i].mat(new FlatMaterial());
+            b[i].shadowed(true);
+            b[i].scaX(scale);
+            b[i].scaY(scale);
+            b[i].scaZ(scale);
+            sun.shadowAdd(b[i], false);
+            b[i] --> GG.scene();
+
+            p[i].init(id*1003 + i, freq * (1 + i * 0.07), amp);
+        }
+    }
+
+    fun void pos(vec3 pos_in) {
+        for (0 => int i; i < b.size(); i++) {
+            b[i].pos(pos_in + p[i].generate(now + 10::second));
+        }
+    }
+
+}
+
+class FlockBird{
+    FlyingBird b[];
+    Perlin3D p[];
+
+    fun void init(int size, int id, dur freq, float amp, float scale) {
+        new FlyingBird[size] @=> b;
+        new Perlin3D[size] @=> p;
+        for(0 => int i; i < size; i++) {
+            new FlyingBird(0.5, scale) @=> b[i];
+            sun.shadowAdd(b[i], false);
+            // b[i] --> GG.scene();
+
+            p[i].init(id*1003 + i, freq * (1 + i * 0.07), amp);
+        }
+    }
+
+    fun void pos(vec3 pos_in) {
+        for (0 => int i; i < b.size(); i++) {
+            b[i].pos() => vec3 prev;
+            b[i].pos(pos_in + p[i].generate(now + 10::second));
+            b[i].pos() => vec3 curr;
+            b[i].orient_to_vec(curr-prev);
+        }
+    }
+
+}
+
+FlockBird bleft;
+bleft.init(3, 0, 1::second, 1., 0.33);
+@(-1., 0., 0.) => vec3 left_base;
+bleft.pos(left_base);
+
+FlockBird bright;
+bright.init(3, 1, 1::second, 1., 0.33);
+@(1., 0., 0.) => vec3 right_base;
+bright.pos(right_base);
+
 
 fun vec3 gt_pos_to_xyz(float lr, float fb, float mag) {
     mag * Math.sin(Math.pi / 4. * lr) => float x;
@@ -203,9 +239,18 @@ fun vec3 gt_pos_to_xyz(float lr, float fb, float mag) {
     return ret;
 }
 
+fun vec3 xyz_to_gt_pos(vec3 pos) {
+    Math.sqrt(Math.pow(pos.x, 2) + Math.pow(pos.y, 2) + Math.pow(pos.z, 2)) => float mag;
+    Math.asin(pos.x/mag) / (Math.PI/4.) => float lr;
+    Math.asin(pos.y/mag) / (Math.PI/4.) => float fb;
+    1./10. => float scale;
+    @(scale*lr, scale*fb, scale*mag) => vec3 ret;
+    return ret;
+}
+
 fun void update() {
-    bleft.pos(left_off + gt_pos_to_xyz(gt.axis[0], gt.axis[1], gt.axis[2]));
-    bright.pos(right_off + gt_pos_to_xyz(gt.axis[3], gt.axis[4], gt.axis[5]));
+    bleft.pos(left_base + gt_pos_to_xyz(gt.axis[0], gt.axis[1], gt.axis[2]));
+    bright.pos(right_base + gt_pos_to_xyz(gt.axis[3], gt.axis[4], gt.axis[5]));
 }
 fun void update_loop() {
     while (true) {

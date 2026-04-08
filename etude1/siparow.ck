@@ -8,6 +8,8 @@
 // date: spring 2026
 //-----------------------------------------------------------------------------
 
+@import "sparrow.ck"
+
 public class Siparow {
     Sparrow s[];
     float base_freqs[];

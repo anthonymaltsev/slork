@@ -7,6 +7,7 @@
 // date: spring 2026
 //-----------------------------------------------------------------------------
 
+@import {"siparow.ck", "perlin.ck", "bird_obj.ck"}
 
 // ----------------------- chugl visualizer --------------------------
 GG.fullscreen();
@@ -33,7 +34,7 @@ floor.shadowed(true);
 sun --> GG.scene();
 floor --> GG.scene();
 
-class Flock{
+class FlockSphere{
     GSphere b[];
     Perlin3D p[];
 
@@ -63,12 +64,39 @@ class Flock{
 
 }
 
-Flock bleft;
+class FlockBird{
+    FlyingBird b[];
+    Perlin3D p[];
+
+    fun void init(int size, int id, dur freq, float amp, float scale) {
+        new FlyingBird[size] @=> b;
+        new Perlin3D[size] @=> p;
+        for(0 => int i; i < size; i++) {
+            new FlyingBird(0.5, scale) @=> b[i];
+            sun.shadowAdd(b[i], false);
+            // b[i] --> GG.scene();
+
+            p[i].init(id*1003 + i, freq * (1 + i * 0.07), amp);
+        }
+    }
+
+    fun void pos(vec3 pos_in) {
+        for (0 => int i; i < b.size(); i++) {
+            b[i].pos() => vec3 prev;
+            b[i].pos(pos_in + p[i].generate(now + 10::second));
+            b[i].pos() => vec3 curr;
+            b[i].orient_to_vec(curr-prev);
+        }
+    }
+
+}
+
+FlockBird bleft;
 bleft.init(3, 0, 1::second, 1., 0.33);
 @(-1., 0., 0.) => vec3 left_base;
 bleft.pos(left_base);
 
-Flock bright;
+FlockBird bright;
 bright.init(3, 1, 1::second, 1., 0.33);
 @(1., 0., 0.) => vec3 right_base;
 bright.pos(right_base);
@@ -115,7 +143,7 @@ fun vec3 right_update() {
 fun void update() {
     left_update() +=> left_base;
     right_update() +=> right_base;
-    bleft.pos(left_base );
+    bleft.pos(left_base);
     bright.pos(right_base);
 }
 
