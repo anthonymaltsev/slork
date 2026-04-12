@@ -112,11 +112,15 @@ public class ClawedCode {
     float t;
 
     while (prog < 1000) {
-      1::ms => now;
+      (verb_change_delay < 1000::ms
+        ? (verb_change_delay + 1000::ms) / 2000
+        : 1::ms)
+      => dur verb_delay_factor;
+      verb_delay_factor => now;
       
       // reverse progress and clamp from 0 to 1
       1. - (prog $ float / 1000.) => t;
-      1 + (t * t) => sca;
+      1 + (t * t) * (1::ms / verb_delay_factor) => sca;
 
       verb_spinner.sca(@(sca,sca));
       verb_line.sca(@(sca,sca));
