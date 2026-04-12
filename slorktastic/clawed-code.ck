@@ -1,4 +1,4 @@
-@import {"clawed.ck"}
+@import {"clawed.ck", "gkr.ck"}
 
 public class ClawedCode {
   "Flibbertigibbeting" => string DEFAULT_VERB;
@@ -30,11 +30,12 @@ public class ClawedCode {
   vec2 RELATIVE;
 
   // terminal display states
-  "hello world" => string prompt_text;
+  "" => string prompt_text;
   DEFAULT_VERB => string current_verb;
   0 => int spinner_idx;
   2500::ms => dur verb_change_delay;
 
+  GKeyboardReceiver keyboard;
   GText prompt;
   GText verb_spinner;
   GText verb_line;
@@ -53,9 +54,11 @@ public class ClawedCode {
   fun void run() {
     spork ~ _run_spinner();
     spork ~ _run_change_verb();
+    spork ~ _run_text_input();
 
     while (true) {
       GG.nextFrame() => now;
+      keyboard.listen();
 
       // terminal.text(TERMINAL_LINE + "\n> " + "text will go here!" + "\n" + TERMINAL_LINE);
       prompt.text("❯ " + prompt_text + "▌");
@@ -73,6 +76,13 @@ public class ClawedCode {
     }
 
     <<< "loaded", VERBS.size(), "verbs" >>>;
+  }
+
+  fun void _run_text_input() {
+    while (true) {
+      keyboard.wait_for_text => now;
+      keyboard.wait_for_text.val +=> prompt_text;
+    }
   }
 
   fun void _run_change_verb() {
