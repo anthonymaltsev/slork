@@ -1,6 +1,7 @@
 @import {"clawed.ck"}
 
 public class ClawedCode {
+  "Flibbertigibbeting" => string DEFAULT_VERB;
   ["·","✢","*","✶","✻","✽"] @=> string SPINNER_SEQUENCE[];
   @(0.005, 0.005, 0.007) => vec3 COLOR_BG;
   @(.24,.48,1.) => vec3 COLOR_PRIMARY;
@@ -12,11 +13,12 @@ public class ClawedCode {
   .2 => float FONT_SIZE;
   16 => int SCALE_FACTOR;
 
-  @(FONT_SIZE, -(FONT_SIZE*12)) => vec2 PROMPT_POS;
-  @(FONT_SIZE, -(FONT_SIZE*15.15)) => vec2 VERB_LINE_POS;
+  @(FONT_SIZE, -(FONT_SIZE*12.)) => vec2 PROMPT_POS;
+  // @(FONT_SIZE, -(FONT_SIZE*15.15)) => vec2 VERB_LINE_POS;
+  PROMPT_POS + @(0., -(FONT_SIZE*2.7)) => vec2 VERB_LINE_POS;
 
   .2 => float TOP_BOX_INSET;
-  .1 => float PROMPT_CONTAINER_PADDING;
+  .12 => float PROMPT_CONTAINER_PADDING;
 
   (TERMINAL_W * CHAR_W * SCALE_FACTOR) => float WINDOW_W;
   (TERMINAL_H * CHAR_H * SCALE_FACTOR) => float WINDOW_H;
@@ -29,12 +31,14 @@ public class ClawedCode {
 
   // terminal display states
   "hello world" => string prompt_text;
-  "Loading" => string current_verb;
+  DEFAULT_VERB => string current_verb;
   0 => int spinner_idx;
   2500::ms => dur verb_change_delay;
 
   GText prompt;
+  GText verb_spinner;
   GText verb_line;
+  Shred @ verb_pulse;
   Clawed @ clawed;
 
   fun @construct() {
@@ -55,7 +59,8 @@ public class ClawedCode {
 
       // terminal.text(TERMINAL_LINE + "\n> " + "text will go here!" + "\n" + TERMINAL_LINE);
       prompt.text("❯ " + prompt_text + "▌");
-      verb_line.text(SPINNER_SEQUENCE[spinner_idx] + " " + current_verb + "…");
+      verb_spinner.text(SPINNER_SEQUENCE[spinner_idx]);
+      verb_line.text("  " + current_verb + "…");
     }
   }
 
@@ -71,12 +76,11 @@ public class ClawedCode {
   }
 
   fun void _run_change_verb() {
-    _show_verb("Loading");
     while (true) {
       verb_change_delay => now;
       Math.random2(0, VERBS.size() - 1) => int verb_idx;
       verb_idx > -1 && VERBS.size() > 0 => int verbs_ready;
-      _show_verb(verbs_ready ? VERBS[verb_idx] : "Loading");
+      _show_verb(verbs_ready ? VERBS[verb_idx] : DEFAULT_VERB);
 
       if (verb_change_delay > 75::ms) .85 *=> verb_change_delay;
     }
@@ -88,7 +92,7 @@ public class ClawedCode {
     0 => int state;
 
     while (true) {
-      125::ms => now;
+      100::ms => now;
 
       if (state < spinner_len) {
         // 0-5 - standard order
@@ -102,8 +106,29 @@ public class ClawedCode {
     }
   }
 
+  fun void _pulse_verb_once() {
+    0 => int prog;
+    float sca;
+    float t;
+
+    while (prog < 1000) {
+      1::ms => now;
+      
+      // reverse progress and clamp from 0 to 1
+      1. - (prog $ float / 1000.) => t;
+      1 + (t * t) => sca;
+
+      verb_spinner.sca(@(sca,sca));
+      verb_line.sca(@(sca,sca));
+      
+      1 +=> prog;
+    }
+  }
+
   fun void _show_verb(string verb) {
     verb => current_verb;
+    if (verb_pulse != null) Machine.remove(verb_pulse.id());
+    spork ~ _pulse_verb_once() @=> verb_pulse;
   }
 
   fun void _init_window() {
@@ -136,15 +161,24 @@ public class ClawedCode {
     prompt.color(@(1., 1., 1., 0.9));
     prompt.controlPoints(@(0., 1.));
     prompt.pos(RELATIVE + PROMPT_POS);
-
-    verb_line.font("fonts/DejaVuSansMono.ttf");
-    verb_line.size(FONT_SIZE);
-    verb_line.color(COLOR_PRIMARY);
-    verb_line.controlPoints(@(0.,1.));
-    verb_line.pos(RELATIVE + VERB_LINE_POS);
+    
+    _init_verb_font(verb_spinner, @(0.,-FONT_SIZE/8.));
+    _init_verb_font(verb_line);
 
     prompt --> GG.scene();
+    verb_spinner --> GG.scene();
     verb_line --> GG.scene();
+  }
+
+  fun void _init_verb_font(GText text) {
+    _init_verb_font(text, @(0.,0.));
+  }
+  fun void _init_verb_font(GText text, vec2 offset) {
+    text.font("fonts/DejaVuSansMono.ttf");
+    text.size(FONT_SIZE);
+    text.color(COLOR_PRIMARY);
+    text.controlPoints(@(0.,1.));
+    text.pos(RELATIVE + VERB_LINE_POS + offset);
   }
 
   fun void _init_clawed() {
@@ -168,10 +202,10 @@ public class ClawedCode {
     line_top.color(@(1.,1.,1.));
     line_bottom.color(@(1.,1.,1.));
 
-    RELATIVE.x + TOP_BOX_INSET => float left;
+    RELATIVE.x + PROMPT_POS.x => float left;
     -left => float right;
-    (RELATIVE.y - TOP_BOX_INSET - (FONT_SIZE * 11.) + PROMPT_CONTAINER_PADDING) => float top;
-    (top - FONT_SIZE - (PROMPT_CONTAINER_PADDING * 2.)) => float bottom;
+    (RELATIVE.y + PROMPT_POS.y + PROMPT_CONTAINER_PADDING) => float top;
+    (top - (FONT_SIZE * 1.5) - PROMPT_CONTAINER_PADDING) => float bottom;
 
     line_top.positions([@(left,top),@(right,top)]);
     line_bottom.positions([@(left,bottom),@(right,bottom)]);
