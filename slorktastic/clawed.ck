@@ -22,6 +22,10 @@ public class Clawed extends GGen {
   GPlane foot_right;
   GMesh beak;
 
+  fun @construct() {
+    return Clawed(1., @(0.,0.,0.));
+  }
+
   fun @construct(float scale, vec3 position) {
     // body
     _init_plane(body, @(0.,0.,0.), @(BODY_WIDTH,BODY_HEIGHT,1.));
@@ -51,6 +55,21 @@ public class Clawed extends GGen {
 
   fun @destruct() {
     this --< GG.scene();
+  }
+
+  fun float get_body_width() {
+    return BODY_WIDTH;
+  }
+
+  fun float get_body_height() {
+    return BODY_HEIGHT;  
+  }
+
+  fun float get_full_width() {
+    return BODY_WIDTH + (2 * WING_WIDTH) + (2 * WINGTIP_WIDTH);
+  }
+  fun float get_full_height() {
+    return BODY_HEIGHT + FOOT_HEIGHT;
   }
 
   fun void _init_wing(GPlane wing, GPlane wingtip, int right) {
