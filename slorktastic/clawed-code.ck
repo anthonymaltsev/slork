@@ -1,7 +1,10 @@
 @import {"clawed.ck"}
 
 public class ClawedCode {
+  ["·","✢","*","✶","✻","✽"] @=> string SPINNER_SEQUENCE[];
   @(0.005, 0.005, 0.007) => vec3 COLOR_BG;
+  @(.24,.48,1.) => vec3 COLOR_PRIMARY;
+
   80 => int TERMINAL_W;
   24 => int TERMINAL_H;
   .45 => float CHAR_W;
@@ -17,16 +20,20 @@ public class ClawedCode {
 
   float CAM_LEFT;
   float CAM_TOP;
+  string VERBS[0];
 
-  "" => string TERMINAL_LINE;
+  // terminal display states
+  "hello world" => string prompt_text;
+  "Loading" => string current_verb;
+  0 => int spinner_idx;
+  2500::ms => dur verb_change_delay;
 
   GText terminal;
+  GText verb_line;
   Clawed @ clawed;
 
   fun @construct() {
-    for (0 => int i; i < TERMINAL_W; i++) {
-      "_" +=> TERMINAL_LINE;
-    }
+    _load_verbs();
 
     _init_window();
     _init_camera();
@@ -35,12 +42,63 @@ public class ClawedCode {
   }
 
   fun void run() {
-    int val;
+    spork ~ _run_spinner();
+    spork ~ _run_change_verb();
+
     while (true) {
       GG.nextFrame() => now;
-      Math.random2(1,10000) => val;
-      terminal.text(TERMINAL_LINE + "\n> " + "text will go here!" + "\n" + TERMINAL_LINE);
+
+      // terminal.text(TERMINAL_LINE + "\n> " + "text will go here!" + "\n" + TERMINAL_LINE);
+      terminal.text("❯ " + prompt_text + "▌");
+      verb_line.text(SPINNER_SEQUENCE[spinner_idx] + " " + current_verb + "…");
     }
+  }
+
+  fun void _load_verbs() {
+    FileIO fin;
+    fin.open("verbs.txt", FileIO.READ);
+
+    if (fin.good()) {
+      while (fin.more()) VERBS << fin.readLine();
+    }
+
+    <<< "loaded", VERBS.size(), "verbs" >>>;
+  }
+
+  fun void _run_change_verb() {
+    _show_verb("Loading");
+    while (true) {
+      verb_change_delay => now;
+      Math.random2(0, VERBS.size() - 1) => int verb_idx;
+      verb_idx > -1 && VERBS.size() > 0 => int verbs_ready;
+      _show_verb(verbs_ready ? VERBS[verb_idx] : "Loading");
+
+      if (verb_change_delay > 75::ms) .85 *=> verb_change_delay;
+    }
+  }
+
+  fun void _run_spinner() {
+    SPINNER_SEQUENCE.size() => int spinner_len;
+    spinner_len * 2 => int spinner_full;
+    0 => int state;
+
+    while (true) {
+      125::ms => now;
+
+      if (state < spinner_len) {
+        // 0-5 - standard order
+        state => spinner_idx;
+      } else {
+        // 6-11 - reverse order
+        (spinner_full - state - 1) => spinner_idx;
+      }
+
+      (state + 1) % spinner_full => state;
+    }
+  }
+
+  fun void _show_verb(string verb) {
+    verb => current_verb;
   }
 
   fun void _init_window() {
@@ -63,14 +121,48 @@ public class ClawedCode {
   }
 
   fun void _init_terminal() {
-    terminal.font("chugl:cousine-regular");
+    _draw_top_box();
+    // _draw_prompt_container_lines();
+
+    terminal.font("fonts/DejaVuSansMono.ttf");
     terminal.size(FONT_SIZE);
     terminal.color(@(1., 1., 1., 0.9));
     terminal.controlPoints(@(0., 1.));
     terminal.pos(@(CAM_LEFT + FONT_SIZE, CAM_TOP - (FONT_SIZE*12), 0.));
-    terminal --> GG.scene();
 
-    _draw_top_box();
+    verb_line.font("fonts/DejaVuSansMono.ttf");
+    verb_line.size(FONT_SIZE);
+    verb_line.color(COLOR_PRIMARY);
+    verb_line.controlPoints(@(0.,1.));
+    verb_line.pos(@(CAM_LEFT + FONT_SIZE, CAM_TOP - (FONT_SIZE*15.15), 0.));
+
+    terminal --> GG.scene();
+    verb_line --> GG.scene();
+  }
+
+  fun void _init_clawed() {
+    // clawed == the mascot of "clawed code"
+    new Clawed() @=> clawed;
+
+    @(
+      CAM_LEFT+(clawed.get_full_width()/2.),
+      CAM_TOP-(clawed.get_full_height()/2.) - FONT_SIZE,
+      0.
+    ) => vec3 clawed_pos;
+
+    clawed.sca(@(.7,.7,.7));
+    clawed.pos(clawed_pos);
+  }
+
+  fun void _draw_prompt_container_lines() {
+    GLines line_top --> GG.scene();
+    // GLines line_bottom --> GG.scene();
+
+    CAM_LEFT + TOP_BOX_INSET => float left_corner;
+    (CAM_TOP - TOP_BOX_INSET + (FONT_SIZE * 8)) => float top_corner;
+
+    line_top.positions([@(left_corner,top_corner),@(-left_corner,top_corner)]);
+    line_top.color(@(1.,1.,1.));
   }
 
   fun void _draw_top_box() {
@@ -92,12 +184,12 @@ public class ClawedCode {
       @(left_corner,bottom_corner)
     ]);
     outline.colors([
-      @(.24,.48,1.),
-      @(.24,.48,1.),
-      @(.24,.48,1.),
+      COLOR_PRIMARY,
+      COLOR_PRIMARY,
+      COLOR_PRIMARY,
       COLOR_BG,
       COLOR_BG,
-      @(.24,.48,1.),
+      COLOR_PRIMARY,
     ]);
 
     GText heading --> GG.scene();
@@ -106,20 +198,6 @@ public class ClawedCode {
     heading.color(@(1., 1., 1., 0.9));
     heading.controlPoints(@(0., 1.));
     heading.pos(@(CAM_LEFT+(FONT_SIZE * 4.), CAM_TOP-(FONT_SIZE * .6), 0.));
-  }
-
-  fun void _init_clawed() {
-    // clawed == the mascot of "clawed code"
-    new Clawed() @=> clawed;
-
-    @(
-      CAM_LEFT+(clawed.get_full_width()/2.),
-      CAM_TOP-(clawed.get_full_height()/2.) - FONT_SIZE,
-      0.
-    ) => vec3 clawed_pos;
-
-    clawed.sca(@(.7,.7,.7));
-    clawed.pos(clawed_pos);
   }
 }
 

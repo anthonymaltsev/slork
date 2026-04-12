@@ -83,14 +83,19 @@ public class Clawed extends GGen {
     // isosceles triangle beak
     Geometry beak_geo;
     beak_geo.vertexCount(3);
-    beak_geo.positions([@(-0.1,0.0,0.0),@(0.1,-0.1,0.0),@(-0.1,-0.2,0.0)]);
     beak_geo.indices([0,1,2]);
 
-    PhongMaterial beak_mat;
+    FlatMaterial beak_mat;
     @(.7,.8,.2) => beak_mat.color;
 
     new GMesh(beak_geo, beak_mat) @=> beak;
-    beak.pos(@((BODY_WIDTH+.2)/2,.2));
+
+    // new: "orthographic"-esque downward beak centered on body
+    beak.pos(@(0.,0.,0.));
+    beak_geo.positions([@(-0.1,0.,0.),@(0.1,0.,0.),@(0.,-0.2,0.)]);
+    // old - right-side-of-body beak
+    // beak_geo.positions([@(-0.1,0.0,0.0),@(0.1,-0.1,0.0),@(-0.1,-0.2,0.0)]);
+    // beak.pos(@((BODY_WIDTH+.2)/2,.2));
 
     beak --> this;
   }
@@ -102,7 +107,7 @@ public class Clawed extends GGen {
     return _init_plane(plane, pos, sca, color, 0);
   }
   fun void _init_plane(GPlane plane, vec3 pos, vec3 sca, vec3 color, int skip_add) {
-    PhongMaterial plane_mat;
+    FlatMaterial plane_mat;
     color => plane_mat.color;
     plane_mat => plane.mat;
     sca => plane.sca;
