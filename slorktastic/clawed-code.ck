@@ -10,9 +10,13 @@ public class ClawedCode {
   .45 => float CHAR_W;
   1. => float CHAR_H;
   .2 => float FONT_SIZE;
-  .2 => float TOP_BOX_INSET;
   16 => int SCALE_FACTOR;
-    (SCALE_FACTOR / FONT_SIZE) => float FONT_RATIO;
+
+  @(FONT_SIZE, -(FONT_SIZE*12)) => vec2 PROMPT_POS;
+  @(FONT_SIZE, -(FONT_SIZE*15.15)) => vec2 VERB_LINE_POS;
+
+  .2 => float TOP_BOX_INSET;
+  .1 => float PROMPT_CONTAINER_PADDING;
 
   (TERMINAL_W * CHAR_W * SCALE_FACTOR) => float WINDOW_W;
   (TERMINAL_H * CHAR_H * SCALE_FACTOR) => float WINDOW_H;
@@ -21,6 +25,7 @@ public class ClawedCode {
   float CAM_LEFT;
   float CAM_TOP;
   string VERBS[0];
+  vec2 RELATIVE;
 
   // terminal display states
   "hello world" => string prompt_text;
@@ -28,7 +33,7 @@ public class ClawedCode {
   0 => int spinner_idx;
   2500::ms => dur verb_change_delay;
 
-  GText terminal;
+  GText prompt;
   GText verb_line;
   Clawed @ clawed;
 
@@ -49,7 +54,7 @@ public class ClawedCode {
       GG.nextFrame() => now;
 
       // terminal.text(TERMINAL_LINE + "\n> " + "text will go here!" + "\n" + TERMINAL_LINE);
-      terminal.text("❯ " + prompt_text + "▌");
+      prompt.text("❯ " + prompt_text + "▌");
       verb_line.text(SPINNER_SEQUENCE[spinner_idx] + " " + current_verb + "…");
     }
   }
@@ -118,25 +123,27 @@ public class ClawedCode {
     // top-left corner of the "terminal" window
     (-ASPECT_RATIO * GG.camera().viewSize()) / 2. => CAM_LEFT;
     (GG.camera().viewSize() / 2.) => CAM_TOP;
+
+    @(CAM_LEFT,CAM_TOP) => RELATIVE;
   }
 
   fun void _init_terminal() {
     _draw_top_box();
-    // _draw_prompt_container_lines();
+    _draw_prompt_container();
 
-    terminal.font("fonts/DejaVuSansMono.ttf");
-    terminal.size(FONT_SIZE);
-    terminal.color(@(1., 1., 1., 0.9));
-    terminal.controlPoints(@(0., 1.));
-    terminal.pos(@(CAM_LEFT + FONT_SIZE, CAM_TOP - (FONT_SIZE*12), 0.));
+    prompt.font("fonts/DejaVuSansMono.ttf");
+    prompt.size(FONT_SIZE);
+    prompt.color(@(1., 1., 1., 0.9));
+    prompt.controlPoints(@(0., 1.));
+    prompt.pos(RELATIVE + PROMPT_POS);
 
     verb_line.font("fonts/DejaVuSansMono.ttf");
     verb_line.size(FONT_SIZE);
     verb_line.color(COLOR_PRIMARY);
     verb_line.controlPoints(@(0.,1.));
-    verb_line.pos(@(CAM_LEFT + FONT_SIZE, CAM_TOP - (FONT_SIZE*15.15), 0.));
+    verb_line.pos(RELATIVE + VERB_LINE_POS);
 
-    terminal --> GG.scene();
+    prompt --> GG.scene();
     verb_line --> GG.scene();
   }
 
@@ -145,33 +152,38 @@ public class ClawedCode {
     new Clawed() @=> clawed;
 
     @(
-      CAM_LEFT+(clawed.get_full_width()/2.),
-      CAM_TOP-(clawed.get_full_height()/2.) - FONT_SIZE,
-      0.
-    ) => vec3 clawed_pos;
+      clawed.get_full_width()/2.,
+      -(clawed.get_full_height()/2.) - FONT_SIZE
+    ) => vec2 clawed_pos;
 
     clawed.sca(@(.7,.7,.7));
-    clawed.pos(clawed_pos);
+    clawed.pos(RELATIVE + clawed_pos);
   }
 
-  fun void _draw_prompt_container_lines() {
+  fun void _draw_prompt_container() {
     GLines line_top --> GG.scene();
-    // GLines line_bottom --> GG.scene();
-
-    CAM_LEFT + TOP_BOX_INSET => float left_corner;
-    (CAM_TOP - TOP_BOX_INSET + (FONT_SIZE * 8)) => float top_corner;
-
-    line_top.positions([@(left_corner,top_corner),@(-left_corner,top_corner)]);
+    GLines line_bottom --> GG.scene();
+    line_top.width(.02);
+    line_bottom.width(.02);
     line_top.color(@(1.,1.,1.));
+    line_bottom.color(@(1.,1.,1.));
+
+    RELATIVE.x + TOP_BOX_INSET => float left;
+    -left => float right;
+    (RELATIVE.y - TOP_BOX_INSET - (FONT_SIZE * 11.) + PROMPT_CONTAINER_PADDING) => float top;
+    (top - FONT_SIZE - (PROMPT_CONTAINER_PADDING * 2.)) => float bottom;
+
+    line_top.positions([@(left,top),@(right,top)]);
+    line_bottom.positions([@(left,bottom),@(right,bottom)]);
   }
 
   fun void _draw_top_box() {
     GLines outline --> GG.scene();
     outline.width(.02);
 
-    CAM_LEFT + TOP_BOX_INSET => float left_corner;
+    RELATIVE.x + TOP_BOX_INSET => float left_corner;
     -left_corner => float right_corner;
-    CAM_TOP - TOP_BOX_INSET => float top_corner;
+    RELATIVE.y - TOP_BOX_INSET => float top_corner;
     top_corner - 2. => float bottom_corner;
 
     outline.positions([
@@ -197,7 +209,7 @@ public class ClawedCode {
     heading.size(FONT_SIZE);
     heading.color(@(1., 1., 1., 0.9));
     heading.controlPoints(@(0., 1.));
-    heading.pos(@(CAM_LEFT+(FONT_SIZE * 4.), CAM_TOP-(FONT_SIZE * .6), 0.));
+    heading.pos(RELATIVE + @(FONT_SIZE * 4.75, -(FONT_SIZE * .6), 0.));
   }
 }
 
