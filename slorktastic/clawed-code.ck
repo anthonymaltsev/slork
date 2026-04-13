@@ -40,7 +40,7 @@ public class ClawedCode {
   GText verb_spinner;
   GText verb_line;
   Shred @ verb_pulse;
-  Clawed @ clawed;
+  ClawedAnimated @ clawed;
 
   fun @construct() {
     _load_verbs();
@@ -80,8 +80,17 @@ public class ClawedCode {
 
   fun void _run_text_input() {
     while (true) {
-      keyboard.wait_for_text => now;
-      keyboard.wait_for_text.val +=> prompt_text;
+      keyboard.wait => now;
+      if (keyboard.wait.backspace) {
+        if (prompt_text.length() > 0)
+          prompt_text.substring(0, prompt_text.length() - 1) => prompt_text;
+      } else if (keyboard.wait.ctrl) {
+        if (keyboard.wait.val == "u") {
+          "" => prompt_text;
+        }
+      } else {
+        keyboard.wait.val +=> prompt_text;
+      }
     }
   }
 
@@ -197,7 +206,7 @@ public class ClawedCode {
 
   fun void _init_clawed() {
     // clawed == the mascot of "clawed code"
-    new Clawed() @=> clawed;
+    new ClawedAnimated() @=> clawed;
 
     @(
       clawed.get_full_width()/2.,
@@ -206,6 +215,8 @@ public class ClawedCode {
 
     clawed.sca(@(.7,.7,.7));
     clawed.pos(RELATIVE + clawed_pos);
+
+    clawed.animate();
   }
 
   fun void _draw_prompt_container() {

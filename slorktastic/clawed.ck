@@ -1,5 +1,6 @@
 public class Clawed extends GGen {
   @(.14,.28,1.) => vec3 BODY_COLOR;
+  @(.12,.24,1.) => vec3 EYE_OPEN_SCA;
 
   2. => float BODY_WIDTH;
   1.25 => float BODY_HEIGHT;
@@ -35,8 +36,8 @@ public class Clawed extends GGen {
     _init_wing(wing_right, wingtip_right, true); // r
 
     // eyes
-    _init_plane(eye_left, @(-(BODY_WIDTH-.8)/2,(BODY_HEIGHT-.8)/2,0.), @(.12,.24,1.), @(0.,0.,0.));
-    _init_plane(eye_right, @((BODY_WIDTH-.8)/2,(BODY_HEIGHT-.8)/2,0.), @(.12,.24,1.), @(0.,0.,0.));
+    _init_plane(eye_left, @(-(BODY_WIDTH-.8)/2,(BODY_HEIGHT-.8)/2,0.), EYE_OPEN_SCA, @(0.,0.,0.));
+    _init_plane(eye_right, @((BODY_WIDTH-.8)/2,(BODY_HEIGHT-.8)/2,0.), EYE_OPEN_SCA, @(0.,0.,0.));
 
     // feet
     _init_plane(foot_left, @(-(BODY_WIDTH-.8)/2,-(BODY_HEIGHT+FOOT_HEIGHT)/2,0.), @(FOOT_WIDTH,FOOT_HEIGHT,1.), @(.7,.8,.2));
@@ -70,6 +71,17 @@ public class Clawed extends GGen {
   }
   fun float get_full_height() {
     return BODY_HEIGHT + FOOT_HEIGHT;
+  }
+
+  fun void _animate_blinking() {
+    while (true) {
+      Math.random2(6000, 12000)::ms => now;
+      eye_left.sca(@(0.,0.,0.));
+      eye_right.sca(@(0.,0.,0.));
+      300::ms => now;
+      eye_left.sca(EYE_OPEN_SCA);
+      eye_right.sca(EYE_OPEN_SCA);
+    }
   }
 
   fun void _init_wing(GPlane wing, GPlane wingtip, int right) {
@@ -113,5 +125,24 @@ public class Clawed extends GGen {
     sca => plane.sca;
     pos => plane.pos;
     plane --> this;
+  }
+}
+
+public class ClawedAnimated extends Clawed {
+  Shred @ blinking;
+
+  fun @construct(float scale, vec3 position) {
+    Clawed(scale, position);
+    "Clawd (Animated)" => this.name;
+  }
+
+  fun @destruct() {
+    if (blinking != null) {
+      Machine.remove(blinking.id());
+    }
+  }
+
+  fun void animate() {
+    spork ~ _animate_blinking() @=> blinking;
   }
 }
