@@ -44,6 +44,7 @@ public class ArbSynth {
         }
         new SinOsc[N] @=> sins;
         for (auto s : sins) {
+            0. => s.gain;
             s => rev;
         }
 

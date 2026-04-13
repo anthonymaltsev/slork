@@ -38,7 +38,7 @@ if( !fout.good() )
 }
 
 second / samp => float srate;
-2048 => fft.size;
+512 => fft.size;
 Windowing.hann(fft.size()) => fft.window;
 // our hop size (how often to perform analysis)
 // fft.size()::samp => dur HOP;
