@@ -44,7 +44,7 @@ class Sayer {
     fun void say(string s) {
         for (0 => int i; i < s.length(); i++) {
             if (" " == s.charAt2(i)) 
-                len => now;
+                2*len => now;
             else { 
                 <<< "saying ", s.charAt2(i) >>>;
                 spork ~ alphabet[s.charAt2(i)].playback();
@@ -55,5 +55,5 @@ class Sayer {
 }
 
 Sayer s;
-s.say("ai is big data and we will see where it goes certainly there are interesting directions of development");
+s.say("ai ai ai ai ai ai ai is big data and we will see where it goes certainly there are interesting directions of development");
 // s.alphabet["abcdefghijklmnopqrstuvwxyz"].playback();
