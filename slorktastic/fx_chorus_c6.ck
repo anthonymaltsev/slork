@@ -18,6 +18,8 @@
 // date: Spring 2023
 //------------------------------------------------------------------------------
 
+// TO RUN: chuck --out:6 fx_chorus_c6.ck
+
 // set up signal chain
 Chorus chor[6];
 
@@ -27,10 +29,12 @@ Chorus chor[6];
 for( int i; i < chor.size(); i++ )
 {
     // testing script for stereo
-    (Math.fmod(i, 2)) $ int => channel;
+    // (Math.fmod(i, 2)) $ int => channel;
     
+    <<< adc.channels() >>>;
+
     // patch each voice
-    adc => chor[i] => dac.chan(channel);
+    adc.chan(0) => chor[i] => dac.chan(i);
     
     // initializing a light chorus effect
     // (try tweaking these values!)
