@@ -68,6 +68,7 @@ public class ArbSynth2 {
                 @(Std.atof(tok1.next()), Std.atof(tok1.next())) => freq_gain1[i][j];
             }
         }
+        norm_scale_mags(freq_gain1, 0.15);
         for (0 => int i; i < num_lines2; i++) {
             fin2.readLine() => line2;
             tok2.set(line2);
@@ -76,6 +77,7 @@ public class ArbSynth2 {
                 @(Std.atof(tok2.next()), Std.atof(tok2.next())) => freq_gain2[i][j];
             }
         }
+        norm_scale_mags(freq_gain2, 0.15);
 
         new SinOsc[N] @=> sins;
         for (auto s : sins) {
@@ -99,7 +101,7 @@ public class ArbSynth2 {
                 interp_lookup(freq_gain1, progress, j) => vec2 fg1;
                 interp_lookup(freq_gain2, progress, j) => vec2 fg2;
                 mix_param * fg1.y + (1. - mix_param) * fg2.y => sins[j].gain;
-                mix_param * fg1.x + (1. - mix_param) * fg2.x => sins[j].freq;
+                Math.exp(mix_param * (fg1.x > 0 ? Math.log(fg1.x) : -1000.) + (1. - mix_param) * (fg2.x > 0 ? Math.log(fg2.x) : -1000.)) => sins[j].freq;
             }
             1::ms => now;
         }
@@ -111,6 +113,20 @@ public class ArbSynth2 {
         if (i0 == table.size() - 1) return table[i0][nind];
         index * table.size() - i0 => float di;
         return table[i0][nind] + (table[i0+1][nind]-table[i0][nind]) * di;
+    }
+
+    fun void norm_scale_mags(vec2 mag_freq[][], float scale) {
+        0. => float maxmag;
+        for (0 => int i; i < mag_freq.size(); i++) {
+            for (0 => int j; j < mag_freq[0].size(); j++) {
+                if (mag_freq[i][j].y > maxmag) mag_freq[i][j].y => maxmag;
+            }
+        }
+        for (0 => int i; i < mag_freq.size(); i++) {
+            for (0 => int j; j < mag_freq[0].size(); j++) {
+                mag_freq[i][j].y / maxmag * scale => mag_freq[i][j].y;
+            }
+        }
     }
 
 }

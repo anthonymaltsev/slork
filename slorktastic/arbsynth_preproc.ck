@@ -80,7 +80,7 @@ for (0 => int j; j < num_lines; j++)
     for (vec2 e : local_maxima) {
         topN_check(e.x, e.y, topN);
     }
-    sort_by_freq(topN);
+    // sort_by_freq(topN);
     for (vec2 e : topN) {
         fout <= e.y <= " " <= e.x <= " ";
     }
