@@ -80,6 +80,7 @@ for (0 => int j; j < num_lines; j++)
     for (vec2 e : local_maxima) {
         topN_check(e.x, e.y, topN);
     }
+    // sort_by_freq(topN);
     for (vec2 e : topN) {
         fout <= e.y <= " " <= e.x <= " ";
     }
@@ -110,6 +111,21 @@ fun void discard_similar(vec2 list[], float separator) {
                 break;
             }
         }
+    }
+}
+
+fun void sort_by_freq(vec2 mag_freq[]) {
+    polar freq_index[mag_freq.size()];
+    for (0 => int i; i < freq_index.size(); i++) {
+        %(mag_freq[i].y, (i $ float)/N) => freq_index[i];
+    }
+    freq_index.sort();
+    vec2 tmp[mag_freq.size()];
+    for (0 => int i; i < tmp.size(); i++) {
+        mag_freq[Math.round(freq_index[i].phase*N)$int] => tmp[i];
+    }
+    for (0 => int i; i < tmp.size(); i++) {
+        tmp[i] => mag_freq[i];
     }
 }
 
