@@ -2,6 +2,7 @@ public class GKeyboardEvent extends Event {
   string val;
   int backspace;
   int ctrl;
+  int enter;
 
   fun @construct(string value) {
     value => val;
@@ -69,12 +70,14 @@ public class GKeyboardReceiver {
       keys_down[i] => key;
       string str;
 
-      if (key == GWindow.KEY_BACKSPACE) {
+      if (key == GWindow.KEY_BACKSPACE || key == GWindow.KEY_ENTER) {
         "" => wait.val;
-        1 => wait.backspace;
+        key == GWindow.KEY_BACKSPACE => wait.backspace;
+        key == GWindow.KEY_ENTER => wait.enter;
         wait.signal();
         continue;
       }
+      
       if (key == GWindow.KEY_SPACE) {
         " " => str;
       } else if (key >= GWindow.KEY_0 && key <= GWindow.KEY_9) {

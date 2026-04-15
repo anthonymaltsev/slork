@@ -180,6 +180,7 @@ public class ClawedAnimated extends Clawed {
   fun @construct(float scale, vec3 position) {
     Clawed(scale, position);
     "Clawd (Animated)" => this.name;
+    animate_blinking();
   }
 
   fun @destruct() {
@@ -189,9 +190,12 @@ public class ClawedAnimated extends Clawed {
     }
   }
 
-  fun void animate() {
+  fun void animate_blinking() {
     spork ~ _animate_blinking() @=> blinking;
-    spork ~ _animate_flapping() @=> blinking;
+  }
+  
+  fun void animate_flapping() {
+    spork ~ _animate_flapping() @=> flapping;
   }
 }
 
@@ -226,15 +230,26 @@ public class ClawedFlock {
   ClawedAnimated birdies[];
   Perlin2D perlin[];
 
+  0 => int birdie_count;
+  1::second => dur _freq;
+
   fun @construct(int size, dur freq) {
+    freq => _freq;
     new ClawedAnimated[size] @=> birdies;
     new Perlin2D[size] @=> perlin;
 
     for (0 => int i; i < size; i++) {
-      new ClawedAnimated(1, @(0.,0.,0.)) @=> birdies[i];
-      birdies[i].animate();
-      perlin[i].init(1003 + i, freq * (1 + i * 0.07), 8);
+      add_birdie();
     }
+  }
+
+  fun void add_birdie() {
+    birdie_count++ => int i;
+    birdies << new ClawedAnimated(1, @(0.,0.,0.));
+    birdies[i].animate_blinking();
+    birdies[i].animate_flapping();
+    perlin << new Perlin2D();
+    perlin[i].init(1003 + i, _freq * (1 + i * 0.07), 8);
   }
 
   fun void pos(vec3 pos_in) {

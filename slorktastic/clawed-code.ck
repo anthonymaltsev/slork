@@ -38,6 +38,7 @@ public class ClawedCode {
   0 => int spinner_idx;
   2500::ms => dur verb_change_delay;
   1 => int num_lines;
+  1 => int prompt_editable;
 
   GKeyboardReceiver keyboard;
   GText prompt;
@@ -60,8 +61,6 @@ public class ClawedCode {
   }
 
   fun void run() {
-    spork ~ _run_spinner();
-    spork ~ _run_change_verb();
     spork ~ _run_text_input();
 
     while (true) {
@@ -90,6 +89,12 @@ public class ClawedCode {
   fun void _run_text_input() {
     while (true) {
       keyboard.wait => now;
+      
+      // "enter" key starts the whole shabang
+      if (keyboard.wait.enter) {
+        _get_crazy_with_it();
+      }
+
       if (keyboard.wait.backspace) {
         if (prompt_text.length() > 0)
           prompt_text.substring(0, prompt_text.length() - 1) => prompt_text;
@@ -107,6 +112,23 @@ public class ClawedCode {
       _update_prompt_display();
     }
   }
+
+  fun void _get_crazy_with_it() {
+    // hide cursor
+    0 => prompt_editable;
+    _update_prompt_display();
+
+    // flap bird
+    clawed.animate_flapping();
+    
+    // verb/spinner init
+    _redraw_verb();
+    verb_line --> GG.scene();
+    verb_spinner --> GG.scene();
+    spork ~ _run_spinner();
+    spork ~ _run_change_verb();
+  }
+
 
   fun void _update_prompt_display() {
     "❯ " => string init;
@@ -136,7 +158,7 @@ public class ClawedCode {
       if (!is_last_line) num_lines++;
     }
 
-    init + "|" => prompt_display;
+    init + (prompt_editable ? "|" : "") => prompt_display;
 
     _redraw_verb();
     _draw_prompt_container();
@@ -150,7 +172,12 @@ public class ClawedCode {
       _show_verb(verbs_ready ? VERBS[verb_idx] : DEFAULT_VERB);
 
       if (verb_change_delay > 75::ms) .85 *=> verb_change_delay;
-      if (clawed.flap_delay > 15::ms) .93 *=> clawed.flap_delay;
+      if (clawed.flap_delay > 15::ms) {
+        .93 *=> clawed.flap_delay;
+        <<< "echo" >>>;
+        if (flock.birdie_count < 16) flock.add_birdie();
+        <<< "echo2" >>>;
+      }
     }
   }
 
@@ -233,12 +260,8 @@ public class ClawedCode {
     prompt.color(@(1., 1., 1., 0.9));
     prompt.controlPoints(@(0., 1.));
     prompt.pos(RELATIVE + PROMPT_POS);
-    
-    _redraw_verb();
 
     prompt --> GG.scene();
-    verb_spinner --> GG.scene();
-    verb_line --> GG.scene();
   }
 
   fun void _redraw_verb() {
@@ -261,7 +284,7 @@ public class ClawedCode {
   fun void _init_clawed() {
     // clawed == the mascot of "clawed code"
     new ClawedAnimated() @=> clawed;
-    new ClawedFlock(16, 750::ms) @=> flock;
+    new ClawedFlock(0, 600::ms) @=> flock;
 
     @(
       clawed.get_full_width()/2.,
@@ -270,8 +293,8 @@ public class ClawedCode {
 
     clawed.sca(@(.7,.7,.7));
     clawed.pos(RELATIVE + clawed_pos);
-    clawed.animate();
-    flock.pos(@(1.,1.,0.));
+    clawed.animate_blinking();
+    flock.pos(@(0.,0.,0.));
   }
 
   fun void _draw_prompt_container() {
@@ -328,7 +351,7 @@ public class ClawedCode {
     heading.pos(RELATIVE + @(FONT_SIZE * 4.75, -(FONT_SIZE * .6), 0.));
 
     GText info --> GG.scene();
-    info.text("Icarus 4.6 (1M context) · Clawed Max");
+    info.text("Icarus 4.6 (1M context) · Clawed Max\nReady to build AGI?");
     info.font(FONT_FACE);
     info.size(FONT_SIZE);
     info.color(@(1., 1., 1., 0.9));
