@@ -1,5 +1,19 @@
 @import {"clawed.ck", "gkr.ck"}
 
+public class ClawedCodePromptEvent extends Event {
+  string prompt;
+  string buzzwords;
+
+  fun @construct(string pr) {
+    pr => prompt;
+  }
+
+  fun @construct(string pr, string buzz) {
+    pr => prompt;
+    buzz => buzzwords;
+  }
+}
+
 public class ClawedCode {
   "Flibbertigibbeting" => string DEFAULT_VERB;
   ["·","✢","*","✶","✻","✽"] @=> string SPINNER_SEQUENCE[];
@@ -53,6 +67,8 @@ public class ClawedCode {
   ClawedAnimated @ clawed;
   ClawedFlock @ flock;
 
+  ClawedCodePromptEvent wait;
+
   fun @construct() {
     _load_verbs();
 
@@ -89,6 +105,33 @@ public class ClawedCode {
     <<< "loaded", VERBS.size(), "verbs" >>>;
   }
 
+  fun void _trigger_prompt_event() {
+    prompt_text => wait.prompt;
+    _gather_buzzwords() => wait.buzzwords;
+    wait.signal();
+  }
+
+  fun string _gather_buzzwords() {
+    string buzzwords;
+
+    prompt_text => string pr; // make copy of prompt to mutate
+    string matches[1];
+    string word;
+    int is_match;
+    while (RegEx.match("[A-Za-z]+", pr, matches)) {
+      matches[0] => word;
+      RegEx.match("^[A-Z]+$", word) => is_match;
+      if (is_match) {
+        word +=> buzzwords;
+      }
+      RegEx.replace("[A-Za-z]+", "_", pr) => pr;
+      // space delimit when more words remain
+      if (is_match && pr.length()) " " +=> buzzwords;
+    }
+
+    return buzzwords;
+  }
+
   fun void _run_text_input() {
     while (true) {
       keyboard.wait => now;
@@ -96,6 +139,7 @@ public class ClawedCode {
       
       // "enter" key starts the whole shabang
       if (keyboard.wait.enter) {
+        _trigger_prompt_event();
         _get_crazy_with_it();
       }
 
@@ -371,6 +415,3 @@ public class ClawedCode {
     info.pos(RELATIVE + @(FONT_SIZE * 22, -(FONT_SIZE * 2), 0.));
   }
 }
-
-ClawedCode code();
-code.run();

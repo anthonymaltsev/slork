@@ -227,7 +227,7 @@ public class ClawedFlock {
 
   fun void add_birdie() {
     birdie_count++ => int i;
-    birdies << new ClawedAnimated(_scale, @(0.,0.,0.));
+    birdies << new ClawedAnimated(_scale, @(Math.random2f(-2,2),Math.random2f(-2,2),0.));
     birdies[i].animate_blinking();
     birdies[i].animate_flapping();
     perlin << new Perlin2D();
