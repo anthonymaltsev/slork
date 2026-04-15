@@ -36,9 +36,12 @@ public class ClawedCode {
   "❯" => string prompt_display;
   DEFAULT_VERB => string current_verb;
   0 => int spinner_idx;
-  2500::ms => dur verb_change_delay;
+  4000::ms => dur verb_change_delay;
   1 => int num_lines;
   1 => int prompt_editable;
+
+  .7 => float clawed_scale;
+  vec2 clawed_pos;
 
   GKeyboardReceiver keyboard;
   GText prompt;
@@ -89,6 +92,7 @@ public class ClawedCode {
   fun void _run_text_input() {
     while (true) {
       keyboard.wait => now;
+      if (!prompt_editable) continue;
       
       // "enter" key starts the whole shabang
       if (keyboard.wait.enter) {
@@ -169,14 +173,22 @@ public class ClawedCode {
       verb_change_delay => now;
       Math.random2(0, VERBS.size() - 1) => int verb_idx;
       verb_idx > -1 && VERBS.size() > 0 => int verbs_ready;
-      _show_verb(verbs_ready ? VERBS[verb_idx] : DEFAULT_VERB);
+
+      verb_change_delay < 750::ms => int passed_extra_crazy_threshold;
+
+      _show_verb(verbs_ready ? VERBS[verb_idx] : DEFAULT_VERB, passed_extra_crazy_threshold);
 
       if (verb_change_delay > 75::ms) .85 *=> verb_change_delay;
       if (clawed.flap_delay > 15::ms) {
         .93 *=> clawed.flap_delay;
-        <<< "echo" >>>;
-        if (flock.birdie_count < 16) flock.add_birdie();
-        <<< "echo2" >>>;
+      }
+      if (passed_extra_crazy_threshold) {
+        if (flock.birdie_count < 64) flock.add_birdie();
+        if (clawed_scale < 2) {
+          clawed.sca(@(clawed_scale,clawed_scale,1.));
+          clawed.pos(RELATIVE + clawed_pos + @((clawed_scale-1.)/2,-(clawed_scale-1.)/2));
+          1.01 *=> clawed_scale;
+        }
       }
     }
   }
@@ -215,7 +227,7 @@ public class ClawedCode {
       
       // reverse progress and clamp from 0 to 1
       1. - (prog $ float / 1000.) => t;
-      1 + (t * t) * (1::ms / verb_delay_factor) => sca;
+      (1 + (t * t * verb_delay_factor / 1::ms)) => sca;
 
       verb_spinner.sca(@(sca,sca));
       verb_line.sca(@(sca,sca));
@@ -224,10 +236,10 @@ public class ClawedCode {
     }
   }
 
-  fun void _show_verb(string verb) {
+  fun void _show_verb(string verb, int crazy) {
     verb => current_verb;
     if (verb_pulse != null) Machine.remove(verb_pulse.id());
-    spork ~ _pulse_verb_once() @=> verb_pulse;
+    if (crazy) spork ~ _pulse_verb_once() @=> verb_pulse;
   }
 
   fun void _init_window() {
@@ -284,12 +296,12 @@ public class ClawedCode {
   fun void _init_clawed() {
     // clawed == the mascot of "clawed code"
     new ClawedAnimated() @=> clawed;
-    new ClawedFlock(0, 600::ms) @=> flock;
+    new ClawedFlock(0, 600::ms, 0.5) @=> flock;
 
     @(
       clawed.get_full_width()/2.,
       -(clawed.get_full_height()/2.) - FONT_SIZE
-    ) => vec2 clawed_pos;
+    ) => clawed_pos;
 
     clawed.sca(@(.7,.7,.7));
     clawed.pos(RELATIVE + clawed_pos);

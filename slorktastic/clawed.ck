@@ -14,10 +14,13 @@ public class Clawed extends GGen {
   .35 => float FOOT_HEIGHT;
 
   [
-    [@(0.,0.,0.), @(WINGTIP_WIDTH,WINGTIP_HEIGHT,0.)],
-    [@(0.,0.,0.), @(WINGTIP_WIDTH+.16,0.,0.)],
-    [@(0.,0.,0.), @(WINGTIP_WIDTH,-WINGTIP_HEIGHT,0.)],
-    [@(0.,0.,0.), @(WINGTIP_WIDTH+.16,0.,0.)]
+    [@(0.,0.,0.), @(WINGTIP_WIDTH,WINGTIP_HEIGHT,0.), @(0.,0.,0.), @(0.,0.,0.)],
+    [@(0.,0.,0.), @(WINGTIP_WIDTH,WINGTIP_HEIGHT,0.), @(0.,0.,.1), @(0.,0.,.2)],
+    [@(0.,0.,0.), @(WINGTIP_WIDTH+.16,0.,0.),@(0.,0.,0.), @(0,0.,0.)],
+    [@(0.,0.,0.), @(WINGTIP_WIDTH,-WINGTIP_HEIGHT,0.),@(0.,0.,0.), @(0,0.,0.)],
+    [@(0.,0.,0.), @(WINGTIP_WIDTH,-WINGTIP_HEIGHT,0.),@(0.,0.,-.1), @(0,0.,-.2)],
+    [@(0.,0.,0.), @(WINGTIP_WIDTH,-WINGTIP_HEIGHT,0.), @(0.,0.,0.), @(0.,0.,.2)],
+    [@(0.,0.,0.), @(WINGTIP_WIDTH+.16,0.,0.),@(0.,0.,0.), @(0,0.,0.)]
   ] @=> vec3 FLAP_PHASES[][];
   FLAP_PHASES.size() => int NUM_FLAP_PHASES;
 
@@ -90,7 +93,7 @@ public class Clawed extends GGen {
 
   fun void _animate_blinking() {
     while (true) {
-      Math.random2(6000, 12000)::ms => now;
+      Math.random2(6000, 12000)::ms * (flap_delay / 100::ms) => now;
       eye_left.sca(@(0.,0.,0.));
       eye_right.sca(@(0.,0.,0.));
       300::ms => now;
@@ -126,8 +129,12 @@ public class Clawed extends GGen {
     FLAP_PHASES[flap_phase] @=> vec3 phase[];
     (right ? right_wing_baseline_pos : left_wing_baseline_pos) => vec3 baseline;
 
+    (right ? 1. : -1.) => float mult;
+
     wing.pos(baseline + phase[0]);
-    wingtip.pos(baseline + @((right ? 1. : -1.) * phase[1].x, -phase[1].y, phase[1].z));
+    wing.rot(mult * phase[2]);
+    wingtip.pos(baseline + @(mult * phase[1].x, -phase[1].y, phase[1].z));
+    wingtip.rot(mult * phase[3]);
   }
 
   fun void _redraw_wings() {
@@ -205,9 +212,11 @@ public class ClawedFlock {
 
   0 => int birdie_count;
   1::second => dur _freq;
+  1 => float _scale;
 
-  fun @construct(int size, dur freq) {
+  fun @construct(int size, dur freq, float scale) {
     freq => _freq;
+    scale => _scale;
     new ClawedAnimated[size] @=> birdies;
     new Perlin2D[size] @=> perlin;
 
@@ -218,7 +227,7 @@ public class ClawedFlock {
 
   fun void add_birdie() {
     birdie_count++ => int i;
-    birdies << new ClawedAnimated(1, @(0.,0.,0.));
+    birdies << new ClawedAnimated(_scale, @(0.,0.,0.));
     birdies[i].animate_blinking();
     birdies[i].animate_flapping();
     perlin << new Perlin2D();
