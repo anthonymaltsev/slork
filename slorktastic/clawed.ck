@@ -1,3 +1,5 @@
+@import {"perlin.ck"}
+
 public class Clawed extends GGen {
   @(.14,.28,1.) => vec3 BODY_COLOR;
   @(.12,.24,1.) => vec3 EYE_OPEN_SCA;
@@ -10,6 +12,19 @@ public class Clawed extends GGen {
   .3 => float WINGTIP_HEIGHT;
   .3 => float FOOT_WIDTH;
   .35 => float FOOT_HEIGHT;
+
+  [
+    [@(0.,0.,0.), @(WINGTIP_WIDTH,WINGTIP_HEIGHT,0.)],
+    [@(0.,0.,0.), @(WINGTIP_WIDTH+.16,0.,0.)],
+    [@(0.,0.,0.), @(WINGTIP_WIDTH,-WINGTIP_HEIGHT,0.)],
+    [@(0.,0.,0.), @(WINGTIP_WIDTH+.16,0.,0.)]
+  ] @=> vec3 FLAP_PHASES[][];
+  FLAP_PHASES.size() => int NUM_FLAP_PHASES;
+
+  0 => int flap_phase;
+  100::ms => dur flap_delay;
+  vec3 left_wing_baseline_pos;
+  vec3 right_wing_baseline_pos;
 
   // body parts
   GPlane body;
@@ -84,11 +99,41 @@ public class Clawed extends GGen {
     }
   }
 
+  fun void _animate_flapping() {
+    while (true) {
+      flap_delay => now;
+      (flap_phase + 1) % NUM_FLAP_PHASES => flap_phase;
+      _redraw_wings();
+    }
+  }
+
   fun void _init_wing(GPlane wing, GPlane wingtip, int right) {
     @((right ? 1 : -1) * (BODY_WIDTH+WING_WIDTH)/2.,-WING_WIDTH/2,0.) => vec3 wing_pos;
 
+    if (right) {
+      wing_pos => right_wing_baseline_pos;
+    } else {
+      wing_pos => left_wing_baseline_pos;
+    }
+
     _init_plane(wing, wing_pos, @(WING_WIDTH,WING_HEIGHT,1.), BODY_COLOR);
-    _init_plane(wingtip, wing_pos - @((right ? -1 : 1) * WINGTIP_WIDTH,WINGTIP_HEIGHT,0.), @(WINGTIP_WIDTH,WINGTIP_HEIGHT,1.), BODY_COLOR);
+    // _init_plane(wingtip, wing_pos - @((right ? -1 : 1) * WINGTIP_WIDTH,WINGTIP_HEIGHT,0.), @(WINGTIP_WIDTH,WINGTIP_HEIGHT,1.), BODY_COLOR);
+    _init_plane(wingtip, wing_pos, BODY_COLOR);
+    _redraw_wings();
+  }
+
+  fun void _position_wing(GPlane wing, GPlane wingtip, int right) {
+    FLAP_PHASES[flap_phase] @=> vec3 phase[];
+    (right ? right_wing_baseline_pos : left_wing_baseline_pos) => vec3 baseline;
+
+    wing.pos(baseline + phase[0]);
+    wingtip.pos(baseline + @((right ? 1. : -1.) * phase[1].x, -phase[1].y, phase[1].z));
+  }
+
+  fun void _redraw_wings() {
+    // reposition both wings according to current flap phase
+    _position_wing(wing_left, wingtip_left, 0);
+    _position_wing(wing_right, wingtip_right, 1);
   }
 
   fun void _init_beak() {
@@ -130,6 +175,7 @@ public class Clawed extends GGen {
 
 public class ClawedAnimated extends Clawed {
   Shred @ blinking;
+  Shred @ flapping;
 
   fun @construct(float scale, vec3 position) {
     Clawed(scale, position);
@@ -139,10 +185,61 @@ public class ClawedAnimated extends Clawed {
   fun @destruct() {
     if (blinking != null) {
       Machine.remove(blinking.id());
+      Machine.remove(flapping.id());
     }
   }
 
   fun void animate() {
     spork ~ _animate_blinking() @=> blinking;
+    spork ~ _animate_flapping() @=> blinking;
+  }
+}
+
+// class FlockBird{
+//     FlyingBird b[];
+//     Perlin3D p[];
+
+//     fun void init(int size, int id, dur freq, float amp, float scale) {
+//         new FlyingBird[size] @=> b;
+//         new Perlin3D[size] @=> p;
+//         for(0 => int i; i < size; i++) {
+//             new FlyingBird(0.5, scale) @=> b[i];
+//             sun.shadowAdd(b[i], true);
+//             // b[i] --> GG.scene();
+
+//             p[i].init(id*1003 + i, freq * (1 + i * 0.07), amp);
+//         }
+//     }
+
+//     fun void pos(vec3 pos_in) {
+//         for (0 => int i; i < b.size(); i++) {
+//             b[i].pos() => vec3 prev;
+//             b[i].pos(pos_in + p[i].generate(now + 10::second));
+//             b[i].pos() => vec3 curr;
+//             b[i].orient_to_vec(curr-prev);
+//         }
+//     }
+
+// }
+
+public class ClawedFlock {
+  ClawedAnimated birdies[];
+  Perlin2D perlin[];
+
+  fun @construct(int size, dur freq) {
+    new ClawedAnimated[size] @=> birdies;
+    new Perlin2D[size] @=> perlin;
+
+    for (0 => int i; i < size; i++) {
+      new ClawedAnimated(1, @(0.,0.,0.)) @=> birdies[i];
+      birdies[i].animate();
+      perlin[i].init(1003 + i, freq * (1 + i * 0.07), 8);
+    }
+  }
+
+  fun void pos(vec3 pos_in) {
+    for (0 => int i; i < birdies.size(); i++) {
+      birdies[i].pos(pos_in + perlin[i].generate(now + 4::second));
+    }
   }
 }

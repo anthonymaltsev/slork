@@ -10,8 +10,10 @@ public class ClawedCode {
   24 => int TERMINAL_H;
   .45 => float CHAR_W;
   1. => float CHAR_H;
-  .2 => float FONT_SIZE;
   16 => int SCALE_FACTOR;
+
+  .2 => float FONT_SIZE;
+  "fonts/DejaVuSansMono.ttf" => string FONT_FACE;
 
   @(FONT_SIZE, -(FONT_SIZE*12.)) => vec2 PROMPT_POS;
   // @(FONT_SIZE, -(FONT_SIZE*15.15)) => vec2 VERB_LINE_POS;
@@ -31,16 +33,21 @@ public class ClawedCode {
 
   // terminal display states
   "" => string prompt_text;
+  "❯" => string prompt_display;
   DEFAULT_VERB => string current_verb;
   0 => int spinner_idx;
   2500::ms => dur verb_change_delay;
+  1 => int num_lines;
 
   GKeyboardReceiver keyboard;
   GText prompt;
   GText verb_spinner;
   GText verb_line;
+  GLines line_top;
+  GLines line_bottom;
   Shred @ verb_pulse;
   ClawedAnimated @ clawed;
+  ClawedFlock @ flock;
 
   fun @construct() {
     _load_verbs();
@@ -49,6 +56,7 @@ public class ClawedCode {
     _init_camera();
     _init_terminal();
     _init_clawed();
+    _update_prompt_display();
   }
 
   fun void run() {
@@ -57,11 +65,12 @@ public class ClawedCode {
     spork ~ _run_text_input();
 
     while (true) {
+      flock.pos(@(0.,0.,0.));
       GG.nextFrame() => now;
       keyboard.listen();
 
-      // terminal.text(TERMINAL_LINE + "\n> " + "text will go here!" + "\n" + TERMINAL_LINE);
-      prompt.text("❯ " + prompt_text + "▌");
+      prompt.text(prompt_display);
+
       verb_spinner.text(SPINNER_SEQUENCE[spinner_idx]);
       verb_line.text("  " + current_verb + "…");
     }
@@ -86,12 +95,51 @@ public class ClawedCode {
           prompt_text.substring(0, prompt_text.length() - 1) => prompt_text;
       } else if (keyboard.wait.ctrl) {
         if (keyboard.wait.val == "u") {
+          // ctrl-u: clear prompt
           "" => prompt_text;
+        } else if (keyboard.wait.val == "j") {
+          // ctrl-j: newline
+          "\n" +=> prompt_text;
         }
       } else {
         keyboard.wait.val +=> prompt_text;
       }
+      _update_prompt_display();
     }
+  }
+
+  fun void _update_prompt_display() {
+    "❯ " => string init;
+
+    0 => int start;
+    0 => int end;
+    int is_first_line;
+    int is_last_line;
+    0 => int iter;
+
+    1 => num_lines;
+    
+    while (start < prompt_text.length() && !is_last_line) {
+      (start + TERMINAL_W - 4) => end;
+      
+      start == 0 => is_first_line;
+      end >= prompt_text.length() => is_last_line;
+
+      if (is_last_line) prompt_text.length() => end;
+
+      (end - start) => int len;
+
+      prompt_text.substring(start, len) => string line;
+      ((is_first_line ? "" : "\n  ") + line) +=> init;
+
+      end => start;
+      if (!is_last_line) num_lines++;
+    }
+
+    init + "|" => prompt_display;
+
+    _redraw_verb();
+    _draw_prompt_container();
   }
 
   fun void _run_change_verb() {
@@ -102,6 +150,7 @@ public class ClawedCode {
       _show_verb(verbs_ready ? VERBS[verb_idx] : DEFAULT_VERB);
 
       if (verb_change_delay > 75::ms) .85 *=> verb_change_delay;
+      if (clawed.flap_delay > 15::ms) .93 *=> clawed.flap_delay;
     }
   }
 
@@ -179,34 +228,40 @@ public class ClawedCode {
     _draw_top_box();
     _draw_prompt_container();
 
-    prompt.font("fonts/DejaVuSansMono.ttf");
+    prompt.font(FONT_FACE);
     prompt.size(FONT_SIZE);
     prompt.color(@(1., 1., 1., 0.9));
     prompt.controlPoints(@(0., 1.));
     prompt.pos(RELATIVE + PROMPT_POS);
     
-    _init_verb_font(verb_spinner, @(0.,-FONT_SIZE/8.));
-    _init_verb_font(verb_line);
+    _redraw_verb();
 
     prompt --> GG.scene();
     verb_spinner --> GG.scene();
     verb_line --> GG.scene();
   }
 
+  fun void _redraw_verb() {
+    _init_verb_font(verb_spinner, @(0.,-FONT_SIZE/8.));
+    _init_verb_font(verb_line);
+  }
+
   fun void _init_verb_font(GText text) {
     _init_verb_font(text, @(0.,0.));
   }
   fun void _init_verb_font(GText text, vec2 offset) {
-    text.font("fonts/DejaVuSansMono.ttf");
+    text.font(FONT_FACE);
     text.size(FONT_SIZE);
     text.color(COLOR_PRIMARY);
     text.controlPoints(@(0.,1.));
-    text.pos(RELATIVE + VERB_LINE_POS + offset);
+    // last part - offse by number of lines
+    text.pos(RELATIVE + VERB_LINE_POS + offset + @(0.,-FONT_SIZE*(num_lines-1.)));
   }
 
   fun void _init_clawed() {
     // clawed == the mascot of "clawed code"
     new ClawedAnimated() @=> clawed;
+    new ClawedFlock(16, 750::ms) @=> flock;
 
     @(
       clawed.get_full_width()/2.,
@@ -215,13 +270,14 @@ public class ClawedCode {
 
     clawed.sca(@(.7,.7,.7));
     clawed.pos(RELATIVE + clawed_pos);
-
     clawed.animate();
+    flock.pos(@(1.,1.,0.));
   }
 
   fun void _draw_prompt_container() {
-    GLines line_top --> GG.scene();
-    GLines line_bottom --> GG.scene();
+    line_top --> GG.scene();
+    line_bottom --> GG.scene();
+    
     line_top.width(.02);
     line_bottom.width(.02);
     line_top.color(@(1.,1.,1.));
@@ -230,7 +286,7 @@ public class ClawedCode {
     RELATIVE.x + PROMPT_POS.x => float left;
     -left => float right;
     (RELATIVE.y + PROMPT_POS.y + PROMPT_CONTAINER_PADDING) => float top;
-    (top - (FONT_SIZE * 1.5) - PROMPT_CONTAINER_PADDING) => float bottom;
+    (top - (FONT_SIZE * num_lines + (FONT_SIZE * 0.5)) - PROMPT_CONTAINER_PADDING) => float bottom;
 
     line_top.positions([@(left,top),@(right,top)]);
     line_bottom.positions([@(left,bottom),@(right,bottom)]);
@@ -265,10 +321,19 @@ public class ClawedCode {
 
     GText heading --> GG.scene();
     heading.text("Clawed Code v4.5.1");
+    heading.font(FONT_FACE);
     heading.size(FONT_SIZE);
     heading.color(@(1., 1., 1., 0.9));
     heading.controlPoints(@(0., 1.));
     heading.pos(RELATIVE + @(FONT_SIZE * 4.75, -(FONT_SIZE * .6), 0.));
+
+    GText info --> GG.scene();
+    info.text("Icarus 4.6 (1M context) · Clawed Max");
+    info.font(FONT_FACE);
+    info.size(FONT_SIZE);
+    info.color(@(1., 1., 1., 0.9));
+    info.controlPoints(@(0., 1.));
+    info.pos(RELATIVE + @(FONT_SIZE * 22, -(FONT_SIZE * 2), 0.));
   }
 }
 
