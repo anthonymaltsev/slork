@@ -53,6 +53,7 @@ public class ClawedCode {
   4000::ms => dur verb_change_delay;
   1 => int num_lines;
   1 => int prompt_editable;
+  string terminal_buzzwords[0];
 
   .7 => float clawed_scale;
   vec2 clawed_pos;
@@ -66,6 +67,7 @@ public class ClawedCode {
   Shred @ verb_pulse;
   ClawedAnimated @ clawed;
   ClawedFlock @ flock;
+  WordCloud @ word_cloud;
 
   ClawedCodePromptEvent wait;
 
@@ -84,6 +86,7 @@ public class ClawedCode {
 
     while (true) {
       flock.pos(@(0.,0.,0.));
+      if (word_cloud != null) word_cloud.pos(@(0.,0.,0.));
       GG.nextFrame() => now;
       keyboard.listen();
 
@@ -113,6 +116,7 @@ public class ClawedCode {
 
   fun string _gather_buzzwords() {
     string buzzwords;
+    int seen_words[0];
 
     prompt_text => string pr; // make copy of prompt to mutate
     string matches[1];
@@ -120,14 +124,22 @@ public class ClawedCode {
     int is_match;
     while (RegEx.match("[A-Za-z]+", pr, matches)) {
       matches[0] => word;
-      RegEx.match("^[A-Z]+$", word) => is_match;
+      !seen_words[word] && RegEx.match("^[A-Z]+$", word) => is_match;
       if (is_match) {
         word +=> buzzwords;
+        // also store in instance array, for use
+        // in rendering (outside of the `ClawedCodePromptEvent`)
+        word => string tok;
+        terminal_buzzwords << tok;
+        1 => seen_words[word];
       }
       RegEx.replace("[A-Za-z]+", "_", pr) => pr;
-      // space delimit when more words remain
       if (is_match && pr.length()) " " +=> buzzwords;
+      // space delimit when more words remain
     }
+
+    for (0 => int i; i < terminal_buzzwords.size(); i++)
+      <<< i, terminal_buzzwords[i] >>>;
 
     return buzzwords;
   }
@@ -168,6 +180,8 @@ public class ClawedCode {
 
     // flap bird
     clawed.animate_flapping();
+
+    new WordCloud(terminal_buzzwords, 100::ms, 1.25) @=> word_cloud;
     
     // verb/spinner init
     _redraw_verb();
@@ -230,7 +244,7 @@ public class ClawedCode {
         if (flock.birdie_count < 64) flock.add_birdie();
         if (clawed_scale < 2) {
           clawed.sca(@(clawed_scale,clawed_scale,1.));
-          clawed.pos(RELATIVE + clawed_pos + @((clawed_scale-1.)/2,-(clawed_scale-1.)/2));
+          clawed.pos(RELATIVE + clawed_pos + @((clawed_scale-.7)/2,-(clawed_scale-.7)/2));
           1.01 *=> clawed_scale;
         }
       }
@@ -301,8 +315,8 @@ public class ClawedCode {
 
     // save camera offsets for positioning relative to the
     // top-left corner of the "terminal" window
-    (-ASPECT_RATIO * GG.camera().viewSize()) / 2. => CAM_LEFT;
-    (GG.camera().viewSize() / 2.) => CAM_TOP;
+    (-ASPECT_RATIO * cam.viewSize()) / 2. => CAM_LEFT;
+    (cam.viewSize() / 2.) => CAM_TOP;
 
     @(CAM_LEFT,CAM_TOP) => RELATIVE;
   }
