@@ -31,6 +31,7 @@ class keyBeats {
     Noise n;
     ADSR key;
     LPF lpf;
+    HPF hpf;
     JCRev r;
 
 
@@ -41,12 +42,12 @@ class keyBeats {
         if (perc_type == 0){
             // noise envelope
             n => key => r => dac;
-            0.1 => n.gain;
-            0.001 => r.mix;
+            0.01 => n.gain;
+            0.08 => r.mix;
             key.set( 5::ms, 4::ms, .3, 5::ms );
         }
         else if (perc_type == 1) {
-            // mid-range tomtom sound
+            // mid-range snare sound
             n => key => lpf => r => dac;
             2000 => lpf.freq;
             0.2 => n.gain;
@@ -54,12 +55,12 @@ class keyBeats {
             key.set( 5::ms, 4::ms, .5, 8::ms );
         }
         else if (perc_type == 2) {
-            // low tomtom sound
-            n => key => lpf => r => dac;
-            500 => lpf.freq;
-            0.3 => n.gain;
-            0.001 => r.mix;
-            key.set( 5::ms, 6::ms, .5, 5::ms );
+            // hat sound
+            n => key => hpf => r => dac;
+            4000 => hpf.freq;
+            0.08 => n.gain;
+            0.01 => r.mix;
+            key.set( 3::ms, 8::ms, .5, 5::ms );
         }
 
         // set audio params
@@ -96,24 +97,43 @@ class keyBeats {
 
 }
 
-
+// instantiate keyBeats
+keyBeats kb(200::ms, [1, 2, 1], 1);
 keyBeats kb1(100::ms, [4, 1, 1, 1, 1], 0);
+keyBeats kb2(300::ms, [1, 1, 1, 1], 2);
 
-fun void addTracks() {
+// spork doesn't work somehow oops
+// fun void addTracks() {
+//     // wait 8 seconds before adding track
+//     8::second => now; 
+//     spork ~ kb1.playBeats();
+//     // wait 8 seconds before adding track
+//     8::second => now;
+//     spork ~ kb2.playBeats();
+// }
+
+// function to play beats for each track
+fun void addTrack1() {
+    // wait 8 seconds before adding track
+    8::second => now; 
+    kb1.playBeats();
+}
+
+fun void addTrack2() {
     // wait 16 seconds before adding track
     16::second => now; 
-    kb1.playBeats();
+    kb2.playBeats();
 }
 
 
 // ======== play drum stuff =========
 
-// instantiate keyBeats
-keyBeats kb(200::ms, [1, 2, 1], 1);
+
 // spork playBeats();
 spork ~ kb.playBeats();
 
-spork ~ addTracks();
+spork ~ addTrack1();
+spork ~ addTrack2();
 
 
 // infinite event loop
@@ -138,6 +158,7 @@ while( true )
             // set state wasKeyDown to true
             1 => kb.wasKeyDown;
             1 => kb1.wasKeyDown;
+            1 => kb2.wasKeyDown;
         }
         else
         {
