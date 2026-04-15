@@ -56,4 +56,4 @@ class Sayer {
 
 Sayer s;
 s.say("ai ai ai ai ai ai ai is big data and we will see where it goes certainly there are interesting directions of development");
-// s.alphabet["abcdefghijklmnopqrstuvwxyz"].playback();
+// s.alphabet["a"].playback();

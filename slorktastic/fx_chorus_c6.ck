@@ -23,8 +23,6 @@
 // set up signal chain
 Chorus chor[6];
 
-0 => int channel;
-
 // connect
 for( int i; i < chor.size(); i++ )
 {
