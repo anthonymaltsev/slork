@@ -199,33 +199,6 @@ public class ClawedAnimated extends Clawed {
   }
 }
 
-// class FlockBird{
-//     FlyingBird b[];
-//     Perlin3D p[];
-
-//     fun void init(int size, int id, dur freq, float amp, float scale) {
-//         new FlyingBird[size] @=> b;
-//         new Perlin3D[size] @=> p;
-//         for(0 => int i; i < size; i++) {
-//             new FlyingBird(0.5, scale) @=> b[i];
-//             sun.shadowAdd(b[i], true);
-//             // b[i] --> GG.scene();
-
-//             p[i].init(id*1003 + i, freq * (1 + i * 0.07), amp);
-//         }
-//     }
-
-//     fun void pos(vec3 pos_in) {
-//         for (0 => int i; i < b.size(); i++) {
-//             b[i].pos() => vec3 prev;
-//             b[i].pos(pos_in + p[i].generate(now + 10::second));
-//             b[i].pos() => vec3 curr;
-//             b[i].orient_to_vec(curr-prev);
-//         }
-//     }
-
-// }
-
 public class ClawedFlock {
   ClawedAnimated birdies[];
   Perlin2D perlin[];
