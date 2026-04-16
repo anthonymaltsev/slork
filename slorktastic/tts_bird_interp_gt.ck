@@ -9,14 +9,42 @@
 @import {"arbsynth.ck", "arbsynth2.ck", "clawed-code.ck", "gt_kb_dupe.ck"}
 
 //-----------------------------------------------------------------------------
+Gain g => dac;
+
+Chorus chor[6];
+
+for( int i; i < chor.size(); i++ )
+{
+    // testing script for stereo
+    (Math.fmod(i, 2)) $ int => int channel;
+    
+    // patch each voice
+    g => chor[i] => dac.chan(channel);
+    
+    // initializing a light chorus effect
+    // (try tweaking these values!)
+    chor[i].baseDelay( 10*i::ms );
+    chor[i].modDepth( .8*i );
+    chor[i].modFreq( 0.1*i );
+    chor[i].mix( .9 );
+}
+
+ClawedCode code();
+spork ~ code.run();
+
+<<< "waiting for prompt to pull buzz words", "" >>>;
+code.wait => now;
+
+//-----------------------------------------------------------------------------
 //        device, deadzone
 GameTrak gt(0, 0.1);
+InterpSayer s("data/sparrow.arr", g);
 
 // -----------------------------------------------------------
 
 class InterpSayer {
     ArbSynth2 alphabet[0];
-    PitShift ps;
+    Gain ps;
     150::ms => dur len;
     0. => float len_mul;
     1. => float mix_param;
@@ -49,7 +77,7 @@ class InterpSayer {
         new ArbSynth2("data/alphabet/y.arr", fname2, ps) @=> alphabet["Y"];
         new ArbSynth2("data/alphabet/z.arr", fname2, ps) @=> alphabet["Z"];
 
-        1. => ps.mix;
+        // 1. => ps.mix;
         ps => outchan;
 
         spork ~ update_param();
@@ -57,10 +85,10 @@ class InterpSayer {
 
     fun void update_param() {
         while (true) {
-            1. - (gt.axis[0]+1.)/2. => mix_param;
+            Math.clampf(1. - (gt.axis[0]+1.)/2., 0., 1.) => mix_param;
             gt.axis[4]>0 ? Math.clampf(gt.axis[4], 0., 0.9): 0. => len_mul;
-            2.5 * gt.axis[3] => ps.shift;
-            <<< mix_param, len_mul, ps.shift(), ps.mix()>>>;
+            // 2.5 * gt.axis[3] => ps.shift;
+            <<< mix_param, len_mul>>>;
             10::ms => now;
         }
     }
@@ -78,32 +106,6 @@ class InterpSayer {
     }
 }
 
-Gain g => dac;
-
-// Chorus chor[6];
-
-// for( int i; i < chor.size(); i++ )
-// {
-//     // testing script for stereo
-//     // (Math.fmod(i, 2)) $ int => channel;
-    
-//     // patch each voice
-//     g => chor[i] => dac.chan(i);
-    
-//     // initializing a light chorus effect
-//     // (try tweaking these values!)
-//     chor[i].baseDelay( 10*i::ms );
-//     chor[i].modDepth( .8*i );
-//     chor[i].modFreq( 0.1*i );
-//     chor[i].mix( .9 );
-// }
-
-InterpSayer s("data/sparrow.arr", g);
-
-ClawedCode code();
-spork ~ code.run();
-
-code.wait => now;
 
 while (true) {
     s.say(code.wait.buzzwords + " ");
