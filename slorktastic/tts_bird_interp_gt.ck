@@ -6,20 +6,28 @@
 // date: spring 2026
 //-----------------------------------------------------------------------------
 
-@import {"arbsynth.ck", "arbsynth2.ck", "clawed-code.ck", "gt_kb_dupe.ck"}
+@import {"arbsynth.ck", "arbsynth2.ck", "clawed-code.ck"}//, "gt_kb_dupe.ck"}
+
+// <<< now >>>;
+// 10::ms => now;
+// <<< now >>>;
+// me.exit();
 
 //-----------------------------------------------------------------------------
-Gain g => dac;
+Gain g;// => dac;
+// pre => NRev rev => dac;
+
+// 0.1 => rev.mix;
 
 Chorus chor[6];
 
 for( int i; i < chor.size(); i++ )
 {
     // testing script for stereo
-    (Math.fmod(i, 2)) $ int => int channel;
+    // (Math.fmod(i, 2)) $ int => int channel;
     
     // patch each voice
-    g => chor[i] => dac.chan(channel);
+    g => chor[i] => dac.chan(i);
     
     // initializing a light chorus effect
     // (try tweaking these values!)
@@ -37,7 +45,99 @@ code.wait => now;
 
 //-----------------------------------------------------------------------------
 //        device, deadzone
-GameTrak gt(0, 0.1);
+// GameTrak gt(0, 0.1);
+
+// z axis deadzone
+0 => float DEADZONE;
+
+// which joystick
+0 => int device;
+// get from command line
+if( me.args() ) me.arg(0) => Std.atoi => device;
+
+// HID objects
+Hid trak;
+HidMsg msg;
+
+// open joystick 0, exit on fail
+if( !trak.openJoystick( device ) ) me.exit();
+
+// print
+<<< "joystick '" + trak.name() + "' ready", "" >>>;
+
+// data structure for gametrak
+class GameTrak
+{
+    // timestamps
+    time lastTime;
+    time currTime;
+    
+    // previous axis data
+    float lastAxis[6];
+    // current axis data
+    float axis[6];
+}
+
+// gametrack
+GameTrak gt;
+
+// spork control
+spork ~ gametrak();
+
+// gametrack handling
+fun void gametrak()
+{
+    while( true )
+    {
+        // wait on HidIn as event
+        trak => now;
+        
+        // messages received
+        while( trak.recv( msg ) )
+        {
+            // joystick axis motion
+            if( msg.isAxisMotion() )
+            {            
+                // check which
+                if( msg.which >= 0 && msg.which < 6 )
+                {
+                    // check if fresh
+                    if( now > gt.currTime )
+                    {
+                        // time stamp
+                        gt.currTime => gt.lastTime;
+                        // set
+                        now => gt.currTime;
+                    }
+                    // save last
+                    gt.axis[msg.which] => gt.lastAxis[msg.which];
+                    // the z axes map to [0,1], others map to [-1,1]
+                    if( msg.which != 2 && msg.which != 5 )
+                    { msg.axisPosition => gt.axis[msg.which]; }
+                    else
+                    {
+                        1 - ((msg.axisPosition + 1) / 2) - DEADZONE => gt.axis[msg.which];
+                        if( gt.axis[msg.which] < 0 ) 0 => gt.axis[msg.which];
+                    }
+                }
+            }
+            
+            // joystick button down
+            else if( msg.isButtonDown() )
+            {
+                <<< "button", msg.which, "down" >>>;
+            }
+            
+            // joystick button up
+            else if( msg.isButtonUp() )
+            {
+                <<< "button", msg.which, "up" >>>;
+            }
+        }
+    }
+}
+
+
 InterpSayer s("data/sparrow.arr", g);
 
 // -----------------------------------------------------------
