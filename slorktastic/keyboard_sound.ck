@@ -32,6 +32,7 @@ class keyBeats {
     ADSR key;
     LPF lpf;
     HPF hpf;
+    BRF brf;
     JCRev r;
 
 
@@ -42,8 +43,8 @@ class keyBeats {
         if (perc_type == 0){
             // noise envelope
             n => key => r => dac;
-            0.01 => n.gain;
-            0.08 => r.mix;
+            0.04 => n.gain;
+            0.01 => r.mix;
             key.set( 5::ms, 4::ms, .3, 5::ms );
         }
         else if (perc_type == 1) {
@@ -55,12 +56,28 @@ class keyBeats {
             key.set( 5::ms, 4::ms, .5, 8::ms );
         }
         else if (perc_type == 2) {
-            // hat sound
-            n => key => hpf => r => dac;
-            4000 => hpf.freq;
-            0.08 => n.gain;
+            // bass tomtom sound
+            n => key => lpf => r => dac;
+            400 => lpf.freq;
+            0.3 => n.gain;
+            0.05 => r.mix;
+            key.set( 3::ms, 20::ms, .5, 10::ms );
+        } else if (perc_type == 3) {
+            // band passed sound
+            n => key => brf => lpf => r => dac;
+            2000 => brf.freq;
+            1.5 => brf.Q;
+            4000 => lpf.freq;
+            0.1 => n.gain;
             0.01 => r.mix;
-            key.set( 3::ms, 8::ms, .5, 5::ms );
+            key.set( 3::ms, 5::ms, .5, 10::ms );
+        } else if (perc_type == 4) {
+            // crash_cymbal-like sound
+            n => key => hpf => r => dac;
+            6000 => hpf.freq;
+            0.05 => n.gain;
+            0.05 => r.mix;
+            key.set( 1::ms, 1::ms, .6, 150::ms );
         }
 
         // set audio params
@@ -86,8 +103,10 @@ class keyBeats {
                     key.releaseTime() => now;
                     0 => wasKeyDown; // reset state
                 }
+
                 // print beat sanity check
-                <<< "beat:", beatPattern[i] >>>;
+                // <<< "beat:", beatPattern[i] >>>;
+
                 // wait until duration of next beat
                 (beatPattern[i] * beatDur) => now;
             }
@@ -98,31 +117,36 @@ class keyBeats {
 }
 
 // instantiate keyBeats
-keyBeats kb(200::ms, [1, 2, 1], 1);
-keyBeats kb1(100::ms, [4, 1, 1, 1, 1], 0);
-keyBeats kb2(300::ms, [1, 1, 1, 1], 2);
+keyBeats kb(200::ms, [1, 2, 1], 1); // basic snare 
+keyBeats kb1(100::ms, [4, 1, 1, 1, 1], 0); // hats
+keyBeats kb2(200::ms, [5, 3], 2); // kick drum
+keyBeats kb3(100::ms, [3, 1, 2, 2], 3); // high snare
+keyBeats kb4(400::ms, [5, 3], 4); // crash
 
-// spork doesn't work somehow oops
-// fun void addTracks() {
-//     // wait 8 seconds before adding track
-//     8::second => now; 
-//     spork ~ kb1.playBeats();
-//     // wait 8 seconds before adding track
-//     8::second => now;
-//     spork ~ kb2.playBeats();
-// }
 
 // function to play beats for each track
 fun void addTrack1() {
-    // wait 8 seconds before adding track
-    8::second => now; 
+    // wait 32 seconds before adding track
+    32::second => now; 
     kb1.playBeats();
 }
 
 fun void addTrack2() {
-    // wait 16 seconds before adding track
-    16::second => now; 
+    // wait 48 seconds before adding track
+    48::second => now; 
     kb2.playBeats();
+}
+
+fun void addTrack3() {
+    // wait 64 seconds before adding track
+    64::second => now; 
+    kb3.playBeats();
+}
+
+fun void addTrack4() {
+    // wait 80 seconds before adding track
+    80::second => now; 
+    kb4.playBeats();
 }
 
 
@@ -134,6 +158,8 @@ spork ~ kb.playBeats();
 
 spork ~ addTrack1();
 spork ~ addTrack2();
+spork ~ addTrack3();
+spork ~ addTrack4();
 
 
 // infinite event loop
@@ -159,6 +185,8 @@ while( true )
             1 => kb.wasKeyDown;
             1 => kb1.wasKeyDown;
             1 => kb2.wasKeyDown;
+            1 => kb3.wasKeyDown;
+            1 => kb4.wasKeyDown;
         }
         else
         {
