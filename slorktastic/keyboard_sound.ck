@@ -6,6 +6,11 @@
 //
 // author: Siqi Chen
 //-----------------------------------------------------------------------------
+Machine.timeOfDay2() => vec2 start_time;
+start_time.y => float start_micros;
+
+(1000::ms - (start_micros/1000.)::ms) => now;
+
 Hid hi;
 HidMsg msg;
 

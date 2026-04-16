@@ -12,6 +12,10 @@
 // 10::ms => now;
 // <<< now >>>;
 // me.exit();
+Machine.timeOfDay2() => vec2 start_time;
+start_time.y => float start_micros;
+
+(1000::ms - (start_micros/1000.)::ms) => now;
 
 //-----------------------------------------------------------------------------
 Gain g;// => dac;
