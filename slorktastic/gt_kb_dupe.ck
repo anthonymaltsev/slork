@@ -7,7 +7,7 @@
 // author: Anthony Maltsev (amaltsev@stanford.edu), Ge Wang (ge@ccrma.stanford.edu)
 // date: summer 2014, spring 2026
 //-----------------------------------------------------------------------------
-
+<<<"start of file","">>>;
 public class GameTrak
 {
     0 => int keyboard_mode; // bool
@@ -35,14 +35,16 @@ public class GameTrak
     }
 
 
-    Hid trak;
-    HidMsg trak_msg;
     fun void __init(int device_in) {
+        <<<"start init","">>>;
+        Hid trak;
+        <<<"trak made","">>>;
         device_in => device;
         // open joystick 0, default to kb mode if fail
         if( !trak.openJoystick( device ) ) 1 => keyboard_mode;
 
         if (keyboard_mode) {
+            <<< "launching kb mode","">>>;
             spork ~ keyboard_sim();
             <<< "Gametrack (keyboard simulation) launched", "" >>>;
         }
@@ -53,7 +55,8 @@ public class GameTrak
     }
 
     fun void gametrak() {
-
+        Hid trak;
+        HidMsg trak_msg;
         while( true )
         {
             trak => now;
@@ -99,7 +102,7 @@ public class GameTrak
 
 
     fun void keyboard_sim() {
-        
+        <<< "enter keyboard_sim" >>>;
         int key_held[256]; // ascii index map to bool held
         spork ~ kb_listener(key_held);
 
@@ -110,7 +113,13 @@ public class GameTrak
         
         while(true) {
             left_update(key_held) +=> left_pos;
+            Math.clampf(left_pos.x, -1., 1.) => left_pos.x;
+            Math.clampf(left_pos.y, -1., 1.) => left_pos.y;
+            Math.clampf(left_pos.z, 0., 1.) => left_pos.z;
             right_update(key_held) +=> right_pos;
+            Math.clampf(right_pos.x, -1., 1.) => right_pos.x;
+            Math.clampf(right_pos.y, -1., 1.) => right_pos.y;
+            Math.clampf(right_pos.z, 0., 1.) => right_pos.z;
             // <<< left_pos, right_pos >>>;
             
             xyz_to_gt_pos(left_pos) => gt_left;
@@ -120,6 +129,12 @@ public class GameTrak
             for (0 => int i; i < 6; i++) {
                 axis[i] => lastAxis[i];
             }
+            Math.clampf(gt_left.x, -1., 1.) => axis[0];
+            Math.clampf(gt_left.y, -1., 1.) => axis[1];
+            Math.clampf(gt_left.z, 0., 1.) => axis[2];
+            Math.clampf(gt_right.x, -1., 1.) => axis[3];
+            Math.clampf(gt_right.y, -1., 1.) => axis[4];
+            Math.clampf(gt_right.z, 0., 1.) => axis[5];
             currTime => lastTime;
             now => currTime;
             1::ms => now;
@@ -179,10 +194,11 @@ public class GameTrak
     }
 
     fun vec3 xyz_to_gt_pos(vec3 pos) {
+        0.0001 => float eps;
         Math.clampf(Math.sqrt(Math.pow(pos.x, 2) + Math.pow(pos.y, 2) + Math.pow(pos.z, 2)), 0., 1.) => float mag;
-        Math.asin(pos.x/mag) / (Math.PI / 2.) => float lr;
-        Math.asin(pos.y/mag) / (Math.PI / 2.) => float fb;
-        @(1./t_scale*lr, 1./t_scale*fb, 1./t_scale*mag) => vec3 ret;
+        Math.asin(pos.x/(mag+eps)) / (Math.PI / 2.) => float lr;
+        Math.asin(pos.y/(mag+eps)) / (Math.PI / 2.) => float fb;
+        @(1./t_scale*lr, 1./t_scale*fb, 1./t_scale*(mag)) => vec3 ret;
         return ret;
     }
 }
@@ -193,8 +209,8 @@ GameTrak gt;
 // main loop
 while( true )
 {
-    // <<< "axes:", gt.axis[0],gt.axis[1],gt.axis[2],
-    //              gt.axis[3],gt.axis[4],gt.axis[5] >>>;
+    <<< "axes:", gt.axis[0],gt.axis[1],gt.axis[2],
+                 gt.axis[3],gt.axis[4],gt.axis[5] >>>;
 
     100::ms => now;
 }
