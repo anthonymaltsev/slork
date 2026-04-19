@@ -213,6 +213,8 @@ public class ClawedFlock {
   0 => int birdie_count;
   1::second => dur _freq;
   1 => float _scale;
+  0 => int wait_count;
+  10 => int MAX_WAIT;
 
   fun @construct(int size, dur freq, float scale) {
     freq => _freq;
@@ -227,7 +229,7 @@ public class ClawedFlock {
 
   fun void add_birdie() {
     birdie_count++ => int i;
-    birdies << new ClawedAnimated(_scale, @(Math.random2f(-2,2),Math.random2f(-2,2),0.));
+    birdies << new ClawedAnimated(Math.random2f(.5,1.1) * _scale, @(Math.random2f(-2,2),Math.random2f(-2,2),0.));
     birdies[i].animate_blinking();
     birdies[i].animate_flapping();
     perlin << new Perlin2D();
@@ -235,8 +237,11 @@ public class ClawedFlock {
   }
 
   fun void pos(vec3 pos_in) {
-    for (0 => int i; i < birdies.size(); i++) {
-      birdies[i].pos(pos_in + perlin[i].generate(now + 8::second));
+    if (++wait_count >= MAX_WAIT) {
+      for (0 => int i; i < birdies.size(); i++) {
+        birdies[i].pos(pos_in + perlin[i].generate(now + 8::second));
+      }
+      0 => wait_count;
     }
   }
 }

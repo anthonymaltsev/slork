@@ -50,7 +50,7 @@ public class ClawedCode {
   "❯" => string prompt_display;
   DEFAULT_VERB => string current_verb;
   0 => int spinner_idx;
-  4000::ms => dur verb_change_delay;
+  1000::ms => dur verb_change_delay;
   1 => int num_lines;
   1 => int prompt_editable;
   string terminal_buzzwords[0];
@@ -227,6 +227,11 @@ public class ClawedCode {
   }
 
   fun void _run_change_verb() {
+    GG.camera().viewSize() => float view_size;
+    clawed_scale => float initial_clawed_scale;
+    RELATIVE + clawed_pos + @(0.,0.,8.) => vec3 start_point;
+    @(0.,0.,8.) => vec3 end_point;
+
     while (true) {
       verb_change_delay => now;
       Math.random2(0, VERBS.size() - 1) => int verb_idx;
@@ -242,10 +247,16 @@ public class ClawedCode {
       }
       if (passed_extra_crazy_threshold) {
         if (flock.birdie_count < 64) flock.add_birdie();
-        if (clawed_scale < 2) {
+        if (clawed_scale < view_size) {
           clawed.sca(@(clawed_scale,clawed_scale,1.));
-          clawed.pos(RELATIVE + clawed_pos + @((clawed_scale-.7)/2,-(clawed_scale-.7)/2));
-          1.01 *=> clawed_scale;
+          
+          // linear interpolation between start & end points
+          // 2x so it centers before it finishes scaling
+          Math.min(2 * (clawed_scale - initial_clawed_scale) / view_size, 1) => float t;
+          (1. - t) * start_point + t * end_point => vec3 lerp;
+
+          clawed.pos(lerp);
+          1.007 *=> clawed_scale;
         }
       }
     }
@@ -353,8 +364,8 @@ public class ClawedCode {
 
   fun void _init_clawed() {
     // clawed == the mascot of "clawed code"
-    new ClawedAnimated() @=> clawed;
     new ClawedFlock(0, 600::ms, 0.5) @=> flock;
+    new ClawedAnimated() @=> clawed;
 
     @(
       clawed.get_full_width()/2.,
@@ -362,7 +373,7 @@ public class ClawedCode {
     ) => clawed_pos;
 
     clawed.sca(@(.7,.7,.7));
-    clawed.pos(RELATIVE + clawed_pos);
+    clawed.pos(RELATIVE + clawed_pos + @(0.,0.,8.));
     clawed.animate_blinking();
     flock.pos(@(0.,0.,0.));
   }
