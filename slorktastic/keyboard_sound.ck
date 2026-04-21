@@ -2,28 +2,14 @@
 // name: keyboard_sound.ck
 // desc: models keyboard typing sounds when receiving keyboard inputs
 //
-// note: 
+// note: Sets of keyboard percussion sounds that can be set to a predetermined beat pattern. 
 //
 // author: Siqi Chen
 //-----------------------------------------------------------------------------
-Machine.timeOfDay2() => vec2 start_time;
-start_time.y => float start_micros;
 
-(1000::ms - (start_micros/1000.)::ms) => now;
 
-Hid hi;
-HidMsg msg;
 
-// which keyboard
-0 => int device;
-// get from command line
-if( me.args() ) me.arg(0) => Std.atoi => device;
-
-// open keyboard (get device number from command line)
-if( !hi.openKeyboard( device ) ) me.exit();
-<<< "keyboard '" + hi.name() + "' ready", "" >>>;
-
-class keyBeats {
+public class keyBeats {
     dur beatDur;
     int beatPattern[];
     // float nGain;
@@ -85,10 +71,6 @@ class keyBeats {
             key.set( 1::ms, 1::ms, .6, 150::ms );
         }
 
-        // set audio params
-        // 0.1 => n.gain;
-        // 0.001 => r.mix;
-        // key.set( 5::ms, 4::ms, .5, 5::ms );
 
     }
 
@@ -120,94 +102,3 @@ class keyBeats {
     }
 
 }
-
-// instantiate keyBeats
-keyBeats kb(200::ms, [1, 2, 1], 1); // basic snare 
-keyBeats kb1(100::ms, [4, 1, 1, 1, 1], 0); // hats
-keyBeats kb2(200::ms, [5, 3], 2); // kick drum
-keyBeats kb3(100::ms, [3, 1, 2, 2], 3); // high snare
-keyBeats kb4(400::ms, [5, 3], 4); // crash
-
-
-// function to play beats for each track
-fun void addTrack1() {
-    // wait 32 seconds before adding track
-    32::second => now; 
-    kb1.playBeats();
-}
-
-fun void addTrack2() {
-    // wait 48 seconds before adding track
-    48::second => now; 
-    kb2.playBeats();
-}
-
-fun void addTrack3() {
-    // wait 64 seconds before adding track
-    64::second => now; 
-    kb3.playBeats();
-}
-
-fun void addTrack4() {
-    // wait 80 seconds before adding track
-    80::second => now; 
-    kb4.playBeats();
-}
-
-
-// ======== play drum stuff =========
-
-
-// spork playBeats();
-spork ~ kb.playBeats();
-
-spork ~ addTrack1();
-spork ~ addTrack2();
-spork ~ addTrack3();
-spork ~ addTrack4();
-
-
-// infinite event loop
-while( true )
-{
-    // wait on event
-    hi => now;
-
-    // get one or more messages
-    while( hi.recv( msg ) )
-    {
-        // check for action type
-        if( msg.isButtonDown() )
-        {
-            <<< "down:", msg.which, "(code)", msg.key, "(usb key)", msg.ascii, "(ascii)" >>>;
-            // // trigger ADSR
-            // key.keyOn();
-            // 20::ms => now;
-            // key.keyOff();
-            // key.releaseTime() => now;
-
-            // set state wasKeyDown to true
-            1 => kb.wasKeyDown;
-            1 => kb1.wasKeyDown;
-            1 => kb2.wasKeyDown;
-            1 => kb3.wasKeyDown;
-            1 => kb4.wasKeyDown;
-        }
-        else
-        {
-            //<<< "up:", msg.which, "(code)", msg.key, "(usb key)", msg.ascii, "(ascii)" >>>;
-        }
-
-        if (msg.isButtonDown() && 64 < msg.ascii && msg.ascii < 91) {
-            // print "letter"
-            <<< "letter:", msg.ascii >>>;
-        }
-        
-        
-    }
-    
-}
-
-
-
-
