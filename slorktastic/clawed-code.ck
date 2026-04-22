@@ -1,4 +1,4 @@
-@import {"clawed.ck", "gkr.ck"}
+@import {"clawed.ck", "gkr.ck", "state.ck"}
 
 public class ClawedCodePromptEvent extends Event {
   string prompt;
@@ -15,7 +15,7 @@ public class ClawedCodePromptEvent extends Event {
 }
 
 public class ClawedCode extends GGen {
-  "Flibbertigibbeting" => string DEFAULT_VERB;
+  "" => string DEFAULT_VERB;
   ["·","✢","*","✶","✻","✽"] @=> string SPINNER_SEQUENCE[];
   @(0.005, 0.005, 0.007) => vec3 COLOR_BG;
   @(.24,.48,1.) => vec3 COLOR_PRIMARY;
@@ -38,7 +38,6 @@ public class ClawedCode extends GGen {
   float TOP_BOX_INSET;
   float PROMPT_CONTAINER_PADDING;
 
-
   float WINDOW_W;
   float WINDOW_H;
   float TITLE_BAR_H;
@@ -46,7 +45,6 @@ public class ClawedCode extends GGen {
 
   float CAM_LEFT;
   float CAM_TOP;
-  string VERBS[0];
   vec2 RELATIVE;
 
   // terminal display states
@@ -58,6 +56,11 @@ public class ClawedCode extends GGen {
   1 => int num_lines;
   1 => int prompt_editable;
   string terminal_buzzwords[0];
+
+  // draw prompt = the prompt we "draw" from
+  DesktopState desktop_state;
+  0 => int drawn_length;
+  0 => int verb_idx;
 
   .7 => float clawed_scale;
   vec3 clawed_pos;
@@ -95,9 +98,10 @@ public class ClawedCode extends GGen {
   int _chrome_attached;
 
   ClawedCodePromptEvent wait;
+  Event state_completed;
 
   fun @construct() {
-    _load_verbs();
+    // _load_verbs();
   }
 
   fun void setSize(float w, float h) {
@@ -145,21 +149,47 @@ public class ClawedCode extends GGen {
     verb_line.text("  " + current_verb + "…");
   }
 
-  fun void _load_verbs() {
-    FileIO fin;
-    fin.open("verbs.txt", FileIO.READ);
+  fun void set_desktop_state(DesktopState st) {
+    0 => drawn_length;
+    0 => verb_idx;
+    1 => prompt_editable;
 
-    if (fin.good()) {
-      while (fin.more()) VERBS << fin.readLine();
-    }
+    st @=> desktop_state;
 
-    <<< "loaded", VERBS.size(), "verbs" >>>;
+    _update_prompt_display();
   }
 
-  fun void _trigger_prompt_event() {
+  fun void _handle_prompt_event() {
     prompt_text => wait.prompt;
     _gather_buzzwords() => wait.buzzwords;
-    wait.signal();
+    wait.broadcast();
+
+    // hide cursor
+    0 => prompt_editable;
+    _update_prompt_display();
+
+    // verb/spinner init
+    _redraw_verb();
+    _run_verb();
+  }
+
+  fun void _run_verb() {
+    // initialize verb_change_delay ONCE to the value from the current
+    // desktop state - it can (and in the "crazy" case, will) be mutated
+    desktop_state.verb_duration => verb_change_delay;
+    0 => verb_idx;
+
+    spork ~ _run_spinner() @=> Shred spinner_shred;
+    spork ~ _run_change_verb() @=> Shred verb_shred;
+
+    // wait to kill & remove until cook duration passes
+    desktop_state.cook_duration => now;
+    Machine.remove(spinner_shred.id());
+    Machine.remove(verb_shred.id());
+    verb_line --< this;
+    verb_spinner --< this;
+
+    state_completed.broadcast();
   }
 
   fun string _gather_buzzwords() {
@@ -199,44 +229,33 @@ public class ClawedCode extends GGen {
       
       // "enter" key starts the whole shabang
       if (keyboard.wait.enter) {
-        _trigger_prompt_event();
-        _get_crazy_with_it();
+        _handle_prompt_event();
+        continue;
+        // _get_crazy_with_it();
       }
 
       if (keyboard.wait.backspace) {
-        if (prompt_text.length() > 0)
-          prompt_text.substring(0, prompt_text.length() - 1) => prompt_text;
+        // if (prompt_text.length() > 0)
+        //   prompt_text.substring(0, prompt_text.length() - 1) => prompt_text;
+        if (drawn_length > 0) drawn_length--;
       } else if (keyboard.wait.ctrl) {
         if (keyboard.wait.val == "u") {
           // ctrl-u: clear prompt
-          "" => prompt_text;
-        } else if (keyboard.wait.val == "j") {
-          // ctrl-j: newline
-          "\n" +=> prompt_text;
+          // "" => prompt_text;
+          0 => drawn_length;
         }
       } else {
-        keyboard.wait.val +=> prompt_text;
+        // keyboard.wait.val +=> prompt_text;
+        if (drawn_length < desktop_state.prompt.length()) drawn_length++;
       }
       _update_prompt_display();
     }
   }
 
   fun void _get_crazy_with_it() {
-    // hide cursor
-    0 => prompt_editable;
-    _update_prompt_display();
-
     // flap bird
     clawed.animate_flapping();
-
     new WordCloud(terminal_buzzwords, 100::ms, 1.25) @=> word_cloud;
-    
-    // verb/spinner init
-    _redraw_verb();
-    verb_line --> this;
-    verb_spinner --> this;
-    spork ~ _run_spinner();
-    spork ~ _run_change_verb();
   }
 
 
@@ -256,6 +275,8 @@ public class ClawedCode extends GGen {
     // widths, but not with perfect consistency as to where the
     // line break is. it's more or less the golden ratio hah
     (WINDOW_W/FONT_SIZE * 1.618) $ int => int terminal_width_chars;
+
+    desktop_state.prompt.substring(0, drawn_length) => prompt_text;
     
     while (start < prompt_text.length() && !is_last_line) {
       (start + terminal_width_chars - 4) => end;
@@ -276,7 +297,7 @@ public class ClawedCode extends GGen {
 
     init + (prompt_editable ? "|" : "") => prompt_display;
 
-    _redraw_verb();
+    // _redraw_verb();
     _draw_prompt_container();
   }
 
@@ -286,15 +307,24 @@ public class ClawedCode extends GGen {
     RELATIVE + clawed_pos => vec3 start_point;
     @(0.,0.,8.) => vec3 end_point;
 
+    _show_verb(desktop_state.cooking_verbs[verb_idx], 0);
+
     while (true) {
       verb_change_delay => now;
-      Math.random2(0, VERBS.size() - 1) => int verb_idx;
-      verb_idx > -1 && VERBS.size() > 0 => int verbs_ready;
+      (verb_idx + 1) % desktop_state.cooking_verbs.size() => verb_idx;
+      desktop_state.cooking_verbs.size() > 0 => int verbs_ready;
 
-      verb_change_delay < 750::ms => int passed_extra_crazy_threshold;
+      (desktop_state.gets_crazy && verb_change_delay < 750::ms) => int passed_extra_crazy_threshold;
 
-      _show_verb(verbs_ready ? VERBS[verb_idx] : DEFAULT_VERB, passed_extra_crazy_threshold);
+      _show_verb(verbs_ready ? desktop_state.cooking_verbs[verb_idx] : DEFAULT_VERB, passed_extra_crazy_threshold);
 
+      // what happens below here is exclusively for crazy mode
+      // but to me crazy mode is normal mode. gotta stop writing
+      // incessant comments and get to bed. soz
+      if (!desktop_state.gets_crazy) continue;
+
+      // all this below the sentry above is for CRAZY MODE only,
+      // aka when s#!t gets crazy...
       if (verb_change_delay > 75::ms) .85 *=> verb_change_delay;
       if (clawed.flap_delay > 15::ms) {
         .93 *=> clawed.flap_delay;
@@ -437,6 +467,8 @@ public class ClawedCode extends GGen {
   fun void _redraw_verb() {
     _init_verb_font(verb_spinner, @(0.,-FONT_SIZE/8.));
     _init_verb_font(verb_line);
+    verb_line --> this;
+    verb_spinner --> this;
   }
 
   fun void _init_verb_font(GText text) {
@@ -459,10 +491,19 @@ public class ClawedCode extends GGen {
     FONT_SIZE*3.5 => clawed_scale;
     clawed.sca(@(clawed_scale,clawed_scale,1.));
 
-    // park clawed inside the top box, below the title bar
+    // top box bounds (must match _draw_top_box)
+    TITLE_BAR_H + TOP_BOX_INSET => float box_top_offset;
+    FONT_SIZE * 8.2 => float box_h;
+
+
+    // park clawed inside the top box, vertically centered
     @(
       clawed.get_full_width()/2. + TOP_BOX_INSET + FONT_SIZE,
-      -clawed.get_full_height()/2. - TITLE_BAR_H - FONT_SIZE * 0.5,
+      // bird body-origin sits above its visual center because feet extend
+      // below the body but nothing balances above, shift down by half foot
+      // TODO: move this sort of calculation into the `Clawed` class itself
+      // this is kinda a jerry rig ngl
+      -(box_top_offset+box_h/2.) + (clawed.FOOT_HEIGHT*clawed_scale)/2.,
       8.
     ) => clawed_pos;
 
