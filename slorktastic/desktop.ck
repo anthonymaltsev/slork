@@ -42,7 +42,12 @@ public class Desktop {
     ),
     new DesktopState(
       "This is not enough. It needs more AI and ML. Maybe use a VLM to interpret user sentiment. Actually that's perfect. Make it a startup. Need guaranteed $1M MRR.",
-      60000::ms,
+      // TODO: make a timeout-free version of DesktopState that will keep running.
+      // TODO: decouple the end sequence from ClawedCode and make it driveable by
+      // DesktopState - the state machine really ought to control that rather than
+      // ClawedCode deciding that on vibes. When I am better rested I hope to take
+      // another pass
+      5::minute,
       2000::ms,
       true,
       ["Worrying","Breaking","Hurting","Screaming","Withering","Rotting","Dying","Burning"],

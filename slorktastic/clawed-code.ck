@@ -62,6 +62,7 @@ public class ClawedCode extends GGen {
   0 => int drawn_length;
   0 => int verb_idx;
   0 => int got_crazy;
+  0 => int begun_end_sequence;
 
   .7 => float clawed_scale;
   vec3 clawed_pos;
@@ -206,7 +207,8 @@ public class ClawedCode extends GGen {
     int is_match;
     while (RegEx.match("[A-Za-z]+", pr, matches)) {
       matches[0] => word;
-      !seen_words[word] && RegEx.match("^[A-Z]+$", word) => is_match;
+      // "I" should be manually ignored (for obvious reasons)
+      word != "I" && !seen_words[word] && RegEx.match("^[A-Z]+$", word) => is_match;
       if (is_match) {
         word +=> buzzwords;
         // also store in instance array, for use
@@ -258,9 +260,16 @@ public class ClawedCode extends GGen {
   fun void _get_crazy_with_it() {
     // flap bird
     clawed.animate_flapping();
-    new WordCloud(terminal_buzzwords, 100::ms, 1.25) @=> word_cloud;
+    new WordCloud(terminal_buzzwords, 100::ms, 1.25, 4) @=> word_cloud;
+    spork ~ _run_add_birdies();
   }
 
+  fun void _run_add_birdies() {
+    while (flock.birdie_count < 128) {
+      flock.add_birdie();
+      700::ms => now;
+    }
+  }
 
   fun void _update_prompt_display() {
     "❯ " => string init;
@@ -304,6 +313,35 @@ public class ClawedCode extends GGen {
     _draw_prompt_container();
   }
 
+  fun void _begin_end_sequence() {
+    true => begun_end_sequence;
+    spork ~ _run_end_sequence();
+  }
+
+  fun void _run_end_sequence() {
+    // TODO: consider making this more than a black screen
+    // (the idea being that the screen goes black, then the bird
+    // comes out in a suit)
+    // not sure that positioning a giant black GPlane over the scene
+    // is the most efficient way, but fttb it's quick'n'dirty
+    2::second => now;
+    GPlane cover;
+    FlatMaterial mat;
+    mat.color(COLOR_BG);
+    cover.material(mat);
+    // just in front of the scene but behind camera (which is z=11)
+    cover.posWorld(@(0.,0.,10.9));
+
+    // get width in terms of GG.viewSize() using frame aspect ratio
+    GG.camera().viewSize() => float scale_h;
+    scale_h * (GG.frameWidth() / GG.frameHeight()) => float scale_w;
+
+    cover.sca(@(scale_w,scale_h,1.));
+    // WARNING to anthony/siqi/any other godforsaken soul perusing this code:
+    // I am explicitly adding this cover to the global scene
+    cover --> GG.scene();
+  }
+
   fun void _run_change_verb() {
     // WINDOW_H => float max_clawed_scale;
     // allow clawed to grow to the full chugl height
@@ -343,8 +381,9 @@ public class ClawedCode extends GGen {
           _get_crazy_with_it();
           1 => got_crazy;
         }
-        if (flock.birdie_count < 128) flock.add_birdie();
-        if (clawed_scale < max_clawed_scale) {
+        if (clawed_scale >= max_clawed_scale) {
+          if (!begun_end_sequence) _begin_end_sequence();
+        } else {
           clawed.sca(@(clawed_scale,clawed_scale,1.));
           
           // linear interpolation between start & end points

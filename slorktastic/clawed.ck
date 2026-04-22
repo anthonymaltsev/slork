@@ -257,16 +257,20 @@ public class WordCloud {
   0 => int word_count;
   1::second => dur _freq;
   1 => float _scale;
+  0 => int wait_count;
+  16 => int MAX_WAIT;
 
-  fun @construct(string words[], dur freq, float scale) {
+  fun @construct(string words[], dur freq, float scale, int reps) {
     words.size() => int size;
     freq => _freq;
     scale => _scale;
     new GText[size] @=> word_objs;
     new Perlin2D[size] @=> perlin;
 
-    for (0 => int i; i < size; i++) {
-      add_word(words[i]);
+    for (0 => int i; i < reps; i++) {
+      for (0 => int j; j < size; j++) {
+        add_word(words[j]);
+      }
     }
   }
 
@@ -278,15 +282,18 @@ public class WordCloud {
   }
 
   fun void pos(vec3 pos_in) {
-    for (0 => int i; i < word_objs.size(); i++) {
-      word_objs[i].pos(pos_in + GG.camera().viewSize() * perlin[i].generate(now + (i * 8::second)));
+    if (++wait_count >= MAX_WAIT){
+      for (0 => int i; i < word_objs.size(); i++) {
+        word_objs[i].pos(pos_in + GG.camera().viewSize() * perlin[i].generate(now + (i * 8::second)));
+      }
+      0 => wait_count;
     }
   }
 
   fun GText create_word_text(string word, vec3 pos) {
     GText txt --> GG.scene();
     txt.font("fonts/DejaVuSansMono.ttf");
-    txt.size(_scale * .4);
+    txt.size(_scale * .4 * Math.random2f(.6,1.1));
     txt.color(@(1., 1., 1., 0.9));
     txt.controlPoints(@(0., 1.));
     txt.text(word);
