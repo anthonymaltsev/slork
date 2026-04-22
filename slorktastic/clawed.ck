@@ -69,12 +69,12 @@ public class Clawed extends GGen {
     @(scale, scale, scale) => this.sca;
 
     "Clawed" => this.name; // since the claude code mascot's internal name is "Clawd"
-    this --> GG.scene();
+    // this --> GG.scene();
   }
 
-  fun @destruct() {
-    this --< GG.scene();
-  }
+  // fun @destruct() {
+  //   this --< GG.scene();
+  // }
 
   fun float get_body_width() {
     return BODY_WIDTH;
@@ -85,10 +85,10 @@ public class Clawed extends GGen {
   }
 
   fun float get_full_width() {
-    return BODY_WIDTH + (2 * WING_WIDTH) + (2 * WINGTIP_WIDTH);
+    return (BODY_WIDTH + (2 * WING_WIDTH) + (2 * WINGTIP_WIDTH)) * this.sca().x;
   }
   fun float get_full_height() {
-    return BODY_HEIGHT + FOOT_HEIGHT;
+    return (BODY_HEIGHT + FOOT_HEIGHT) * this.sca().y;
   }
 
   fun void _animate_blinking() {
@@ -229,7 +229,9 @@ public class ClawedFlock {
 
   fun void add_birdie() {
     birdie_count++ => int i;
-    birdies << new ClawedAnimated(Math.random2f(.5,1.1) * _scale, @(Math.random2f(-2,2),Math.random2f(-2,2),0.));
+    birdies << new ClawedAnimated(Math.random2f(.5,1.1) * _scale, @(Math.random2f(-2,2),Math.random2f(-2,2),7.));
+    // add to top-level scene, since the GGen no longer auto-adds
+    birdies[i] --> GG.scene();
     birdies[i].animate_blinking();
     birdies[i].animate_flapping();
     perlin << new Perlin2D();

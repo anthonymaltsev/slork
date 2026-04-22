@@ -14,30 +14,34 @@ public class ClawedCodePromptEvent extends Event {
   }
 }
 
-public class ClawedCode {
+public class ClawedCode extends GGen {
   "Flibbertigibbeting" => string DEFAULT_VERB;
   ["·","✢","*","✶","✻","✽"] @=> string SPINNER_SEQUENCE[];
   @(0.005, 0.005, 0.007) => vec3 COLOR_BG;
   @(.24,.48,1.) => vec3 COLOR_PRIMARY;
 
-  80 => int TERMINAL_W;
-  24 => int TERMINAL_H;
   .45 => float CHAR_W;
   1. => float CHAR_H;
   16 => int SCALE_FACTOR;
 
-  .2 => float FONT_SIZE;
+  // this is the base font size before scalin
+  .036 => float _base_font_size;
+  // we later set FONT_SIZE according to the _base_font_size
+  float FONT_SIZE;
   "fonts/DejaVuSansMono.ttf" => string FONT_FACE;
 
-  @(FONT_SIZE, -(FONT_SIZE*12.)) => vec2 PROMPT_POS;
-  // @(FONT_SIZE, -(FONT_SIZE*15.15)) => vec2 VERB_LINE_POS;
-  PROMPT_POS + @(0., -(FONT_SIZE*2.7)) => vec2 VERB_LINE_POS;
+  vec2 PROMPT_POS;
+  vec2 VERB_LINE_POS;
 
-  .2 => float TOP_BOX_INSET;
-  .12 => float PROMPT_CONTAINER_PADDING;
+  // .2 => float TOP_BOX_INSET;
+  // .12 => float PROMPT_CONTAINER_PADDING;
+  float TOP_BOX_INSET;
+  float PROMPT_CONTAINER_PADDING;
 
-  (TERMINAL_W * CHAR_W * SCALE_FACTOR) => float WINDOW_W;
-  (TERMINAL_H * CHAR_H * SCALE_FACTOR) => float WINDOW_H;
+
+  float WINDOW_W;
+  float WINDOW_H;
+  float TITLE_BAR_H;
   (WINDOW_W / WINDOW_H) => float ASPECT_RATIO;
 
   float CAM_LEFT;
@@ -56,7 +60,7 @@ public class ClawedCode {
   string terminal_buzzwords[0];
 
   .7 => float clawed_scale;
-  vec2 clawed_pos;
+  vec3 clawed_pos;
 
   GKeyboardReceiver keyboard;
   GText prompt;
@@ -65,36 +69,80 @@ public class ClawedCode {
   GLines line_top;
   GLines line_bottom;
   Shred @ verb_pulse;
-  ClawedAnimated @ clawed;
-  ClawedFlock @ flock;
+  ClawedAnimated clawed();
+  ClawedFlock flock(0, 600::ms, .3);
   WordCloud @ word_cloud;
+
+  // window chrome
+  GPlane bg;
+  FlatMaterial bg_mat;
+  GPlane title_bar;
+  FlatMaterial title_bar_mat;
+  GText title_text;
+  GPlane btn_close;
+  FlatMaterial btn_close_mat;
+  GPlane btn_min;
+  FlatMaterial btn_min_mat;
+  GPlane btn_max;
+  FlatMaterial btn_max_mat;
+  GLines border;
+
+  // promoted from locals in _draw_top_box so re-layout is safe
+  GLines outline;
+  GText heading;
+  GText info;
+
+  int _chrome_attached;
 
   ClawedCodePromptEvent wait;
 
   fun @construct() {
     _load_verbs();
+  }
 
-    _init_window();
-    _init_camera();
-    _init_terminal();
-    _init_clawed();
+  fun void setSize(float w, float h) {
+    w => WINDOW_W;
+    h => WINDOW_H;
+
+    h * 0.09 => TITLE_BAR_H;
+    h * _base_font_size => FONT_SIZE;
+    @(FONT_SIZE, -(TITLE_BAR_H+FONT_SIZE*11.)) => PROMPT_POS;
+    PROMPT_POS + @(0., -(FONT_SIZE*2.7)) => VERB_LINE_POS;
+    FONT_SIZE => TOP_BOX_INSET;
+    FONT_SIZE*.6 => PROMPT_CONTAINER_PADDING;
+
+    // defining relative coordinates using abstracted
+    // window space rather than the actual GG.camera()
+    // (since this is now gonna be a "window" in a fake
+    // desktop environment. woohoo...)
+    -w/2. => CAM_LEFT;
+    h/2. => CAM_TOP;
+    @(CAM_LEFT,CAM_TOP) => RELATIVE;
+    
+    if (!_chrome_attached) {
+      _init_bg();
+      _init_chrome();
+      _init_terminal();
+      _init_clawed();
+      1 => _chrome_attached;
+    }
+
     _update_prompt_display();
   }
 
-  fun void run() {
+  fun void begin() {
     spork ~ _run_text_input();
+  }
 
-    while (true) {
-      flock.pos(@(0.,0.,0.));
-      if (word_cloud != null) word_cloud.pos(@(0.,0.,0.));
-      GG.nextFrame() => now;
-      keyboard.listen();
+  fun void update() {
+    flock.pos(@(0.,0.,0.));
+    if (word_cloud != null) word_cloud.pos(@(0.,0.,0.));
+    keyboard.listen();
 
-      prompt.text(prompt_display);
+    prompt.text(prompt_display);
 
-      verb_spinner.text(SPINNER_SEQUENCE[spinner_idx]);
-      verb_line.text("  " + current_verb + "…");
-    }
+    verb_spinner.text(SPINNER_SEQUENCE[spinner_idx]);
+    verb_line.text("  " + current_verb + "…");
   }
 
   fun void _load_verbs() {
@@ -185,8 +233,8 @@ public class ClawedCode {
     
     // verb/spinner init
     _redraw_verb();
-    verb_line --> GG.scene();
-    verb_spinner --> GG.scene();
+    verb_line --> this;
+    verb_spinner --> this;
     spork ~ _run_spinner();
     spork ~ _run_change_verb();
   }
@@ -202,9 +250,15 @@ public class ClawedCode {
     0 => int iter;
 
     1 => num_lines;
+
+    // TODO: find a more reliable method of calculating terminal width:
+    // i tuned by hand, and it works-ish (ish!) for a variety of window
+    // widths, but not with perfect consistency as to where the
+    // line break is. it's more or less the golden ratio hah
+    (WINDOW_W/FONT_SIZE * 1.618) $ int => int terminal_width_chars;
     
     while (start < prompt_text.length() && !is_last_line) {
-      (start + TERMINAL_W - 4) => end;
+      (start + terminal_width_chars - 4) => end;
       
       start == 0 => is_first_line;
       end >= prompt_text.length() => is_last_line;
@@ -227,9 +281,9 @@ public class ClawedCode {
   }
 
   fun void _run_change_verb() {
-    GG.camera().viewSize() => float view_size;
+    WINDOW_H => float view_size;
     clawed_scale => float initial_clawed_scale;
-    RELATIVE + clawed_pos + @(0.,0.,8.) => vec3 start_point;
+    RELATIVE + clawed_pos => vec3 start_point;
     @(0.,0.,8.) => vec3 end_point;
 
     while (true) {
@@ -246,7 +300,7 @@ public class ClawedCode {
         .93 *=> clawed.flap_delay;
       }
       if (passed_extra_crazy_threshold) {
-        if (flock.birdie_count < 64) flock.add_birdie();
+        if (flock.birdie_count < 128) flock.add_birdie();
         if (clawed_scale < view_size) {
           clawed.sca(@(clawed_scale,clawed_scale,1.));
           
@@ -311,25 +365,60 @@ public class ClawedCode {
     if (crazy) spork ~ _pulse_verb_once() @=> verb_pulse;
   }
 
-  fun void _init_window() {
-    GWindow.windowed(WINDOW_W $ int, WINDOW_H $ int);
-    GWindow.center();
-    GWindow.title("clawed --dangerously-skip-critical-thinking — " + TERMINAL_W + "×" + TERMINAL_H);
-    GG.scene().backgroundColor(COLOR_BG);
+  fun void _init_bg() {
+    bg --> this;
+    bg_mat.color(COLOR_BG);
+    bg.material(bg_mat);
+    bg.sca(@(WINDOW_W, WINDOW_H, 1.));
+    bg.pos(@(0., 0., -0.01));
   }
 
-  fun void _init_camera() {
-    GG.camera() @=> GCamera cam;
-    cam.orthographic();
-    cam.pos(@(0., 0., 11.));
-    cam.lookAt(@(0., 0., 0.));
-
-    // save camera offsets for positioning relative to the
-    // top-left corner of the "terminal" window
-    (-ASPECT_RATIO * cam.viewSize()) / 2. => CAM_LEFT;
-    (cam.viewSize() / 2.) => CAM_TOP;
-
-    @(CAM_LEFT,CAM_TOP) => RELATIVE;
+  fun void _init_chrome() {
+    // title bar
+    title_bar --> this;
+    title_bar_mat.color(@(0.08,0.08,0.10));
+    title_bar.material(title_bar_mat);
+    title_bar.sca(@(WINDOW_W, TITLE_BAR_H, 1.));
+    title_bar.pos(@(0.,CAM_TOP-TITLE_BAR_H/2.,.005));
+    // title txt
+    title_text --> this;
+    title_text.text("clawed");
+    title_text.font(FONT_FACE);
+    title_text.size(TITLE_BAR_H * 0.5);
+    title_text.color(@(0.82, 0.82, 0.88, 1.));
+    title_text.controlPoints(@(0.5, 0.5));
+    title_text.pos(@(0.,CAM_TOP-TITLE_BAR_H/2.,.02));
+    // btns: close, min, max
+    TITLE_BAR_H*.24 => float btn_r;
+    TITLE_BAR_H*.8 => float btn_gap;
+    CAM_LEFT + TITLE_BAR_H*0.6 => float btn_x0;
+    CAM_TOP - TITLE_BAR_H/2. => float btn_y;
+    // btn1
+    btn_close --> this;
+    btn_close_mat.color(@(0.99,0.37,0.34));
+    btn_close.material(btn_close_mat);
+    btn_close.sca(@(btn_r*2,btn_r*2,1.));
+    btn_close.pos(@(btn_x0, btn_y, 0.02));
+    // btn2
+    btn_min --> this;
+    btn_min_mat.color(@(0.99,0.74,0.21));
+    btn_min.material(btn_min_mat);
+    btn_min.sca(@(btn_r*2, btn_r*2, 1.));
+    btn_min.pos(@(btn_x0 + btn_gap, btn_y,.02));
+    // btn3
+    btn_max --> this;
+    btn_max_mat.color(@(0.15,0.78,0.25));
+    btn_max.material(btn_max_mat);
+    btn_max.sca(@(btn_r*2, btn_r*2, 1.));
+    btn_max.pos(@(btn_x0 + btn_gap*2, btn_y, 0.02));
+    // window border
+    border --> this;
+    border.width(.01);
+    border.color(@(0.22, 0.22, 0.27));
+    WINDOW_W/2. => float hx;
+    WINDOW_H/2. => float hy;
+    border.positions([@(-hx,hy), @(hx,hy), @(hx,-hy), @(-hx,-hy), @(-hx,hy)]);
+    border.pos(@(0., 0., 0.015));
   }
 
   fun void _init_terminal() {
@@ -342,7 +431,7 @@ public class ClawedCode {
     prompt.controlPoints(@(0., 1.));
     prompt.pos(RELATIVE + PROMPT_POS);
 
-    prompt --> GG.scene();
+    prompt --> this;
   }
 
   fun void _redraw_verb() {
@@ -363,24 +452,30 @@ public class ClawedCode {
   }
 
   fun void _init_clawed() {
-    // clawed == the mascot of "clawed code"
-    new ClawedFlock(0, 600::ms, 0.5) @=> flock;
-    new ClawedAnimated() @=> clawed;
+    // scale mascot relative to window height
+    // TODO: pull out a `TOP_BOX_H` or similar to scale relative to that
+    // rather than relative to font size (it's less obvious as to why)
+    // mea culpa. i am writing something that will work for wednesday
+    FONT_SIZE*3.5 => clawed_scale;
+    clawed.sca(@(clawed_scale,clawed_scale,1.));
 
+    // park clawed inside the top box, below the title bar
     @(
-      clawed.get_full_width()/2.,
-      -(clawed.get_full_height()/2.) - FONT_SIZE
+      clawed.get_full_width()/2. + TOP_BOX_INSET + FONT_SIZE,
+      -clawed.get_full_height()/2. - TITLE_BAR_H - FONT_SIZE * 0.5,
+      8.
     ) => clawed_pos;
 
-    clawed.sca(@(.7,.7,.7));
-    clawed.pos(RELATIVE + clawed_pos + @(0.,0.,8.));
+    // clawed.pos(RELATIVE + clawed_pos + @(0.,0.,8.));
+    clawed.pos(RELATIVE + clawed_pos);
     clawed.animate_blinking();
     flock.pos(@(0.,0.,0.));
+    clawed --> this;
   }
 
   fun void _draw_prompt_container() {
-    line_top --> GG.scene();
-    line_bottom --> GG.scene();
+    line_top --> this;
+    line_bottom --> this;
     
     line_top.width(.02);
     line_bottom.width(.02);
@@ -397,20 +492,23 @@ public class ClawedCode {
   }
 
   fun void _draw_top_box() {
-    GLines outline --> GG.scene();
-    outline.width(.02);
+    outline --> this;
+    outline.width(.015);
 
     RELATIVE.x + TOP_BOX_INSET => float left_corner;
     -left_corner => float right_corner;
-    RELATIVE.y - TOP_BOX_INSET => float top_corner;
-    top_corner - 2. => float bottom_corner;
+    RELATIVE.y - TITLE_BAR_H - TOP_BOX_INSET => float top_corner;
+    top_corner - FONT_SIZE * 8.2 => float bottom_corner;
+
+    (FONT_SIZE * 4.75) => float heading_gap_start;
+    heading_gap_start + FONT_SIZE * 11. => float heading_gap_end;
 
     outline.positions([
       @(left_corner,bottom_corner),
       @(right_corner,bottom_corner),
       @(right_corner,top_corner),
-      @(left_corner+3.2,top_corner),
-      @(left_corner+.6,top_corner),
+      @(left_corner+heading_gap_end,top_corner),
+      @(left_corner+heading_gap_start,top_corner),
       @(left_corner,top_corner),
       @(left_corner,bottom_corner)
     ]);
@@ -423,20 +521,23 @@ public class ClawedCode {
       COLOR_PRIMARY,
     ]);
 
-    GText heading --> GG.scene();
+    heading --> this;
     heading.text("Clawed Code v4.5.1");
     heading.font(FONT_FACE);
     heading.size(FONT_SIZE);
     heading.color(@(1., 1., 1., 0.9));
     heading.controlPoints(@(0., 1.));
-    heading.pos(RELATIVE + @(FONT_SIZE * 4.75, -(FONT_SIZE * .6), 0.));
+    // found this new scaled positioning through trial-and-error fiddling
+    // TODO: make this cleaner and more reliable (once everything works how
+    // i want it to, anyway...)
+    heading.pos(RELATIVE + @((TOP_BOX_INSET + FONT_SIZE * .5) + WINDOW_W * 0.1, -(TITLE_BAR_H + (TOP_BOX_INSET+(FONT_SIZE*.25))/2), 0.));
 
-    GText info --> GG.scene();
+    info --> this;
     info.text("Icarus 4.6 (1M context) · Clawed Max\nReady to build AGI?");
     info.font(FONT_FACE);
     info.size(FONT_SIZE);
     info.color(@(1., 1., 1., 0.9));
-    info.controlPoints(@(0., 1.));
-    info.pos(RELATIVE + @(FONT_SIZE * 22, -(FONT_SIZE * 2), 0.));
+    info.controlPoints(@(1., 1.));
+    info.pos(RELATIVE + @(WINDOW_W - TOP_BOX_INSET - FONT_SIZE, -TOP_BOX_INSET - (FONT_SIZE * 3), 0.));
   }
 }
