@@ -16,17 +16,24 @@ public class Desktop {
   [
     new DesktopState(
       "Chat I don't know how to code, make me a cool piano in ChucK for class",
-      10000::ms,
-      2000::ms,
+      1000::ms,
+      100::ms,
       false,
       ["Cooking","Brewing","Caramelizing","Flambéing","Whisking"]
     ),
     new DesktopState(
       "That's fine but I need it cooler. Add some AI and ML to make it pop. Make no mistakes",
-      15000::ms,
-      2000::ms,
+      1000::ms,
+      100::ms,
       false,
       ["Calculating","Cerebrating","Newspapering"]
+    ),
+    new DesktopState(
+      "I quit, something something poopy pants",
+      60000::ms,
+      2000::ms,
+      true,
+      ["Worrying","Breaking","Hurting","Screaming","Withering","Rotting","Dying","Burning"]
     )
   ] @=> DesktopState STATES[];
   0 => int current_state_idx;

@@ -61,6 +61,7 @@ public class ClawedCode extends GGen {
   DesktopState desktop_state;
   0 => int drawn_length;
   0 => int verb_idx;
+  0 => int got_crazy;
 
   .7 => float clawed_scale;
   vec3 clawed_pos;
@@ -152,6 +153,7 @@ public class ClawedCode extends GGen {
   fun void set_desktop_state(DesktopState st) {
     0 => drawn_length;
     0 => verb_idx;
+    0 => got_crazy;
     1 => prompt_editable;
 
     st @=> desktop_state;
@@ -231,7 +233,6 @@ public class ClawedCode extends GGen {
       if (keyboard.wait.enter) {
         _handle_prompt_event();
         continue;
-        // _get_crazy_with_it();
       }
 
       if (keyboard.wait.backspace) {
@@ -330,6 +331,11 @@ public class ClawedCode extends GGen {
         .93 *=> clawed.flap_delay;
       }
       if (passed_extra_crazy_threshold) {
+        // get crazy and set the flag
+        if (!got_crazy) {
+          _get_crazy_with_it();
+          1 => got_crazy;
+        }
         if (flock.birdie_count < 128) flock.add_birdie();
         if (clawed_scale < view_size) {
           clawed.sca(@(clawed_scale,clawed_scale,1.));
