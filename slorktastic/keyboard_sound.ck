@@ -7,7 +7,7 @@
 // author: Siqi Chen
 //-----------------------------------------------------------------------------
 
-
+@import "arbsynth.ck"
 
 public class keyBeats {
     dur beatDur;
@@ -97,8 +97,101 @@ public class keyBeats {
                 // wait until duration of next beat
                 (beatPattern[i] * beatDur) => now;
             }
-
         }
     }
 
+    fun void addTrack(dur start_time) {
+
+        // wait until start time
+        start_time => now;
+
+        playBeats();
+    }
+
+}
+
+
+
+
+public class keySynths {
+    dur synthDur;
+    int synthPattern[];
+
+    0 => int wasKeyDown;
+
+    ArbSynth @synths[];
+
+    // initializing some audio FXs in case we wanna use them
+    ADSR env;
+    LPF lpf;
+    HPF hpf;
+    BRF brf;
+    JCRev r;
+    PitShift ps;
+    Gain bus;
+
+
+
+    fun @construct(dur synthDur_in, int synthPattern_in[], int synth_group_in) {
+        synthDur_in => synthDur;
+        synthPattern_in @=> synthPattern;
+
+        if (synth_group_in == 0) {
+            new ArbSynth[13] @=> synths; // sized number of cooking sounds
+            new ArbSynth("data/verbs/coffee-brewing-futuristic_1.arr", bus) @=> cooking_synths[0];
+            new ArbSynth("data/verbs/food-cooking-in-oil.arr", bus) @=> cooking_synths[1];
+            new ArbSynth("data/verbs/cooking-frying.arr", bus) @=> cooking_synths[2];
+            new ArbSynth("data/verbs/cooking-in-cooking-pot.arr", bus) @=> cooking_synths[3];
+            new ArbSynth("data/verbs/cooking-pasta.arr", bus) @=> cooking_synths[4];
+            new ArbSynth("data/verbs/cutting-vegetables.arr", bus) @=> cooking_synths[5];
+            new ArbSynth("data/verbs/foley-chef-cracking-an-egg-into-bowl.arr", bus) @=> cooking_synths[6];
+            new ArbSynth("data/verbs/frying-food-cooking-kitchen.arr", bus) @=> cooking_synths[7];
+            new ArbSynth("data/verbs/keurig-kcup-brewing.arr", bus) @=> cooking_synths[8];
+            new ArbSynth("data/verbs/liquid-swirl.arr", bus) @=> cooking_synths[9];
+            new ArbSynth("data/verbs/pretzel-crunching.arr", bus) @=> cooking_synths[10];
+            new ArbSynth("data/verbs/whisking.arr", bus) @=> cooking_synths[11];
+            new ArbSynth("data/verbs/moka-express-brewing.arr", bus) @=> cooking_synths[12];
+
+            // connect to effects and dac
+            bus => ps => dac;
+
+        } 
+        else if (synth_group_in == 1) {
+            // man synths
+            new ArbSynth[7] @=> synths;
+            new ArbSynth("data/verbs/man-screaming.arr", bus) @=> man_synths[0];
+            new ArbSynth("data/verbs/crying-man.arr", bus) @=> man_synths[1];
+            new ArbSynth("data/verbs/screaming-man.arr", bus) @=> man_synths[2];
+            new ArbSynth("data/verbs/frantic-screaming.arr", bus) @=> man_synths[3];
+            new ArbSynth("data/verbs/cry-of-pain.arr", bus) @=> man_synths[4];
+            new ArbSynth("data/verbs/ouch-oof-hurt.arr", bus) @=> man_synths[5];
+            new ArbSynth("data/verbs/puppy-crying.arr", bus) @=> man_synths[6];
+
+            // connect to effects and dac
+            bus => ps => dac;            
+        }
+
+    }
+
+    fun void playSynths() {
+        // each time a key event is detected, we randomly select one of the synths and play it
+        while( true ){
+
+            // will add use of synthDur and synthPattern here later
+            if( wasKeyDown )
+            {
+                // randomly select one of the synths and play it
+                Math.random2(0, synths.size() - 1) => int synth_idx;
+                spork ~ synths[synth_idx].playback();
+                0 => wasKeyDown; // reset state
+            }
+        }
+    }
+
+    fun void addSynthTrack(dur start_time) {
+        // wait until start time
+        start_time => now;
+
+        playSynths();
+    }
 }

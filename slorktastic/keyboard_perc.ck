@@ -71,6 +71,9 @@ if( !hi.openKeyboard( device ) ) me.exit();
 <<< "keyboard '" + hi.name() + "' ready", "" >>>;
 
 
+
+// Keyboard beats sounds ====================================================
+
 // instantiate keyBeats
 keyBeats kb(200::ms, [1, 2, 1], 1); // basic snare 
 keyBeats kb1(100::ms, [4, 1, 1, 1, 1], 0); // hats
@@ -79,42 +82,16 @@ keyBeats kb3(100::ms, [3, 1, 2, 2], 3); // high snare
 keyBeats kb4(400::ms, [5, 3], 4); // crash
 
 
-// function to play beats for each track
-fun void addTrack1() {
-    // wait 32 seconds before adding track
-    32::second => now; 
-    kb1.playBeats();
-}
-
-fun void addTrack2() {
-    // wait 48 seconds before adding track
-    48::second => now; 
-    kb2.playBeats();
-}
-
-fun void addTrack3() {
-    // wait 64 seconds before adding track
-    64::second => now; 
-    kb3.playBeats();
-}
-
-fun void addTrack4() {
-    // wait 80 seconds before adding track
-    80::second => now; 
-    kb4.playBeats();
-}
-
-
 // ======== play drum stuff =========
 
 
 // spork playBeats();
 spork ~ kb.playBeats();
 
-spork ~ addTrack1();
-spork ~ addTrack2();
-spork ~ addTrack3();
-spork ~ addTrack4();
+spork ~ kb1.addTrack(32::second);
+spork ~ kb2.addTrack(48::second);
+spork ~ kb3.addTrack(64::second);
+spork ~ kb4.addTrack(80::second);
 
 
 // Loops =================================================================
