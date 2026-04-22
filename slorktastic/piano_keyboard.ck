@@ -8,6 +8,11 @@ class Mouse {
 
   fun void stop() {
     if (_loop != null) Machine.remove(_loop.id());
+    null => _loop;
+  }
+
+  fun int is_running() {
+    return _loop != null;
   }
 
   fun @destruct() {
@@ -28,6 +33,10 @@ class PianoKey {
   @(0.74, 0.78, 0.90) => vec3 COLOR_WHITE_PRESSED;
   @(0.28, 0.34, 0.50) => vec3 COLOR_BLACK_PRESSED;
 
+  // just read off degree values from the color wheel as i liked 'em:
+  // https://miro.medium.com/v2/resize:fit:1200/1*tQYAE9PU2FIrZV5rKwT7AQ.jpeg
+  [0., 30., 60., 120., 210., 270., 300.] @=> float COLOR_WHEEL[];
+
   GPlane plane;
   FlatMaterial mat;
   int midi_note;
@@ -36,17 +45,32 @@ class PianoKey {
   vec3 pressed_color;
   float rest_y;
   int is_pressed;
+  int white_idx;
 
-  // for now it's a single oscillator in adsr envelope.
-  // maybe this is part of the fun (the badness, like my
-  // first assignment? or maybe i should make it more
-  // complex... no sé señor)
+  false => int rainbow_mode;
+  false => int funky_vibrato;
+
+  // 0 = funky_vibrato disabled, 1 = enabled
+  // so we can access by idx here
+  [0., 10.] @=> float VIBRATO_PRESETS[];
+
+  // upgraded to have some fun vibrato with help from jack atherton (shoutout!):
+  // https://ccrma.stanford.edu/~lja/timbre-library/chuck/vibratosawlead.ck
+  1.0 => float vibrato_waver;
+  float base_freq;
   TriOsc osc;
   ADSR env;
+  TriOsc lfo => Envelope lfo_env => blackhole;
+  300::ms => lfo_env.duration;
+  0 => lfo.freq;
 
-  fun @construct(int note, int black) {
+  Shred @ _vibrato_messer;
+  Shred @ _lfo_loop;
+
+  fun @construct(int note, int black, int idx) {
     note => midi_note;
     black => is_black;
+    idx => white_idx;
 
     plane.material(mat);
 
@@ -54,17 +78,17 @@ class PianoKey {
     env.set(6::ms,80::ms,.65,200::ms);
 
     Std.mtof(note) => float f;
-    f => osc.freq;
+    f => base_freq;
+    (base_freq*vibrato_waver) => osc.freq;
     .7 => osc.gain;
 
     if (is_black) {
       COLOR_BLACK => base_color;
       COLOR_BLACK_PRESSED => pressed_color;
+      mat.color(base_color);
     } else {
-      COLOR_WHITE => base_color;
-      COLOR_WHITE_PRESSED => pressed_color;
+      recolor_white();
     }
-    mat.color(base_color);
   }
 
   fun void place(float cx, float cy, float w, float h, float z) {
@@ -85,6 +109,16 @@ class PianoKey {
   fun void hit() {
     // call when we want to press the key
     if (is_pressed) return;
+
+    // reset lfo phase and freq
+    -0.25 => lfo.phase;
+    VIBRATO_PRESETS[funky_vibrato] => lfo.freq;
+
+    if (funky_vibrato) {
+      spork ~ _mess_with_vibrato() @=> _vibrato_messer;
+      spork ~ _run_lfo_loop() @=> _lfo_loop;
+    }
+    
     1 => is_pressed;
     mat.color(pressed_color);
     plane.pos() => vec3 p;
@@ -95,11 +129,46 @@ class PianoKey {
   fun void unhit() {
     // call when key is released!!
     if (!is_pressed) return;
+    if (_vibrato_messer != null) Machine.remove(_vibrato_messer.id());
+    if (_lfo_loop != null) Machine.remove(_lfo_loop.id());
     0 => is_pressed;
     mat.color(base_color);
     plane.pos() => vec3 p;
     plane.pos(@(p.x, rest_y, p.z));
     env.keyOff();
+  }
+
+  fun void recolor_white() {
+    if (rainbow_mode) {
+      Color.hsv2rgb(@(COLOR_WHEEL[white_idx % COLOR_WHEEL.size()],.7,1.)) => base_color;
+      base_color - @(0,.1,.1) => pressed_color;
+    } else {
+      COLOR_WHITE => base_color;
+      COLOR_WHITE_PRESSED => pressed_color;
+    }
+    mat.color(base_color);
+  }
+
+  fun void _run_lfo_loop() {
+    1 => lfo_env.keyOn;
+    -0.25 => lfo.phase;
+    while (true) {
+      // modulation only when funky_vibrato flag enabled
+      if (funky_vibrato) {
+        0.03*lfo_env.last() + 1 => vibrato_waver;
+      } else {
+        1.0 => vibrato_waver;
+      }
+      (base_freq*vibrato_waver) => osc.freq;
+      5::ms => now;
+    }
+  }
+
+  fun void _mess_with_vibrato() {
+    while (lfo.freq() > .5) {
+      lfo.freq()*.995 => lfo.freq;
+      10::ms => now;
+    }
   }
 }
 
@@ -127,11 +196,19 @@ public class PianoKeyboard extends GGen {
   // 8 white keys C4..C5, 5 black keys C#4..A#4
   PianoKey white_keys[0];
   PianoKey black_keys[0];
+  // array for addressing keys of all types (can
+  // iterate through this list once rather than
+  // a separate iteration for each of the white and
+  // black lists
+  PianoKey all_keys[0];
 
   Mouse mouse;
   PianoKey @ active_key;
   int was_down;
 
+  int playable;
+  int rainbow_mode;
+  int funky_vibrato;
   int _attached;
 
   fun void setSize(float w, float h) {
@@ -144,8 +221,32 @@ public class PianoKeyboard extends GGen {
     }
   }
 
-  fun void begin() {
-    mouse.begin();
+  fun void set_playable(int play) {
+    if (play != playable) {
+      if (play) {
+        mouse.begin();
+      } else {
+        mouse.stop();
+      }
+    }
+    play => playable;
+  }
+
+  fun void set_rainbow_mode(int enabled) {
+    PianoKey @ wk;
+    for (0 => int i; i < white_keys.size(); i++) {
+      white_keys[i] @=> wk;
+      enabled => wk.rainbow_mode;
+      wk.recolor_white();
+    }
+    enabled => rainbow_mode;
+  }
+
+  fun void set_funky_vibrato(int enabled) {
+    for (0 => int i; i < all_keys.size(); i++) {
+      enabled => all_keys[i].funky_vibrato;
+    }
+    enabled => funky_vibrato;
   }
 
   fun void _init_body() {
@@ -170,7 +271,8 @@ public class PianoKeyboard extends GGen {
     (white_top + white_bot) / 2. => float white_cy;
 
     for (0 => int i; i < 8; i++) {
-      new PianoKey(white_midi[i], 0) @=> PianoKey wk;
+      new PianoKey(white_midi[i], 0, i) @=> PianoKey wk;
+      all_keys << wk;
       white_keys << wk;
       keys_left + (i + 0.5) * white_w => float cx;
       wk.place(cx, white_cy, white_w - gap, keys_h, 0.02);
@@ -182,7 +284,8 @@ public class PianoKeyboard extends GGen {
     white_top - black_h/2. => float black_cy;
 
     for (0 => int i; i < black_midi.size(); i++) {
-      new PianoKey(black_midi[i], 1) @=> PianoKey bk;
+      new PianoKey(black_midi[i], 1, 0) @=> PianoKey bk;
+      all_keys << bk;
       black_keys << bk;
       keys_left + (black_after[i] + 1) * white_w => float cx;
       bk.place(cx, black_cy, black_w, black_h, 0.04);
@@ -191,15 +294,18 @@ public class PianoKeyboard extends GGen {
   }
 
   fun void update() {
+    // don't attempt to play when mouse inactive
+    // (as controlled by set_playable function)
+    if (!mouse.is_running()) return;
+
     GWindow.mouseLeft() => int is_down;
     is_down && !was_down => int edge_down;
     !is_down && was_down => int edge_up;
     is_down => was_down;
 
-    if (edge_down) {
+    if (is_down) {
       mouse.world_pos => vec3 mp;
       PianoKey @ hit;
-      null @=> hit;
 
       // black keys sit on top of white keys visually, so check them first
       for (0 => int i; i < black_keys.size(); i++) {
@@ -216,11 +322,15 @@ public class PianoKeyboard extends GGen {
           }
         }
       }
-      if (hit != null) {
+
+      // release old key if i drag away
+      if (hit != active_key) {
+        if (active_key != null) active_key.unhit();
+        if (hit != null) hit.hit();
         hit @=> active_key;
-        hit.hit();
       }
     }
+
     if (edge_up && active_key != null) {
       active_key.unhit();
       null @=> active_key;

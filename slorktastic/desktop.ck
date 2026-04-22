@@ -15,25 +15,38 @@ public class Desktop {
   // state machine
   [
     new DesktopState(
-      "Chat I don't know how to code, make me a cool piano in ChucK for class",
+      "Clawed, I don't know how to code, make me a cool instrument in ChucK for class",
       1000::ms,
       100::ms,
       false,
-      ["Cooking","Brewing","Caramelizing","Flambéing","Whisking"]
+      ["Cooking","Brewing","Caramelizing","Flambéing","Whisking"],
+      new PianoState(
+        false,
+        true,
+        false,
+        false
+      )
     ),
     new DesktopState(
-      "That's fine but I need it cooler. Add some AI and ML to make it pop. Make no mistakes",
+      "That's fine but I need it cooler. Add some AI and ML to make it pop or something. Make no mistakes",
       1000::ms,
       100::ms,
       false,
-      ["Calculating","Cerebrating","Newspapering"]
+      ["Calculating","Cerebrating","Newspapering"],
+      new PianoState(
+        false,
+        true,
+        true,
+        true
+      )
     ),
     new DesktopState(
-      "I quit, something something poopy pants",
+      "This is not enough. It needs more AI and ML. Maybe use a VLM to interpret user sentiment. Actually that's perfect. Make it a startup. Need guaranteed $1M MRR.",
       60000::ms,
       2000::ms,
       true,
-      ["Worrying","Breaking","Hurting","Screaming","Withering","Rotting","Dying","Burning"]
+      ["Worrying","Breaking","Hurting","Screaming","Withering","Rotting","Dying","Burning"],
+      new PianoState(0,1)
     )
   ] @=> DesktopState STATES[];
   0 => int current_state_idx;
@@ -52,7 +65,6 @@ public class Desktop {
 
   fun void run() {
     terminal.begin();
-    piano.begin();
     spork ~ _handle_terminal_events();
     while (true) {
       GG.nextFrame() => now;
@@ -96,6 +108,17 @@ public class Desktop {
     piano --> GG.scene();
   }
 
+  fun void _set_piano_showing(int show) {
+    <<< "showing piano", show >>>;
+    piano.set_playable(show);
+    // TODO: think on whether there's a cleaner way of doing this
+    if (show) {
+      piano --> GG.scene();
+    } else{
+      piano --< GG.scene();
+    }
+  }
+
   fun void _init_camera() {
     GG.camera() @=> GCamera cam;
     cam.orthographic();
@@ -132,14 +155,31 @@ public class Desktop {
     wallpaper --> GG.scene();
   }
 
+  fun void _dispatch_initial_piano_state(PianoState ps) {
+    _set_piano_showing(ps.visible_before);
+    piano.set_rainbow_mode(ps.rainbow_mode);
+    piano.set_funky_vibrato(ps.funky_vibrato);
+  }
+
   fun void _handle_terminal_events() {
     while (true) {
+      STATES[current_state_idx] @=> DesktopState orig_state;
+      // BEFORE (while this state is running)
+      _dispatch_initial_piano_state(orig_state.piano_state);
       // not gonna need the prompt from here (just yet, till i wire
       // it up to anthony's/siqi's beautiful sound design work)
       terminal.state_completed => now;
-      if (current_state_idx < STATES.size()) {
-        terminal.set_desktop_state(STATES[++current_state_idx]);
-      }
+      // AFTER (persists until the next state actually starts running)
+      _set_piano_showing(orig_state.piano_state.visible_after);
+
+      if (current_state_idx >= STATES.size() - 1) break;
+
+      // queue up the next prompt but hold the AFTER piano state.
+      // only flip to the next BEFORE once performer kicks off the
+      // new state (enter pressed -> terminal.wait broadcasts)
+      ++current_state_idx;
+      terminal.set_desktop_state(STATES[current_state_idx]);
+      terminal.wait => now;
     }
   }
 }

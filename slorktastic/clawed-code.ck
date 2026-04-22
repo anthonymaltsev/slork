@@ -195,6 +195,8 @@ public class ClawedCode extends GGen {
   }
 
   fun string _gather_buzzwords() {
+    // clear buzzwords on fresh prompt
+    terminal_buzzwords.size(0);
     string buzzwords;
     int seen_words[0];
 
@@ -303,9 +305,14 @@ public class ClawedCode extends GGen {
   }
 
   fun void _run_change_verb() {
-    WINDOW_H => float view_size;
+    // WINDOW_H => float max_clawed_scale;
+    // allow clawed to grow to the full chugl height
+    // rather than just the faux "window"
+    GG.camera().viewSize() => float max_clawed_scale;
     clawed_scale => float initial_clawed_scale;
-    RELATIVE + clawed_pos => vec3 start_point;
+    // we'll be world-positioning clawed now, so its
+    // initial position should be world-scale
+    clawed.posWorld() => vec3 start_point;
     @(0.,0.,8.) => vec3 end_point;
 
     _show_verb(desktop_state.cooking_verbs[verb_idx], 0);
@@ -337,15 +344,15 @@ public class ClawedCode extends GGen {
           1 => got_crazy;
         }
         if (flock.birdie_count < 128) flock.add_birdie();
-        if (clawed_scale < view_size) {
+        if (clawed_scale < max_clawed_scale) {
           clawed.sca(@(clawed_scale,clawed_scale,1.));
           
           // linear interpolation between start & end points
           // 2x so it centers before it finishes scaling
-          Math.min(2 * (clawed_scale - initial_clawed_scale) / view_size, 1) => float t;
+          Math.min(2 * (clawed_scale - initial_clawed_scale) / max_clawed_scale, 1) => float t;
           (1. - t) * start_point + t * end_point => vec3 lerp;
 
-          clawed.pos(lerp);
+          clawed.posWorld(lerp);
           1.007 *=> clawed_scale;
         }
       }
