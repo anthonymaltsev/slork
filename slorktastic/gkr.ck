@@ -70,10 +70,12 @@ public class GKeyboardReceiver {
       keys_down[i] => key;
       string str;
 
+      // moved out of the conditional so they always update
+      key == GWindow.KEY_BACKSPACE => wait.backspace;
+      key == GWindow.KEY_ENTER => wait.enter;
+
       if (key == GWindow.KEY_BACKSPACE || key == GWindow.KEY_ENTER) {
         "" => wait.val;
-        key == GWindow.KEY_BACKSPACE => wait.backspace;
-        key == GWindow.KEY_ENTER => wait.enter;
         wait.signal();
         continue;
       }

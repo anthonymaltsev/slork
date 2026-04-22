@@ -1,4 +1,4 @@
-@import {"clawed-code.ck"}
+@import {"clawed-code.ck", "piano_keyboard.ck", "state.ck"}
 
 public class Desktop {
   // 1024 => int WINDOW_W;
@@ -12,21 +12,45 @@ public class Desktop {
   float CAM_TOP;
   vec2 RELATIVE;
 
+  // state machine
+  [
+    new DesktopState(
+      "Chat I don't know how to code, make me a cool piano in ChucK for class",
+      10000::ms,
+      2000::ms,
+      false,
+      ["Cooking","Brewing","Caramelizing","Flambéing","Whisking"]
+    ),
+    new DesktopState(
+      "That's fine but I need it cooler. Add some AI and ML to make it pop. Make no mistakes",
+      15000::ms,
+      2000::ms,
+      false,
+      ["Cooking","Brewing","Caramelizing","Flambéing","Whisking"]
+    )
+  ] @=> DesktopState STATES[];
+  0 => int current_state_idx;
+
   GPlane wallpaper;
   ClawedCode terminal;
+  PianoKeyboard piano;
 
   fun @construct() {
     _init_window();
     _init_camera();
     _init_desktop();
     _init_terminal();
+    _init_piano();
   }
 
   fun void run() {
     terminal.begin();
+    piano.begin();
+    spork ~ _handle_terminal_events();
     while (true) {
       GG.nextFrame() => now;
       terminal.update();
+      piano.update();
     }
   }
 
@@ -48,8 +72,21 @@ public class Desktop {
     term_w * (2./3) => float term_h;
 
     terminal.setSize(term_w,term_h);
-    terminal.pos(@(-.7,.55,0.));
+    terminal.pos(@(-1.6,.9,0.));
     terminal --> GG.scene();
+
+    // send initial desktop state (subsequently handled by
+    // _handle_terminal_events)
+    terminal.set_desktop_state(STATES[current_state_idx]);
+  }
+
+  fun void _init_piano() {
+    3.6 => float piano_w;
+    piano_w / 3.2 => float piano_h;
+
+    piano.setSize(piano_w, piano_h);
+    piano.pos(@(3, -2, 0.));
+    piano --> GG.scene();
   }
 
   fun void _init_camera() {
@@ -86,6 +123,17 @@ public class Desktop {
     // z -1. to keep it in the background!
     wallpaper.pos(@(0.,0.,-1.));
     wallpaper --> GG.scene();
+  }
+
+  fun void _handle_terminal_events() {
+    while (true) {
+      // not gonna need the prompt from here (just yet, till i wire
+      // it up to anthony's/siqi's beautiful sound design work)
+      terminal.state_completed => now;
+      if (current_state_idx < STATES.size()) {
+        terminal.set_desktop_state(STATES[++current_state_idx]);
+      }
+    }
   }
 }
 
