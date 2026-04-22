@@ -10,8 +10,8 @@
 
 ArbSynth sounds[0];
 
-new ArbSynth("data/verbs/blade-piercing-body.arr", dac) @=> sounds["A"];
-new ArbSynth("data/verbs/buttons_calculator.arr", dac) @=> sounds["B"];
+new ArbSynth("data/verbs/pulse/blade-piercing-body.arr", dac) @=> sounds["A"];
+new ArbSynth("data/verbs/cont/chain.arr", dac) @=> sounds["B"];
 new ArbSynth("data/verbs/calculator-fingertips.arr", dac) @=> sounds["C"];
 new ArbSynth("data/verbs/car-horn-honking.arr", dac) @=> sounds["D"];
 new ArbSynth("data/verbs/cell-phone-vibrate-high-quality.arr", dac) @=> sounds["E"];

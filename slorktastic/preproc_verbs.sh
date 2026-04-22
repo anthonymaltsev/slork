@@ -2,7 +2,7 @@
 cd "$(dirname "$0")"
 
 pids=()
-for wav in data/verbs/*.wav; do
+for wav in data/verbs/pulse/*.wav; do
     arr="${wav%.wav}.arr"
     args="arbsynth_preproc.ck:$wav:$arr:15:1"
     chuck --silent $args &   # spork!
