@@ -63,7 +63,7 @@ public class percSets extends GGen {
 
     // booleans
     0 => int activateHappened;
-    0 => int deactivateHappened;
+    1 => int deactivateHappened;
 
     // color map
     [

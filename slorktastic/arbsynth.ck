@@ -32,6 +32,7 @@ public class ArbSynth {
         Std.atoi(tok.next()) =>  num_lines;
         Std.atoi(tok.next()) => fft_size;
 
+
         new vec2[num_lines][N] @=> freq_gain;
 
         for (0 => int i; i < num_lines; i++) {
@@ -66,6 +67,10 @@ public class ArbSynth {
         }
 
         for (auto s : sins) 0. => s.gain;
+    }
+
+    fun dur getDur() {
+        return num_lines * fft_size::samp;
     }
 
     // indexer is monotonic function of breakpoints
