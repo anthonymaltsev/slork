@@ -7,7 +7,6 @@
 // author: Anthony Maltsev (amaltsev@stanford.edu), Ge Wang (ge@ccrma.stanford.edu)
 // date: summer 2014, spring 2026
 //-----------------------------------------------------------------------------
-<<<"start of file","">>>;
 public class GameTrak
 {
     0 => int keyboard_mode; // bool
@@ -36,9 +35,7 @@ public class GameTrak
 
 
     fun void __init(int device_in) {
-        <<<"start init","">>>;
         Hid trak;
-        <<<"trak made","">>>;
         device_in => device;
         // open joystick 0, default to kb mode if fail
         if( !trak.openJoystick( device ) ) 1 => keyboard_mode;
@@ -57,6 +54,7 @@ public class GameTrak
     fun void gametrak() {
         Hid trak;
         HidMsg trak_msg;
+        trak.openJoystick( device );
         while( true )
         {
             trak => now;
