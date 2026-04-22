@@ -26,7 +26,7 @@ public class Desktop {
       15000::ms,
       2000::ms,
       false,
-      ["Cooking","Brewing","Caramelizing","Flambéing","Whisking"]
+      ["Calculating","Cerebrating","Newspapering"]
     )
   ] @=> DesktopState STATES[];
   0 => int current_state_idx;
