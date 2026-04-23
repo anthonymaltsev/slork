@@ -53,6 +53,10 @@ public class ArbSynth {
         rev => outchan;
 
     }
+    
+    fun void silence() {
+        for (auto s : sins) 0. => s.gain;
+    }
 
     fun void playback() {
         vec2 curr_freq_gain;

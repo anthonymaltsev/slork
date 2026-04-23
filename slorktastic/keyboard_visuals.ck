@@ -44,11 +44,13 @@ class TPlane extends GGen {
 public class percSets extends GGen {
     
     TPlane icon_bg --> this;
+    GText label --> this;
 
     Mouse @ mouse;
     Event onHoverEvent, onClickEvent;  // onExit, onRelease
 
     @(2, 2, 2) => vec3 COLOR_ICONBG_NONE;
+    @(0.1, .1, .1) => vec3 LABEL_COLOR;
     
     // states
     0 => static int NONE;
@@ -77,9 +79,17 @@ public class percSets extends GGen {
 
         0.4 => icon_bg.sca;
         COLOR_ICONBG_NONE => icon_bg.color;
+
+        0.06 => label.sca;
+        LABEL_COLOR => label.color;
+        label.posY(-0.1);
+
         spork ~ this.clickListener();
     }
 
+    fun void setName(string n) {
+        label.text(n);
+    }
 
     // check if state is active
     fun int active() {
