@@ -141,7 +141,7 @@ public class ClawedCode extends GGen {
   }
 
   fun void update() {
-    flock.pos(@(0.,0.,0.));
+    flock.pos(@(-1.6,0.9,0.));
     if (word_cloud != null) word_cloud.pos(@(0.,0.,0.));
     keyboard.listen();
 
@@ -381,6 +381,7 @@ public class ClawedCode extends GGen {
           _get_crazy_with_it();
           1 => got_crazy;
         }
+        flock.start(); // set start time for bird additions
         if (clawed_scale >= max_clawed_scale) {
           if (!begun_end_sequence) _begin_end_sequence();
         } else {

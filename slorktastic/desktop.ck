@@ -17,7 +17,7 @@ public class Desktop {
     new DesktopState(
       "Clawed, I don't know how to code, make me a cool instrument in ChucK for class",
       1000::ms,
-      100::ms,
+      500::ms,
       false,
       ["Cooking","Brewing","Caramelizing","Flambéing","Whisking"],
       new PianoState(
@@ -30,7 +30,7 @@ public class Desktop {
     new DesktopState(
       "That's fine but I need it cooler. Add some AI and ML to make it pop or something. Make no mistakes",
       1000::ms,
-      100::ms,
+      500::ms,
       false,
       ["Calculating","Cerebrating","Newspapering"],
       new PianoState(
