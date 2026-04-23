@@ -217,7 +217,7 @@ public class ClawedFlock {
   10 => int MAX_WAIT;
   0 => int started;
   time start_time;
-  5::second => dur time_to_be_constrained_to_window;
+  20::second => dur time_to_be_constrained_to_window;
 
   4.5 => float term_w;
   term_w * (2./3) => float term_h;
