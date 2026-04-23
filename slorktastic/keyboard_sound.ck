@@ -34,7 +34,7 @@ public class keyBeats {
         if (perc_type == 0){
             // noise envelope
             n => key => r => dac;
-            0.06 => n.gain;
+            0.3 => n.gain;
             0.01 => r.mix;
             key.set( 5::ms, 4::ms, .3, 5::ms );
         }
@@ -42,7 +42,7 @@ public class keyBeats {
             // mid-range snare sound
             n => key => lpf => r => dac;
             2000 => lpf.freq;
-            0.3 => n.gain;
+            0.8 => n.gain;
             0.001 => r.mix;
             key.set( 5::ms, 4::ms, .5, 8::ms );
         }
@@ -50,7 +50,7 @@ public class keyBeats {
             // bass tomtom sound
             n => key => lpf => r => dac;
             400 => lpf.freq;
-            0.45 => n.gain;
+            0.8 => n.gain;
             0.05 => r.mix;
             key.set( 3::ms, 20::ms, .5, 10::ms );
         } else if (perc_type == 3) {
@@ -59,14 +59,14 @@ public class keyBeats {
             2000 => brf.freq;
             1.5 => brf.Q;
             4000 => lpf.freq;
-            0.15 => n.gain;
+            0.6 => n.gain;
             0.01 => r.mix;
             key.set( 3::ms, 5::ms, .5, 10::ms );
         } else if (perc_type == 4) {
             // crash_cymbal-like sound
             n => key => hpf => r => dac;
             6000 => hpf.freq;
-            0.08 => n.gain;
+            0.2 => n.gain;
             0.05 => r.mix;
             key.set( 1::ms, 1::ms, .6, 150::ms );
         }
