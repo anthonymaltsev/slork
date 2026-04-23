@@ -16,10 +16,10 @@ public class Desktop {
   [
     new DesktopState(
       "Clawed, I don't know how to code, make me a cool instrument in ChucK for class",
-      1000::ms,
-      100::ms,
+      20::second,
+      2::second,
       false,
-      ["Cooking","Brewing","Caramelizing","Flambéing","Whisking"],
+      ["Cooking","Brewing","Frying","Flambéing","Whisking"],
       new PianoState(
         false,
         true,
@@ -29,10 +29,10 @@ public class Desktop {
     ),
     new DesktopState(
       "That's fine but I need it cooler. Add some AI and ML to make it pop or something. Make no mistakes",
-      1000::ms,
-      100::ms,
+      20::second,
+      1.75::second,
       false,
-      ["Calculating","Cerebrating","Newspapering"],
+      ["Cooking","Brewing", "Newspapering", "Honking", "Frying", "Writing", "Raining", "Vibing"],
       new PianoState(
         false,
         true,
@@ -48,9 +48,9 @@ public class Desktop {
       // ClawedCode deciding that on vibes. When I am better rested I hope to take
       // another pass
       5::minute,
-      2000::ms,
+      1.75::second,
       true,
-      ["Worrying","Breaking","Hurting","Screaming","Withering","Rotting","Dying","Burning"],
+      ["Cooking","Brewing", "Newspapering", "Honking", "Frying", "Writing", "Raining", "Vibing", "Worrying","Breaking","Hurting","Screaming","Withering","Rotting","Dying","Burning"],
       new PianoState(0,1)
     )
   ] @=> DesktopState STATES[];

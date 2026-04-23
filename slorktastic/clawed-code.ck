@@ -141,7 +141,7 @@ public class ClawedCode extends GGen {
   }
 
   fun void update() {
-    flock.pos(@(0.,0.,0.));
+    flock.pos(@(-1.6,0.9,0.));
     if (word_cloud != null) word_cloud.pos(@(0.,0.,0.));
     keyboard.listen();
 
@@ -260,12 +260,12 @@ public class ClawedCode extends GGen {
   fun void _get_crazy_with_it() {
     // flap bird
     clawed.animate_flapping();
-    new WordCloud(terminal_buzzwords, 100::ms, 1.25, 4) @=> word_cloud;
+    // new WordCloud(terminal_buzzwords, 100::ms, 1.25, 4) @=> word_cloud;
     spork ~ _run_add_birdies();
   }
 
   fun void _run_add_birdies() {
-    while (flock.birdie_count < 128) {
+    while (flock.birdie_count < 32){//128) {
       flock.add_birdie();
       700::ms => now;
     }
@@ -371,7 +371,7 @@ public class ClawedCode extends GGen {
 
       // all this below the sentry above is for CRAZY MODE only,
       // aka when s#!t gets crazy...
-      if (verb_change_delay > 75::ms) .85 *=> verb_change_delay;
+      if (verb_change_delay > 200::ms) .95 *=> verb_change_delay;
       if (clawed.flap_delay > 15::ms) {
         .93 *=> clawed.flap_delay;
       }
@@ -381,6 +381,7 @@ public class ClawedCode extends GGen {
           _get_crazy_with_it();
           1 => got_crazy;
         }
+        flock.start(); // set start time for bird additions
         if (clawed_scale >= max_clawed_scale) {
           if (!begun_end_sequence) _begin_end_sequence();
         } else {
@@ -392,7 +393,7 @@ public class ClawedCode extends GGen {
           (1. - t) * start_point + t * end_point => vec3 lerp;
 
           clawed.posWorld(lerp);
-          1.007 *=> clawed_scale;
+          1.01 *=> clawed_scale;
         }
       }
     }

@@ -215,6 +215,15 @@ public class ClawedFlock {
   1 => float _scale;
   0 => int wait_count;
   10 => int MAX_WAIT;
+  0 => int started;
+  time start_time;
+  20::second => dur time_to_be_constrained_to_window;
+
+  4.5 => float term_w;
+  term_w * (2./3) => float term_h;
+  0.5 => float bird_w;
+  0.4 => float bird_h;
+  @(-1.6,.9,0.) => vec3 term_center;
 
   fun @construct(int size, dur freq, float scale) {
     freq => _freq;
@@ -227,9 +236,16 @@ public class ClawedFlock {
     }
   }
 
+  fun void start() {
+    if (!started) {
+      1 => started;
+      now => start_time;
+    }
+  }
+
   fun void add_birdie() {
     birdie_count++ => int i;
-    birdies << new ClawedAnimated(Math.random2f(.5,1.1) * _scale, @(Math.random2f(-2,2),Math.random2f(-2,2),7.));
+    birdies << new ClawedAnimated(Math.random2f(.5,1.1) * _scale, @(Math.random2f(term_center.x - 0.4, term_center.x + 0.4),Math.random2f(term_center.y - 0.4, term_center.y + 0.4),7.));
     // add to top-level scene, since the GGen no longer auto-adds
     birdies[i] --> GG.scene();
     birdies[i].animate_blinking();
@@ -241,7 +257,12 @@ public class ClawedFlock {
   fun void pos(vec3 pos_in) {
     if (++wait_count >= MAX_WAIT) {
       for (0 => int i; i < birdies.size(); i++) {
-        birdies[i].pos(pos_in + perlin[i].generate(now + 8::second));
+        pos_in + perlin[i].generate(now + 8::second) => vec3 new_pos;
+        now - start_time => dur time_being_crazy;
+        if (time_being_crazy < time_to_be_constrained_to_window) {
+          @(Math.clampf(new_pos.x, -1.6-term_w/2. + bird_w, -1.6+term_w/2. - bird_w), Math.clampf(new_pos.y, 0.9-term_h/2. + bird_h, 0.9+term_h/2. - bird_h), Math.clampf(new_pos.z, 0., 0.)) => new_pos;
+        }
+        birdies[i].pos(new_pos);
       }
       0 => wait_count;
     }
@@ -276,8 +297,8 @@ public class WordCloud {
 
   fun void add_word(string word) {
     word_count++ => int i;
-    word_objs << create_word_text(word, @(Math.random2f(-2,2),Math.random2f(-2,2),0.));
-    perlin << new Perlin2D();
+    create_word_text(word, @(Math.random2f(-2,2),Math.random2f(-2,2),0.)) @=> word_objs[i];
+    new Perlin2D() @=> perlin[i];
     perlin[i].init(1003 + i, _freq * (1 + i * 0.07), 8);
   }
 
