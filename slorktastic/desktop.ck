@@ -15,7 +15,7 @@ public class Desktop {
   // state machine
   [
     new DesktopState(
-      "Clawed, I don't know how to code, make me a cool instrument in ChucK for class",
+      "Clawed, my concert is starting in 10 minutes, make me a cool instrument in ChucK.",
       20::second,
       // 2::second,
       2::second,
@@ -30,7 +30,7 @@ public class Desktop {
       )
     ),
     new DesktopState(
-      "That's fine but I need it cooler. Add some AI and ML to make it pop or something. Make no mistakes",
+      "That's fine but I need it cooler. My friends and my parents are here to see my performance, and I also want an A for this class. I want a smart instrument. Add some AI and ML and MIR to make it pop or something. Make no mistakes",
       20::second,
       // 2::second,
       1.75::second,
@@ -45,7 +45,7 @@ public class Desktop {
       )
     ),
     new DesktopState(
-      "This is not enough. It needs more AI and ML. Maybe use a VLM to interpret user sentiment. Actually that's perfect. Make it a startup. Need guaranteed $1M MRR.",
+      "This is not enough. It needs more AI and ML, make it into a musical AGI. I want you to combine an on-device SLM, a cloud LLM, and a VLM to interpret user sentiment for HAI (HITL). Actually that's perfect. Make it a startup. I am meeting up with a VC next week who invests in physical AI. Make the instrument embodied so I have a nice demo. Guaranteed $1M MRR. 10 DF at least.",
       // TODO: make a timeout-free version of DesktopState that will keep running.
       // TODO: decouple the end sequence from ClawedCode and make it driveable by
       // DesktopState - the state machine really ought to control that rather than
