@@ -2,24 +2,25 @@ public class PianoState {
   int visible_before;
   int visible_after;
   int rainbow_mode;
+  int bird_mode;
   int funky_vibrato;
 
   fun @construct() {
-    PianoState(true, false, false, false);
+    PianoState(true, false, false, false, false);
   }
   fun @construct(int vis_before, int vis_after) {
-    PianoState(vis_before, vis_after, false, false);
+    PianoState(vis_before, vis_after, false, false, false);
   }
-  fun @construct(int vis_before, int vis_after, int rainbow, int funky_vib) {
+  fun @construct(int vis_before, int vis_after, int rainbow, int bird, int funky_vib) {
     vis_before => visible_before;
     vis_after => visible_after;
     rainbow => rainbow_mode;
+    bird => bird_mode;
     funky_vib => funky_vibrato;
   }
 }
 
 public class DesktopState {
-  // TODO: add some fields to control the "bad" keyboard instrument
   string prompt;
   dur cook_duration;
   dur verb_duration;

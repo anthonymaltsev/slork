@@ -386,6 +386,9 @@ public class ClawedCode extends GGen {
           if (!begun_end_sequence) _begin_end_sequence();
         } else {
           clawed.sca(@(clawed_scale,clawed_scale,1.));
+
+          // basically a bernoulli rv: Ber(0.2)
+          if (Math.random2f(0,1) > 0.8) clawed.flash_demon();
           
           // linear interpolation between start & end points
           // 2x so it centers before it finishes scaling

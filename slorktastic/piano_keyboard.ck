@@ -37,7 +37,8 @@ class PianoKey {
   // https://miro.medium.com/v2/resize:fit:1200/1*tQYAE9PU2FIrZV5rKwT7AQ.jpeg
   [0., 30., 60., 120., 210., 270., 300.] @=> float COLOR_WHEEL[];
 
-  GPlane plane;
+  GMesh key;
+  Geometry key_geo;
   FlatMaterial mat;
   int midi_note;
   int is_black;
@@ -46,8 +47,10 @@ class PianoKey {
   float rest_y;
   int is_pressed;
   int white_idx;
+  int is_triangle;
 
   false => int rainbow_mode;
+  false => int bird_mode;
   false => int funky_vibrato;
 
   // 0 = funky_vibrato disabled, 1 = enabled
@@ -72,7 +75,7 @@ class PianoKey {
     black => is_black;
     idx => white_idx;
 
-    plane.material(mat);
+    new GMesh(key_geo, mat) @=> key;
 
     osc => env => dac;
     env.set(6::ms,80::ms,.65,200::ms);
@@ -91,17 +94,37 @@ class PianoKey {
     }
   }
 
+  fun void _init_geometry() {
+    is_black&&bird_mode => is_triangle;
+    if (is_triangle) {
+      key_geo.vertexCount(3);
+      key_geo.positions([@(-.5,.5,0.), @(.5,.5,0.), @(0.,-.5,0.)]);
+      key_geo.indices([0,1,2]);
+    } else {
+      key_geo.vertexCount(4);
+      key_geo.positions([@(-.5,-.5,0.), @(.5,-.5,0.), @(.5,.5,0.), @(-.5,.5,0.)]);
+      // 2 triangles to make 1 rectangle
+      key_geo.indices([0,1,2,0,2,3]);
+    }
+  }
+
   fun void place(float cx, float cy, float w, float h, float z) {
     cy => rest_y;
-    plane.sca(@(w, h, 1.));
-    plane.pos(@(cx, cy, z));
+    _init_geometry();
+    key.sca(@(w, h, 1.));
+    key.pos(@(cx, cy, z));
+  }
+
+  fun void reshape() {
+    _init_geometry();
   }
 
   fun int hits(vec3 mp) {
-    // ensure mouse position (mp) is within bounds of the key.
-    // nuff said
-    plane.scaWorld() => vec3 s;
-    plane.posWorld() => vec3 p;
+    // TODO: consider custom hits logic for inside of triangle
+    // rather than treating it like a rectangle (this is just
+    // quicker n dirtier i guess)
+    key.scaWorld() => vec3 s;
+    key.posWorld() => vec3 p;
     return (mp.x > p.x - s.x/2. && mp.x < p.x + s.x/2. &&
             mp.y > p.y - s.y/2. && mp.y < p.y + s.y/2.);
   }
@@ -121,8 +144,8 @@ class PianoKey {
     
     1 => is_pressed;
     mat.color(pressed_color);
-    plane.pos() => vec3 p;
-    plane.pos(@(p.x, rest_y, p.z));
+    key.pos() => vec3 p;
+    key.pos(@(p.x, rest_y, p.z));
     env.keyOn();
   }
 
@@ -133,15 +156,19 @@ class PianoKey {
     if (_lfo_loop != null) Machine.remove(_lfo_loop.id());
     0 => is_pressed;
     mat.color(base_color);
-    plane.pos() => vec3 p;
-    plane.pos(@(p.x, rest_y, p.z));
+    key.pos() => vec3 p;
+    key.pos(@(p.x, rest_y, p.z));
     env.keyOff();
   }
 
   fun void recolor_white() {
     if (rainbow_mode) {
-      Color.hsv2rgb(@(COLOR_WHEEL[white_idx % COLOR_WHEEL.size()],.7,1.)) => base_color;
-      base_color - @(0,.1,.1) => pressed_color;
+      @(COLOR_WHEEL[white_idx % COLOR_WHEEL.size()],.7,1.) => vec3 hsv;
+      Color.hsv2rgb(hsv) => base_color;
+      Color.hsv2rgb(hsv - @(0,.1,.1)) => pressed_color;
+    } else if (bird_mode) {
+      @(.7,.8,.2) => base_color;
+      @(.6,.7,.16) => pressed_color;
     } else {
       COLOR_WHITE => base_color;
       COLOR_WHITE_PRESSED => pressed_color;
@@ -178,6 +205,7 @@ class PianoKey {
 // introduced by the "clawed code" "agent"
 public class PianoKeyboard extends GGen {
   @(0.08, 0.06, 0.05) => vec3 COLOR_BODY;
+  @(.14,.28,1.) => vec3 COLOR_BIRD_BODY;
 
   // C4=60, D4=62, E4=64, F4=65, G4=67, A4=69, B4=71, C5=72
   [60, 62, 64, 65, 67, 69, 71, 72] @=> int white_midi[];
@@ -208,6 +236,7 @@ public class PianoKeyboard extends GGen {
 
   int playable;
   int rainbow_mode;
+  int bird_mode;
   int funky_vibrato;
   int _attached;
 
@@ -240,6 +269,21 @@ public class PianoKeyboard extends GGen {
       wk.recolor_white();
     }
     enabled => rainbow_mode;
+  }
+
+  fun void set_bird_mode(int enabled) {
+    PianoKey @ wk;
+    for (0 => int i; i < white_keys.size(); i++) {
+      white_keys[i] @=> wk;
+      enabled => wk.bird_mode;
+      wk.recolor_white();
+    }
+    for (0 => int i; i < black_keys.size(); i++) {
+      enabled => black_keys[i].bird_mode;
+      black_keys[i].reshape();
+    }
+    body_mat.color(enabled ? COLOR_BIRD_BODY : COLOR_BODY);
+    enabled => bird_mode;
   }
 
   fun void set_funky_vibrato(int enabled) {
@@ -276,7 +320,7 @@ public class PianoKeyboard extends GGen {
       white_keys << wk;
       keys_left + (i + 0.5) * white_w => float cx;
       wk.place(cx, white_cy, white_w - gap, keys_h, 0.02);
-      wk.plane --> this;
+      wk.key --> this;
     }
 
     white_w * 0.62 => float black_w;
@@ -289,7 +333,7 @@ public class PianoKeyboard extends GGen {
       black_keys << bk;
       keys_left + (black_after[i] + 1) * white_w => float cx;
       bk.place(cx, black_cy, black_w, black_h, 0.04);
-      bk.plane --> this;
+      bk.key --> this;
     }
   }
 

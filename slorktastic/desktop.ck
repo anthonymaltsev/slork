@@ -17,11 +17,13 @@ public class Desktop {
     new DesktopState(
       "Clawed, I don't know how to code, make me a cool instrument in ChucK for class",
       20::second,
+      // 2::second,
       2::second,
       false,
       ["Cooking","Brewing","Frying","Flambéing","Whisking"],
       new PianoState(
         false,
+        true,
         true,
         false,
         false
@@ -30,12 +32,14 @@ public class Desktop {
     new DesktopState(
       "That's fine but I need it cooler. Add some AI and ML to make it pop or something. Make no mistakes",
       20::second,
+      // 2::second,
       1.75::second,
       false,
       ["Cooking","Brewing", "Newspapering", "Honking", "Frying", "Writing", "Raining", "Vibing"],
       new PianoState(
         false,
         true,
+        false,
         true,
         true
       )
@@ -163,6 +167,7 @@ public class Desktop {
   fun void _dispatch_initial_piano_state(PianoState ps) {
     _set_piano_showing(ps.visible_before);
     piano.set_rainbow_mode(ps.rainbow_mode);
+    piano.set_bird_mode(ps.bird_mode);
     piano.set_funky_vibrato(ps.funky_vibrato);
   }
 
