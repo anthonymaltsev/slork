@@ -129,6 +129,36 @@ public class ArbSynth2 {
         }
     }
 
+    // ---- pad play func ---- 
+    // loops audios, and takes in updates from controller
+    float pad_mix;
+
+    fun void pad_playback() {
+        pad_playback((dur1+dur2)/2.);
+    }
+
+    fun void pad_playback(dur duration) {
+        while (true) {
+            for (0::samp => dur t; t <= duration; 1::ms +=> t) {
+                t/duration => float progress;
+                for (0 => int j; j < N; j++) {
+                    interp_lookup(freq_gain1, progress, j) => vec2 fg1;
+                    interp_lookup(freq_gain2, progress, j) => vec2 fg2;
+                    pad_mix * fg1.y + (1. - pad_mix) * fg2.y => sins[j].gain;
+                    Math.exp(pad_mix * (fg1.x > 0 ? Math.log(fg1.x) : -1000.) + (1. - pad_mix) * (fg2.x > 0 ? Math.log(fg2.x) : -1000.)) => sins[j].freq;
+                }
+                1::ms => now;
+            }
+        }
+    }
+
+    fun void set_pad_mix(float pad_mix_in) {
+        Math.clampf(pad_mix_in, 0., 1.) => pad_mix;
+    }
+    fun float get_pad_mix() {
+        return pad_mix;
+    }
+
 }
 
 ArbSynth2 arb(me.arg(0), me.arg(1), dac);
