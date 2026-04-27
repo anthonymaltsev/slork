@@ -1,4 +1,4 @@
-@import {"perlin.ck"}
+@import {"perlin.ck", "perlin_cloud.ck"}
 
 public class Clawed extends GGen {
   @(.14,.28,1.) => vec3 BODY_COLOR;
@@ -156,12 +156,6 @@ public class Clawed extends GGen {
     }
   }
 
-  fun void _flash_demon() {
-    set_demonic(1);
-    70::ms => now;
-    set_demonic(0);
-  }
-
   fun void _init_wing(GPlane wing, GPlane wingtip, int right) {
     @((right ? 1 : -1) * (BODY_WIDTH+WING_WIDTH)/2.,-WING_WIDTH/2,0.) => vec3 wing_pos;
 
@@ -255,7 +249,6 @@ public class Clawed extends GGen {
 public class ClawedAnimated extends Clawed {
   Shred @ blinking;
   Shred @ flapping;
-  Shred @ demon_flash;
 
   fun @construct(float scale, vec3 position) {
     ClawedAnimated(scale, position, false);
@@ -270,7 +263,6 @@ public class ClawedAnimated extends Clawed {
   fun @destruct() {
     _kill_spork(blinking);
     _kill_spork(flapping);
-    _kill_spork(demon_flash);
   }
 
   fun void animate_blinking() {
@@ -281,28 +273,15 @@ public class ClawedAnimated extends Clawed {
     spork ~ _animate_flapping() @=> flapping;
   }
 
-  fun void flash_demon() {
-    _kill_spork(demon_flash);
-    spork ~ _flash_demon() @=> demon_flash;
-  }
-
   fun void _kill_spork(Shred sp) {
     if (sp != null) Machine.remove(sp.id());
   }
 }
 
-public class ClawedFlock {
-  ClawedAnimated birdies[];
-  Perlin2D perlin[];
-
-  0 => int birdie_count;
-  1::second => dur _freq;
-  1 => float _scale;
-  0 => int wait_count;
-  10 => int MAX_WAIT;
+public class ClawedFlock extends PerlinCloud {
   0 => int started;
   time start_time;
-  20::second => dur time_to_be_constrained_to_window;
+  20::second => dur constrained_window;
 
   4.5 => float term_w;
   term_w * (2./3) => float term_h;
@@ -310,16 +289,16 @@ public class ClawedFlock {
   0.4 => float bird_h;
   @(-1.6,.9,0.) => vec3 term_center;
 
-  fun @construct(int size, dur freq, float scale) {
-    freq => _freq;
-    scale => _scale;
-    new ClawedAnimated[size] @=> birdies;
-    new Perlin2D[size] @=> perlin;
+  @(0.5,1.1) => vec2 spawn_scale_range;
+  0.4 => float spawn_jitter;
+  7. => float spawn_z;
 
-    for (0 => int i; i < size; i++) {
-      add_birdie();
-    }
+  fun @construct(int size, dur freq_in, float scale_in) {
+    PerlinCloud(freq_in, scale_in, 10);
+    for (0 => int i; i < size; i++) add_birdie();
   }
+
+  fun int birdie_count() { return count(); }
 
   fun void start() {
     if (!started) {
@@ -329,81 +308,108 @@ public class ClawedFlock {
   }
 
   fun void add_birdie() {
-    birdie_count++ => int i;
-    birdies << new ClawedAnimated(Math.random2f(.5,1.1) * _scale, @(Math.random2f(term_center.x - 0.4, term_center.x + 0.4),Math.random2f(term_center.y - 0.4, term_center.y + 0.4),7.));
-    // add to top-level scene, since the GGen no longer auto-adds
-    birdies[i] --> GG.scene();
-    birdies[i].animate_blinking();
-    birdies[i].animate_flapping();
-    perlin << new Perlin2D();
-    perlin[i].init(1003 + i, _freq * (1 + i * 0.07), 8);
+    new ClawedAnimated(
+      Math.random2f(spawn_scale_range.x, spawn_scale_range.y) * scale,
+      @(Math.random2f(term_center.x - spawn_jitter, term_center.x + spawn_jitter),
+        Math.random2f(term_center.y - spawn_jitter, term_center.y + spawn_jitter),
+        spawn_z)
+    ) @=> ClawedAnimated b;
+    b.animate_blinking();
+    b.animate_flapping();
+    add(b);
   }
 
-  fun void pos(vec3 pos_in) {
-    if (++wait_count >= MAX_WAIT) {
-      for (0 => int i; i < birdies.size(); i++) {
-        pos_in + perlin[i].generate(now + 8::second) => vec3 new_pos;
-        now - start_time => dur time_being_crazy;
-        if (time_being_crazy < time_to_be_constrained_to_window) {
-          @(Math.clampf(new_pos.x, -1.6-term_w/2. + bird_w, -1.6+term_w/2. - bird_w), Math.clampf(new_pos.y, 0.9-term_h/2. + bird_h, 0.9+term_h/2. - bird_h), Math.clampf(new_pos.z, 0., 0.)) => new_pos;
-        }
-        birdies[i].pos(new_pos);
-      }
-      0 => wait_count;
+  fun vec3 _position_for(int i, vec3 base, vec2 offset) {
+    base + @(offset.x, offset.y, 0.) => vec3 p;
+    if ((now - start_time) < constrained_window) {
+      @(
+        Math.clampf(p.x, term_center.x - term_w/2. + bird_w, term_center.x + term_w/2. - bird_w),
+        Math.clampf(p.y, term_center.y - term_h/2. + bird_h, term_center.y + term_h/2. - bird_h),
+        Math.clampf(p.z, 0., 0.)
+      ) => p;
     }
+    return p;
   }
 }
 
-// TODO: make a superclass for both ClawedFlock and WordCloud
-// to manage perlin/positioning calculations
-public class WordCloud {
-  GText word_objs[];
-  Perlin2D perlin[];
+public class WordCloud extends PerlinCloud {
+  "fonts/DejaVuSansMono.ttf" => string font_face;
+  @(1., 1., 1., 0.9) => vec4 word_color;
+  @(0.6, 1.1) => vec2 spawn_size_range;
+  0.4 => float size_factor;
+  @(-2., 2.) => vec2 spawn_xy_range;
 
-  0 => int word_count;
-  1::second => dur _freq;
-  1 => float _scale;
-  0 => int wait_count;
-  16 => int MAX_WAIT;
-
-  fun @construct(string words[], dur freq, float scale, int reps) {
-    words.size() => int size;
-    freq => _freq;
-    scale => _scale;
-    new GText[size] @=> word_objs;
-    new Perlin2D[size] @=> perlin;
-
-    for (0 => int i; i < reps; i++) {
-      for (0 => int j; j < size; j++) {
-        add_word(words[j]);
-      }
+  fun @construct(string words[], dur freq_in, float scale_in, int reps) {
+    PerlinCloud(freq_in, scale_in, 16);
+    for (0 => int r; r < reps; r++) {
+      for (0 => int j; j < words.size(); j++) add_word(words[j]);
     }
   }
+
+  fun int word_count() { return count(); }
 
   fun void add_word(string word) {
-    word_count++ => int i;
-    create_word_text(word, @(Math.random2f(-2,2),Math.random2f(-2,2),0.)) @=> word_objs[i];
-    new Perlin2D() @=> perlin[i];
-    perlin[i].init(1003 + i, _freq * (1 + i * 0.07), 8);
-  }
-
-  fun void pos(vec3 pos_in) {
-    if (++wait_count >= MAX_WAIT){
-      for (0 => int i; i < word_objs.size(); i++) {
-        word_objs[i].pos(pos_in + GG.camera().viewSize() * perlin[i].generate(now + (i * 8::second)));
-      }
-      0 => wait_count;
-    }
+    add(create_word_text(word,
+      @(Math.random2f(spawn_xy_range.x, spawn_xy_range.y),
+        Math.random2f(spawn_xy_range.x, spawn_xy_range.y), 0.)));
   }
 
   fun GText create_word_text(string word, vec3 pos) {
-    GText txt --> GG.scene();
-    txt.font("fonts/DejaVuSansMono.ttf");
-    txt.size(_scale * .4 * Math.random2f(.6,1.1));
-    txt.color(@(1., 1., 1., 0.9));
+    GText txt;
+    txt.font(font_face);
+    txt.size(scale * size_factor * Math.random2f(spawn_size_range.x, spawn_size_range.y));
+    txt.color(word_color);
     txt.controlPoints(@(0., 1.));
     txt.text(word);
     txt.pos(pos);
     return txt;
+  }
+
+  fun time _sample_time(int i) {
+    return now + (i * 8::second);
+  }
+
+  fun vec3 _position_for(int i, vec3 base, vec2 offset) {
+    GG.camera().viewSize() => float vs;
+    return base + @(vs * offset.x, vs * offset.y, 0.);
+  }
+}
+
+public class GlitchCloud extends PerlinCloud {
+  @(0.05, 0.6) => vec2 size_range;
+  7. => float spawn_z;
+
+  @(-3., 3.) => vec2 x_range;
+  @(-2., 2.) => vec2 y_range;
+
+  fun @construct() {
+    PerlinCloud(200::ms, 1., 8);
+  }
+
+  fun void populate(int n) {
+    clear();
+    for (0 => int i; i < n; i++) _add_square();
+  }
+
+  fun vec3 _random_pos() {
+    return @(
+      Math.random2f(x_range.x, x_range.y),
+      Math.random2f(y_range.x, y_range.y),
+      spawn_z);
+  }
+
+  fun void _add_square() {
+    GPlane sq;
+    FlatMaterial mat;
+    @(1.,1.,1.) => mat.color;
+    mat => sq.mat;
+    Math.random2f(size_range.x, size_range.y) => float s;
+    @(s, s, 1.) => sq.sca;
+    _random_pos() => sq.pos;
+    add(sq);
+  }
+
+  fun vec3 _position_for(int i, vec3 base, vec2 offset) {
+    return _random_pos();
   }
 }

@@ -98,13 +98,16 @@ public class ClawedCode extends GGen {
   GText info;
 
   int _chrome_attached;
+  Shred @ _demon_flash_shred;
 
   ClawedCodePromptEvent wait;
   Event state_completed;
   Event key_down;
 
-  fun @construct() {
-    // _load_verbs();
+  GlitchCloud @ glitch_cloud;
+
+  fun @construct(GlitchCloud gc) {
+    gc @=> glitch_cloud;
   }
 
   fun void setSize(float w, float h) {
@@ -267,7 +270,7 @@ public class ClawedCode extends GGen {
   }
 
   fun void _run_add_birdies() {
-    while (flock.birdie_count < 32){//128) {
+    while (flock.count() < 32){//128) {
       flock.add_birdie();
       700::ms => now;
     }
@@ -390,7 +393,7 @@ public class ClawedCode extends GGen {
           clawed.sca(@(clawed_scale,clawed_scale,1.));
 
           // basically a bernoulli rv: Ber(0.2)
-          if (Math.random2f(0,1) > 0.8) clawed.flash_demon();
+          if (Math.random2f(0,1) > 0.8) flash_demon();
           
           // linear interpolation between start & end points
           // 2x so it centers before it finishes scaling
@@ -402,6 +405,20 @@ public class ClawedCode extends GGen {
         }
       }
     }
+  }
+
+  fun void flash_demon() {
+    if (_demon_flash_shred != null) Machine.remove(_demon_flash_shred.id());
+    spork ~ _run_flash_demon() @=> _demon_flash_shred;
+  }
+
+  fun void _run_flash_demon() {
+    clawed.set_demonic(1);
+    glitch_cloud.populate(Math.random2(60, 120));
+    glitch_cloud.enable();
+    Math.random2(40,175)::ms => now;
+    clawed.set_demonic(0);
+    glitch_cloud.disable();
   }
 
   fun void _run_spinner() {

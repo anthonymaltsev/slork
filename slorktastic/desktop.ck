@@ -16,8 +16,8 @@ public class Desktop {
   [
     new DesktopState(
       "Clawed, my concert is starting in 10 minutes, make me a cool instrument in ChucK.",
-      20::second,
-      // 2::second,
+      // 20::second,
+      2::second,
       2::second,
       false,
       ["Cooking","Brewing","Frying","Flambéing","Whisking"],
@@ -31,8 +31,8 @@ public class Desktop {
     ),
     new DesktopState(
       "That's fine but I need it cooler. My friends and my parents are here to see my performance, and I also want an A for this class. I want a smart instrument. Add some AI and ML and MIR to make it pop or something. Make no mistakes",
-      20::second,
-      // 2::second,
+      // 20::second,
+      2::second,
       1.75::second,
       false,
       ["Cooking","Brewing", "Newspapering", "Honking", "Frying", "Writing", "Raining", "Vibing"],
@@ -61,7 +61,7 @@ public class Desktop {
   0 => int current_state_idx;
 
   GPlane wallpaper;
-  ClawedCode terminal;
+  ClawedCode @ terminal;
   PianoKeyboard piano;
   keyBeats kbs(200::ms, [1, 2, 1], 1); // basic snare 
   keyBeats kbs1(100::ms, [4, 1, 1, 1, 1], 0); // hats
@@ -71,13 +71,16 @@ public class Desktop {
 
   
   
+  GlitchCloud glitch_cloud;
 
   fun @construct() {
+    new ClawedCode(glitch_cloud) @=> terminal;
     _init_window();
     _init_camera();
     _init_desktop();
     _init_terminal();
     _init_piano();
+    glitch_cloud.disable();
   }
 
   fun void _kb_listener(){
@@ -100,11 +103,34 @@ public class Desktop {
     spork ~ kbs2.addTrack(20::second);
     spork ~ kbs3.addTrack(50::second);
     spork ~ kbs4.addTrack(80::second);
+    GG.nextFrame() => now;
+    // window dims aren't real until after the first frame ticks
+    GG.frameWidth() => WINDOW_W;
+    GG.frameHeight() => WINDOW_H;
+    WINDOW_W/WINDOW_H => ASPECT_RATIO;
+    _init_glitch();
     while (true) {
       GG.nextFrame() => now;
       terminal.update();
       piano.update();
+      glitch_cloud.pos(@(0.,0.,0.));
     }
+  }
+
+  fun void set_glitching(int on) {
+    if (on) {
+      glitch_cloud.populate(Math.random2(60, 120));
+      glitch_cloud.enable();
+    } else {
+      glitch_cloud.disable();
+    }
+  }
+
+  fun void _init_glitch() {
+    GG.camera().viewSize() => float vh;
+    vh * ASPECT_RATIO => float vw;
+    @(-vw/2., vw/2.) => glitch_cloud.x_range;
+    @(-vh/2., vh/2.) => glitch_cloud.y_range;
   }
 
   fun void _init_window() {
