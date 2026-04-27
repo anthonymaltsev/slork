@@ -101,6 +101,7 @@ public class ClawedCode extends GGen {
 
   ClawedCodePromptEvent wait;
   Event state_completed;
+  Event key_down;
 
   fun @construct() {
     // _load_verbs();
@@ -232,6 +233,7 @@ public class ClawedCode extends GGen {
     while (true) {
       keyboard.wait => now;
       if (!prompt_editable) continue;
+      key_down.broadcast();
       
       // "enter" key starts the whole shabang
       if (keyboard.wait.enter) {

@@ -1,4 +1,4 @@
-@import {"clawed-code.ck", "piano_keyboard.ck", "state.ck"}
+@import {"clawed-code.ck", "piano_keyboard.ck", "state.ck", "keyboard_sound.ck"}
 
 public class Desktop {
   // 1024 => int WINDOW_W;
@@ -63,6 +63,14 @@ public class Desktop {
   GPlane wallpaper;
   ClawedCode terminal;
   PianoKeyboard piano;
+  keyBeats kbs(200::ms, [1, 2, 1], 1); // basic snare 
+  keyBeats kbs1(100::ms, [4, 1, 1, 1, 1], 0); // hats
+  keyBeats kbs2(200::ms, [5, 3], 2); // kick drum
+  keyBeats kbs3(100::ms, [3, 1, 2, 2], 3); // high snare
+  keyBeats kbs4(400::ms, [5, 3], 4); // crash
+
+  
+  
 
   fun @construct() {
     _init_window();
@@ -72,9 +80,26 @@ public class Desktop {
     _init_piano();
   }
 
+  fun void _kb_listener(){
+    while (true) {
+      terminal.key_down => now;
+      1 => kbs.wasKeyDown;
+      1 => kbs1.wasKeyDown;
+      1 => kbs2.wasKeyDown;
+      1 => kbs3.wasKeyDown;
+      1 => kbs4.wasKeyDown;
+    }
+  }
+
   fun void run() {
     terminal.begin();
     spork ~ _handle_terminal_events();
+    spork ~ _kb_listener();
+    spork ~ kbs.addTrack(0::second);
+    spork ~ kbs1.addTrack(10::second);
+    spork ~ kbs2.addTrack(20::second);
+    spork ~ kbs3.addTrack(50::second);
+    spork ~ kbs4.addTrack(80::second);
     while (true) {
       GG.nextFrame() => now;
       terminal.update();

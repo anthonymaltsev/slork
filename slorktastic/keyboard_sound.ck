@@ -34,7 +34,7 @@ public class keyBeats {
         if (perc_type == 0){
             // noise envelope
             n => key => r => dac;
-            0.3 => n.gain;
+            0.1 => n.gain;
             0.01 => r.mix;
             key.set( 5::ms, 4::ms, .3, 5::ms );
         }
