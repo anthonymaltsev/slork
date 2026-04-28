@@ -14,6 +14,127 @@ public class ClawedCodePromptEvent extends Event {
   }
 }
 
+public class DemonSounder {
+  Gain master_gain => dac;
+
+  SawOsc base_osc => master_gain;
+  SawOsc fifth_osc => master_gain;
+  TriOsc bassy_osc => master_gain;
+  Noise scary_noise => master_gain;
+
+  // vibrato
+  TriOsc lfo => Envelope lfo_env => blackhole;
+
+  // implicit state here - if null, not running
+  Shred @ _shred;
+
+  1000. => float base_freq;
+
+  fun @construct() {
+    300::ms => lfo_env.duration;
+
+    1 => base_osc.gain;
+    .6 => fifth_osc.gain;
+    .8 => bassy_osc.gain;
+    .5 => scary_noise.gain;
+
+    // never changes (for now)
+    (base_freq * 1/8) => bassy_osc.freq;
+
+    10 => lfo.freq;
+    -0.25 => lfo.phase;
+    lfo_env.keyOn();
+    
+    // start muted
+    0 => master_gain.gain;
+  }
+
+  fun start() {
+    if (_shred != null) return; // noop
+    1 => master_gain.gain;
+    spork ~ _run_sound_loop() @=> _shred;
+  }
+  
+  fun stop() {
+    if (_shred == null) return;
+    0 => master_gain.gain;
+    Machine.remove(_shred.id());
+    null @=> _shred;
+  }
+
+  function escalate_pitch() {
+    30 +=> base_freq;
+  }
+
+  fun _run_sound_loop() {
+    float cur_freq;
+    while(true){
+      0.03*lfo_env.last() + 1 => float vibrato_waver;
+      (base_freq*vibrato_waver) => cur_freq;
+
+      cur_freq => base_osc.freq;
+      // perfect fifth ratio 3/2
+      (cur_freq*3/2) => fifth_osc.freq;
+
+      5::ms => now;
+    }
+  }
+}
+
+public class LightsManager {
+  // "localhost" => string hostname;
+  "192.168.185.187" => string hostname;
+  8005 => int port;
+
+  Shred @ _flash_spork;
+
+  fun void init() {
+    _reset_blue();
+  }
+
+  fun void flash() {
+    if (_flash_spork != null) {
+      Machine.remove(_flash_spork.id());
+      null => _flash_spork;
+      _reset_blue();
+    }
+    spork ~ _flash() @=> _flash_spork;
+  }
+
+  fun void _flash() {
+    _send_osc("/cs/chan/select/1");
+    _send_osc("/cs/color/hs/0/100");
+    200::ms => now;
+    _reset_blue();
+    200::ms => now;
+  }
+
+  fun void _reset_blue() {
+    _send_osc("/cs/chan/select/1");
+    _send_osc("/cs/color/hs/270/100");
+  }
+
+  fun void set_spotlight(int val) {
+    _send_osc("/cs/chan/select/11");
+    _send_osc("/cs/chan/at/" + val);
+  }
+
+  fun void _send_osc(string chan) {
+    _make_message(chan) @=> OscOut msg;
+    _send_osc(msg);
+  }
+  fun void _send_osc(OscOut msg) {
+    spork ~ msg.send();
+  }
+
+  fun OscOut _make_message(string chan) {
+    OscOut xmit;
+    xmit.dest(hostname, port);
+    xmit.start(chan);
+    return xmit;
+  }
+}
+
 public class ClawedCode extends GGen {
   "" => string DEFAULT_VERB;
   ["·","✢","*","✶","✻","✽"] @=> string SPINNER_SEQUENCE[];
@@ -63,6 +184,7 @@ public class ClawedCode extends GGen {
   0 => int verb_idx;
   0 => int got_crazy;
   0 => int begun_end_sequence;
+  0 => int final_view_shown;
 
   .7 => float clawed_scale;
   vec3 clawed_pos;
@@ -92,6 +214,9 @@ public class ClawedCode extends GGen {
   FlatMaterial btn_max_mat;
   GLines border;
 
+  // end scene cover
+  GPlane cover;
+
   // promoted from locals in _draw_top_box so re-layout is safe
   GLines outline;
   GText heading;
@@ -100,11 +225,17 @@ public class ClawedCode extends GGen {
   int _chrome_attached;
   Shred @ _demon_flash_shred;
 
+  Shred spinner_shred;
+  Shred verb_shred;
+
   ClawedCodePromptEvent wait;
   Event state_completed;
   Event key_down;
 
   GlitchCloud @ glitch_cloud;
+
+  DemonSounder demon_sounder;
+  LightsManager _lights;
 
   fun @construct(GlitchCloud gc) {
     gc @=> glitch_cloud;
@@ -141,6 +272,7 @@ public class ClawedCode extends GGen {
   }
 
   fun void begin() {
+    _lights.init();
     spork ~ _run_text_input();
   }
 
@@ -155,11 +287,16 @@ public class ClawedCode extends GGen {
     verb_line.text("  " + current_verb + "…");
   }
 
+  fun void set_prompt_editable(int enabled) {
+    enabled => prompt_editable;
+    _lights.set_spotlight(enabled ? 100 : 0);
+  }
+
   fun void set_desktop_state(DesktopState st) {
     0 => drawn_length;
     0 => verb_idx;
     0 => got_crazy;
-    1 => prompt_editable;
+    set_prompt_editable(1);
 
     st @=> desktop_state;
 
@@ -172,12 +309,14 @@ public class ClawedCode extends GGen {
     wait.broadcast();
 
     // hide cursor
-    0 => prompt_editable;
+    set_prompt_editable(0);
     _update_prompt_display();
 
     // verb/spinner init
     _redraw_verb();
-    _run_verb();
+    // sporked so _run_text_input can keep polling keyboard events
+    // whoops lol glad i fixed that
+    spork ~ _run_verb();
   }
 
   fun void _run_verb() {
@@ -186,15 +325,12 @@ public class ClawedCode extends GGen {
     desktop_state.verb_duration => verb_change_delay;
     0 => verb_idx;
 
-    spork ~ _run_spinner() @=> Shred spinner_shred;
-    spork ~ _run_change_verb() @=> Shred verb_shred;
+    spork ~ _run_spinner() @=> spinner_shred;
+    spork ~ _run_change_verb() @=> verb_shred;
 
     // wait to kill & remove until cook duration passes
     desktop_state.cook_duration => now;
-    Machine.remove(spinner_shred.id());
-    Machine.remove(verb_shred.id());
-    verb_line --< this;
-    verb_spinner --< this;
+    _hide_verb_spinner();
 
     state_completed.broadcast();
   }
@@ -205,7 +341,9 @@ public class ClawedCode extends GGen {
     string buzzwords;
     int seen_words[0];
 
-    prompt_text => string pr; // make copy of prompt to mutate
+    // copy from the DESKTOP STATE rather than drawn prompt,
+    // just in case performer does not finish typing!
+    desktop_state.prompt => string pr; // make copy of prompt to mutate
     string matches[1];
     string word;
     int is_match;
@@ -235,6 +373,14 @@ public class ClawedCode extends GGen {
   fun void _run_text_input() {
     while (true) {
       keyboard.wait => now;
+
+      <<< "ev", keyboard.wait.val >>>;
+
+      if (begun_end_sequence && (keyboard.wait.val.find("q") >= 0 || keyboard.wait.val.find("Q") >= 0)) {
+        _show_final_view();
+        continue;
+      }
+
       if (!prompt_editable) continue;
       key_down.broadcast();
       
@@ -265,13 +411,15 @@ public class ClawedCode extends GGen {
   fun void _get_crazy_with_it() {
     // flap bird
     clawed.animate_flapping();
-    // new WordCloud(terminal_buzzwords, 100::ms, 1.25, 4) @=> word_cloud;
+    new WordCloud(100::ms, 1.25) @=> word_cloud;
     spork ~ _run_add_birdies();
   }
 
   fun void _run_add_birdies() {
-    while (flock.count() < 32){//128) {
-      flock.add_birdie();
+    0 => int i;
+    while (flock.count() < 32 || word_cloud.count() < terminal_buzzwords.size()){//128) {
+      if (flock.count() < 32) flock.add_birdie();
+      if (word_cloud.count() < terminal_buzzwords.size()) word_cloud.add_word(terminal_buzzwords[i++]);
       700::ms => now;
     }
   }
@@ -324,13 +472,15 @@ public class ClawedCode extends GGen {
   }
 
   fun void _run_end_sequence() {
+    // stop demon flashing first and foremost
+    _kill_spork(_demon_flash_shred);
     // TODO: consider making this more than a black screen
     // (the idea being that the screen goes black, then the bird
     // comes out in a suit)
     // not sure that positioning a giant black GPlane over the scene
     // is the most efficient way, but fttb it's quick'n'dirty
     2::second => now;
-    GPlane cover;
+    if (final_view_shown) return;
     FlatMaterial mat;
     mat.color(COLOR_BG);
     cover.material(mat);
@@ -345,6 +495,28 @@ public class ClawedCode extends GGen {
     // WARNING to anthony/siqi/any other godforsaken soul perusing this code:
     // I am explicitly adding this cover to the global scene
     cover --> GG.scene();
+  }
+
+  fun void _show_final_view() {
+    if (final_view_shown) return;
+    1 => final_view_shown;
+    <<< "showing final view" >>>;
+    // hide flocklike things
+    word_cloud.disable();
+    glitch_cloud.disable(); // this one shouldnt be necessary, just in case
+    flock.disable();
+    // stop verb stuff
+    _hide_verb_spinner();
+    // ungruck cover screen and clawed
+    clawed --< this;
+    cover --< GG.scene();
+  }
+
+  fun void _hide_verb_spinner() {
+    _kill_spork(spinner_shred);
+    _kill_spork(verb_shred);
+    verb_line --< this;
+    verb_spinner --< this;
   }
 
   fun void _run_change_verb() {
@@ -408,17 +580,23 @@ public class ClawedCode extends GGen {
   }
 
   fun void flash_demon() {
-    if (_demon_flash_shred != null) Machine.remove(_demon_flash_shred.id());
+    _kill_spork(_demon_flash_shred);
+    // happens on its own
+    _lights.flash();
     spork ~ _run_flash_demon() @=> _demon_flash_shred;
   }
 
   fun void _run_flash_demon() {
+    demon_sounder.start();
     clawed.set_demonic(1);
     glitch_cloud.populate(Math.random2(60, 120));
     glitch_cloud.enable();
-    Math.random2(40,175)::ms => now;
+    Math.random2(60,300)::ms => now;
     clawed.set_demonic(0);
     glitch_cloud.disable();
+    demon_sounder.stop();
+    // higher pitch on next
+    demon_sounder.escalate_pitch();
   }
 
   fun void _run_spinner() {
@@ -466,7 +644,7 @@ public class ClawedCode extends GGen {
 
   fun void _show_verb(string verb, int crazy) {
     verb => current_verb;
-    if (verb_pulse != null) Machine.remove(verb_pulse.id());
+    _kill_spork(verb_pulse);
     if (crazy) spork ~ _pulse_verb_once() @=> verb_pulse;
   }
 
@@ -655,5 +833,9 @@ public class ClawedCode extends GGen {
     info.color(@(1., 1., 1., 0.9));
     info.controlPoints(@(1., 1.));
     info.pos(RELATIVE + @(WINDOW_W - TOP_BOX_INSET - FONT_SIZE, -TOP_BOX_INSET - (FONT_SIZE * 3), 0.));
+  }
+
+  fun void _kill_spork(Shred sp) {
+    if (sp != null) Machine.remove(sp.id());
   }
 }

@@ -339,6 +339,10 @@ public class WordCloud extends PerlinCloud {
   0.4 => float size_factor;
   @(-2., 2.) => vec2 spawn_xy_range;
 
+  fun @construct(dur freq_in, float scale_in) {
+    PerlinCloud(freq_in, scale_in, 16);
+  }
+
   fun @construct(string words[], dur freq_in, float scale_in, int reps) {
     PerlinCloud(freq_in, scale_in, 16);
     for (0 => int r; r < reps; r++) {
@@ -349,6 +353,7 @@ public class WordCloud extends PerlinCloud {
   fun int word_count() { return count(); }
 
   fun void add_word(string word) {
+    <<< "adding word", word >>>;
     add(create_word_text(word,
       @(Math.random2f(spawn_xy_range.x, spawn_xy_range.y),
         Math.random2f(spawn_xy_range.x, spawn_xy_range.y), 0.)));
@@ -382,19 +387,30 @@ public class GlitchCloud extends PerlinCloud {
   @(-3., 3.) => vec2 x_range;
   @(-2., 2.) => vec2 y_range;
 
+  float VW;
+  float VH;
+  float ASPECT_RATIO;
+
   fun @construct() {
     PerlinCloud(200::ms, 1., 8);
   }
 
   fun void populate(int n) {
+    _init();
     clear();
     for (0 => int i; i < n; i++) _add_square();
   }
 
+  fun void _init() {
+    GG.frameWidth()/GG.frameHeight() => ASPECT_RATIO;
+    GG.camera().viewSize() => VH;
+    VH * ASPECT_RATIO => VW;
+  }
+
   fun vec3 _random_pos() {
     return @(
-      Math.random2f(x_range.x, x_range.y),
-      Math.random2f(y_range.x, y_range.y),
+      Math.random2f(-VW/2., VW/2.),
+      Math.random2f(-VH/2., VH/2.),
       spawn_z);
   }
 

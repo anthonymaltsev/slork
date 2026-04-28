@@ -52,7 +52,7 @@ public class GKeyboardReceiver {
 
   }
 
-  fun listen() {
+  fun void listen() {
     (
       GWindow.key(GWindow.KEY_LEFTSHIFT) ||
       GWindow.key(GWindow.KEY_RIGHTSHIFT)

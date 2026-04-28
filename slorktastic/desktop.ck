@@ -61,6 +61,8 @@ public class Desktop {
   0 => int current_state_idx;
 
   GPlane wallpaper;
+  GPlane wallpaper_filter;
+  FlatMaterial wallpaper_filter_mat;
   ClawedCode @ terminal;
   PianoKeyboard piano;
   keyBeats kbs(200::ms, [1, 2, 1], 1); // basic snare 
@@ -202,6 +204,10 @@ public class Desktop {
     mat.colorMap(img);
     wallpaper.material(mat);
 
+    @(1.,.1,.1) => wallpaper_filter_mat.color;
+    0.009 => wallpaper_filter_mat.alpha;
+    wallpaper_filter.material(wallpaper_filter_mat);
+
     (img.width() $ float) / img.height() => float img_aspect;
     GG.camera().viewSize() => float wallpaper_height;
     // wallpaper_height * ASPECT_RATIO => float wallpaper_width;
@@ -212,7 +218,10 @@ public class Desktop {
     wallpaper.sca(@(wallpaper_width,wallpaper_height));
     // z -1. to keep it in the background!
     wallpaper.pos(@(0.,0.,-1.));
+    wallpaper_filter.sca(@(wallpaper_width,wallpaper_height));
+    wallpaper_filter.pos(@(0.,0.,-.5));
     wallpaper --> GG.scene();
+    wallpaper_filter --> GG.scene();
   }
 
   fun void _dispatch_initial_piano_state(PianoState ps) {
