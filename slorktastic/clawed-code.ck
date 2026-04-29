@@ -1,4 +1,4 @@
-@import {"clawed.ck", "gkr.ck", "state.ck"}
+@import {"clawed.ck", "gkr.ck", "state.ck", "tts.ck"}
 
 public class ClawedCodePromptEvent extends Event {
   string prompt;
@@ -235,6 +235,7 @@ public class ClawedCode extends GGen {
   GlitchCloud @ glitch_cloud;
 
   DemonSounder demon_sounder;
+  Sayer sayer;
   LightsManager _lights;
 
   fun @construct(GlitchCloud gc) {
@@ -413,6 +414,7 @@ public class ClawedCode extends GGen {
     clawed.animate_flapping();
     new WordCloud(100::ms, 1.25) @=> word_cloud;
     spork ~ _run_add_birdies();
+    spork ~ _run_tts_loop();
   }
 
   fun void _run_add_birdies() {
@@ -421,6 +423,27 @@ public class ClawedCode extends GGen {
       if (flock.count() < 32) flock.add_birdie();
       if (word_cloud.count() < terminal_buzzwords.size()) word_cloud.add_word(terminal_buzzwords[i++]);
       700::ms => now;
+    }
+  }
+
+  fun void _run_tts_loop() {
+    0 => int idx;
+    desktop_state.verb_duration / 1::ms => float delay_start_ms;
+    200. => float delay_end_ms;
+    (delay_start_ms - delay_end_ms) => float delay_range_ms;
+
+    while (true) {
+      word_cloud.count() => int visible;
+      if (visible > 0) {
+        idx % visible => idx;
+        Math.clampf((1. - (verb_change_delay / 1::ms - delay_end_ms) / delay_range_ms)*2., 0., 2.) => float g;
+        sayer.set_gain(g);
+        sayer.say(terminal_buzzwords[idx].lower());
+        Math.random2f(250, 350)::ms => now;
+        (idx + 1) % visible => idx;
+      } else {
+        300::ms => now;
+      }
     }
   }
 
@@ -779,7 +802,7 @@ public class ClawedCode extends GGen {
     RELATIVE.x + PROMPT_POS.x => float left;
     -left => float right;
     (RELATIVE.y + PROMPT_POS.y + PROMPT_CONTAINER_PADDING) => float top;
-    (top - (FONT_SIZE * num_lines + (FONT_SIZE * 0.5)) - PROMPT_CONTAINER_PADDING) => float bottom;
+    (top - ((FONT_SIZE * 1.13) * num_lines + (FONT_SIZE * 0.5)) - PROMPT_CONTAINER_PADDING) => float bottom;
 
     line_top.positions([@(left,top),@(right,top)]);
     line_bottom.positions([@(left,bottom),@(right,bottom)]);

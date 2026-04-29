@@ -1,52 +1,58 @@
-//-----------------------------------------------------------------------------
-// name: tts.ck
-// desc: the stupidest tts synthesizer of all time. uses arbsynth
-//
-// author: Anthony Maltsev (amaltsev@stanford.edu)
-// date: spring 2026
-//-----------------------------------------------------------------------------
-
 @import "arbsynth.ck"
 
-class Sayer {
+public class Sayer {
     ArbSynth alphabet[0];
+    Gain master;
     150::ms => dur len;
 
     fun @construct() {
-        new ArbSynth("data/alphabet/a.arr", dac) @=> alphabet["a"];
-        new ArbSynth("data/alphabet/b.arr", dac) @=> alphabet["b"];
-        new ArbSynth("data/alphabet/c.arr", dac) @=> alphabet["c"];
-        new ArbSynth("data/alphabet/d.arr", dac) @=> alphabet["d"];
-        new ArbSynth("data/alphabet/e.arr", dac) @=> alphabet["e"];
-        new ArbSynth("data/alphabet/f.arr", dac) @=> alphabet["f"];
-        new ArbSynth("data/alphabet/g.arr", dac) @=> alphabet["g"];
-        new ArbSynth("data/alphabet/h.arr", dac) @=> alphabet["h"];
-        new ArbSynth("data/alphabet/i.arr", dac) @=> alphabet["i"];
-        new ArbSynth("data/alphabet/j.arr", dac) @=> alphabet["j"];
-        new ArbSynth("data/alphabet/k.arr", dac) @=> alphabet["k"];
-        new ArbSynth("data/alphabet/l.arr", dac) @=> alphabet["l"];
-        new ArbSynth("data/alphabet/m.arr", dac) @=> alphabet["m"];
-        new ArbSynth("data/alphabet/n.arr", dac) @=> alphabet["n"];
-        new ArbSynth("data/alphabet/o.arr", dac) @=> alphabet["o"];
-        new ArbSynth("data/alphabet/p.arr", dac) @=> alphabet["p"];
-        new ArbSynth("data/alphabet/q.arr", dac) @=> alphabet["q"];
-        new ArbSynth("data/alphabet/r.arr", dac) @=> alphabet["r"];
-        new ArbSynth("data/alphabet/s.arr", dac) @=> alphabet["s"];
-        new ArbSynth("data/alphabet/t.arr", dac) @=> alphabet["t"];
-        new ArbSynth("data/alphabet/u.arr", dac) @=> alphabet["u"];
-        new ArbSynth("data/alphabet/v.arr", dac) @=> alphabet["v"];
-        new ArbSynth("data/alphabet/w.arr", dac) @=> alphabet["w"];
-        new ArbSynth("data/alphabet/x.arr", dac) @=> alphabet["x"];
-        new ArbSynth("data/alphabet/y.arr", dac) @=> alphabet["y"];
-        new ArbSynth("data/alphabet/z.arr", dac) @=> alphabet["z"];
+        master => dac;
+        _load();
+    }
+
+    fun @construct(UGen outchan) {
+        master => outchan;
+        _load();
+    }
+
+    fun void _load() {
+        new ArbSynth("data/alphabet/a.arr", master) @=> alphabet["a"];
+        new ArbSynth("data/alphabet/b.arr", master) @=> alphabet["b"];
+        new ArbSynth("data/alphabet/c.arr", master) @=> alphabet["c"];
+        new ArbSynth("data/alphabet/d.arr", master) @=> alphabet["d"];
+        new ArbSynth("data/alphabet/e.arr", master) @=> alphabet["e"];
+        new ArbSynth("data/alphabet/f.arr", master) @=> alphabet["f"];
+        new ArbSynth("data/alphabet/g.arr", master) @=> alphabet["g"];
+        new ArbSynth("data/alphabet/h.arr", master) @=> alphabet["h"];
+        new ArbSynth("data/alphabet/i.arr", master) @=> alphabet["i"];
+        new ArbSynth("data/alphabet/j.arr", master) @=> alphabet["j"];
+        new ArbSynth("data/alphabet/k.arr", master) @=> alphabet["k"];
+        new ArbSynth("data/alphabet/l.arr", master) @=> alphabet["l"];
+        new ArbSynth("data/alphabet/m.arr", master) @=> alphabet["m"];
+        new ArbSynth("data/alphabet/n.arr", master) @=> alphabet["n"];
+        new ArbSynth("data/alphabet/o.arr", master) @=> alphabet["o"];
+        new ArbSynth("data/alphabet/p.arr", master) @=> alphabet["p"];
+        new ArbSynth("data/alphabet/q.arr", master) @=> alphabet["q"];
+        new ArbSynth("data/alphabet/r.arr", master) @=> alphabet["r"];
+        new ArbSynth("data/alphabet/s.arr", master) @=> alphabet["s"];
+        new ArbSynth("data/alphabet/t.arr", master) @=> alphabet["t"];
+        new ArbSynth("data/alphabet/u.arr", master) @=> alphabet["u"];
+        new ArbSynth("data/alphabet/v.arr", master) @=> alphabet["v"];
+        new ArbSynth("data/alphabet/w.arr", master) @=> alphabet["w"];
+        new ArbSynth("data/alphabet/x.arr", master) @=> alphabet["x"];
+        new ArbSynth("data/alphabet/y.arr", master) @=> alphabet["y"];
+        new ArbSynth("data/alphabet/z.arr", master) @=> alphabet["z"];
+    }
+
+    fun void set_gain(float g) {
+        g => master.gain;
     }
 
     fun void say(string s) {
         for (0 => int i; i < s.length(); i++) {
-            if (" " == s.charAt2(i)) 
+            if (" " == s.charAt2(i))
                 2*len => now;
-            else { 
-                <<< "saying ", s.charAt2(i) >>>;
+            else {
                 spork ~ alphabet[s.charAt2(i)].playback();
                 len => now;
             }
