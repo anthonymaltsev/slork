@@ -1,0 +1,25 @@
+#!/bin/bash
+
+system-sound-to-motu
+osascript -e "set Volume 5"
+
+pushd ~/slork/groups/2026/chungus/slorktastic
+# pushd ~/college/spring26/cs170/slork/slorktastic
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 [perc,pad,vis]"
+    exit 1
+fi
+
+if [ "$1" = "perc" ]; then
+    chuck keyboard_perc.ck
+elif [ "$1" = "pad" ]; then 
+    chuck flappy_bird.ck
+elif [ "$1" = "vis" ]; then
+    chuck desktop.ck
+else
+    echo "Supplied argument must be one of [perc,pad,vis]"
+    exit 1
+fi
+
+popd
