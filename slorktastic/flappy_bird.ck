@@ -10,11 +10,10 @@
 
 // ----------------------------------------------------------------------------
 
-0 => int device;
-if (me.args() > 0) Std.atoi(me.arg(0)) => device;
+0 => int gt_device;
 0.05 => float deadzone;
-// GameTrak gt(device, deadzone);
-GameTrak gt;
+GameTrak gt(gt_device, deadzone);
+// GameTrak gt;
 
 //------------------------- flappy bird setup ----------------------------------
 
@@ -56,12 +55,72 @@ class FlappyBird {
 
 }
 
-Gain g;
-FlappyBird f("data/verbs/cont/geese-honking.arr", "data/verbs/cont/cooking-pasta.arr", g);
-// FlappyBird f("data/verbs/cont/geese-honking.arr", "data/verbs/cont/pencil-on-paper-1.arr", g);
-f.play_pad(15::second);
-f.play_pad(21::second); // 5::second
-// f.play_pad(1000::ms);
+Hid kb;
+HidMsg kb_msg;
+0 => int kb_device;
+if (me.args() > 0) Std.atoi(me.arg(0)) => kb_device;
+if (!kb.openKeyboard(kb_device)) me.exit();
+
+// 3 => int NUM_BIRDS;
+Gain g[0];
+Gain bus;
+new Gain @=> g["1"] => bus;
+new Gain @=> g["2"] => bus;
+new Gain @=> g["3"] => bus;
+
+FlappyBird f[0];
+new FlappyBird("data/verbs/cont/geese-honking.arr", "data/verbs/cont/cooking-pasta.arr", g["1"]) @=> f["1"];
+new FlappyBird("data/verbs/cont/stomach-gurgle.arr", "data/verbs/cont/cooking-frying.arr", g["2"]) @=> f["2"];
+new FlappyBird("data/verbs/cont/wood-burning-stove-fire.arr", "data/verbs/cont/coffee-brewing-percolation.arr", g["3"]) @=> f["3"];
+
+f["1"].play_pad(15::second);
+f["1"].play_pad(21::second);
+f["2"].play_pad(15::second);
+f["2"].play_pad(21::second);
+f["3"].play_pad(15::second);
+f["3"].play_pad(21::second);
+
+// bools for which of these are on or not.
+int on[0];
+1 => on["1"];
+0 => on["2"];
+0 => on["3"];
+
+// listen to controls around which samples are played
+spork ~ kb_listener();
+fun void kb_listener() {
+    while (true) {
+        kb => now;
+        while (kb.recv(kb_msg)) {
+            ascii_to_numkey(kb_msg.which) => string whichkey;
+            <<< "whichkey: ", whichkey >>>;
+            if (whichkey == "") continue;
+            if (kb_msg.isButtonDown()) {
+                // <<< whichkey, on[whichkey] >>>;
+                on[whichkey] ? 0 : 1 => on[whichkey]; // toggle
+            }
+
+        }
+    }
+}
+spork ~ gain_listener();
+fun void gain_listener() {
+    while (true) {
+        on["1"] => g["1"].gain;
+        on["2"] => g["2"].gain;
+        on["3"] => g["3"].gain;
+        1::ms => now;
+    }
+}
+
+fun string ascii_to_numkey(int ascii) {
+    // "ABCDEFGHIJKLMNOPQRSTUVWXYZ" => string alpha;
+    // if (ascii >= 65 && ascii <= 90) return alpha.charAt2(ascii - 65);
+    // if (ascii >= 48 && ascii <= 57) return Std.itoa(ascii - 48);
+    // <<< ascii >>>;
+    if (ascii >= 30 && ascii <= 32) return Std.itoa(ascii - 29); // only 1 to 3
+    return "";
+}
 
 // g => NRev rev;
 // rev => dac;
@@ -71,9 +130,18 @@ f.play_pad(21::second); // 5::second
 // 2 => ps.shift;
 // 0.8 => ps.mix;
 // g => ps => dac;
-g => NRev rev(0.1) =>  ABSaturator ab => dac;
+bus => NRev rev(0.1) =>  ABSaturator ab => dac;
 0.1 => ab.dcOffset;
 10. => ab.drive;
+
+Chorus chor[3];
+for (0 => int i; i < chor.size(); i++) {
+    bus => chor[i] => rev;
+    chor[i].baseDelay( i * 10::ms );
+    chor[i].modDepth( .1 + i * 0.15 );
+    chor[i].modFreq( i );
+    chor[i].mix( .5 );
+}
 
 spork ~ effect_param_propagater();
 fun void effect_param_propagater() {
@@ -85,6 +153,7 @@ fun void effect_param_propagater() {
 }
 
 while (true) {
+    <<< "pasta-geese: ", on["1"], "\nfrying-gurgle: ", on["2"], "\nbrewing-fire: ", on["3"] >>>;
     <<< gt.axis[0], gt.axis[1], gt.axis[2], gt.axis[3], gt.axis[4], gt.axis[5] >>> ;
     100::ms => now;
 }
