@@ -26,6 +26,7 @@ public class ArbSynth2 {
 
     SinOsc sins[];
     NRev rev;
+    Gain bus;
 
     fun @construct(string fname1_in, string fname2_in, UGen outchan) {
         fname1_in => fname1;
@@ -82,11 +83,11 @@ public class ArbSynth2 {
         new SinOsc[N] @=> sins;
         for (auto s : sins) {
             0. => s.gain;
-            s => rev;
+            s => bus;
         }
 
         0.01 => rev.mix;
-        rev => outchan;
+        bus => rev => outchan;
 
     }
 
@@ -110,7 +111,7 @@ public class ArbSynth2 {
 
     fun vec2 interp_lookup(vec2 table[][], float index, int nind) {
         Math.floor(index * table.size()) $ int => int i0;
-        if (i0 == table.size() - 1) return table[i0][nind];
+        if (i0 >= table.size() - 1) return table[table.size()-1][nind];
         index * table.size() - i0 => float di;
         return table[i0][nind] + (table[i0+1][nind]-table[i0][nind]) * di;
     }
@@ -157,6 +158,13 @@ public class ArbSynth2 {
     }
     fun float get_pad_mix() {
         return pad_mix;
+    }
+
+    fun void set_pad_gain(float gain_in) {
+        Math.clampf(gain_in, 0., 1.) => bus.gain;
+    }
+    fun float get_pad_gain() {
+        return bus.gain();
     }
 
 }
