@@ -16,8 +16,6 @@ kb_device=$(chuck --probe 2>&1 | awk '/keyboard-device/{kb=1} kb && /Apple Inter
 if [ "$1" = "perc" ]; then
     chuck keyboard_perc.ck:"$kb_device"
 elif [ "$1" = "pad" ]; then 
-    echo "PAD BRANCH"
-    osascript -e "set Volume 3"
     chuck flappy_bird.ck
 elif [ "$1" = "vis" ]; then
     chuck desktop.ck

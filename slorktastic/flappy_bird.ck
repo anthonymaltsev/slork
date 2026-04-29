@@ -47,7 +47,7 @@ class FlappyBird {
         while (true) {
             s.set_pad_mix(gt.axis[2]);
             // gain ramp 0 to 1 from lengths 0 to 0.25, flat at 1 after
-            s.set_pad_gain(Math.clampf(gt.axis[2], 0., 0.25)*4.);
+            s.set_pad_gain(Math.clampf(gt.axis[2], 0., 0.25));
 
             1::ms => now;
         }
@@ -71,7 +71,7 @@ new Gain @=> g["3"] => bus;
 FlappyBird f[0];
 new FlappyBird("data/verbs/cont/geese-honking.arr", "data/verbs/cont/cooking-pasta.arr", g["1"]) @=> f["1"];
 new FlappyBird("data/verbs/cont/stomach-gurgle.arr", "data/verbs/cont/cooking-frying.arr", g["2"]) @=> f["2"];
-new FlappyBird("data/verbs/cont/wood-burning-stove-fire.arr", "data/verbs/cont/coffee-brewing-percolation.arr", g["3"]) @=> f["3"];
+new FlappyBird("data/verbs/cont/cry-of-pain.arr", "data/verbs/cont/wood-burning-stove-fire.arr", g["3"]) @=> f["3"];
 
 f["1"].play_pad(15::second);
 f["1"].play_pad(21::second);
@@ -130,7 +130,7 @@ fun string ascii_to_numkey(int ascii) {
 // 2 => ps.shift;
 // 0.8 => ps.mix;
 // g => ps => dac;
-bus => NRev rev(0.1) =>  ABSaturator ab => dac;
+bus => NRev rev(0.03) =>  ABSaturator ab => dac;
 0.1 => ab.dcOffset;
 10. => ab.drive;
 
@@ -153,7 +153,7 @@ fun void effect_param_propagater() {
 }
 
 while (true) {
-    <<< "pasta-geese: ", on["1"], "\nfrying-gurgle: ", on["2"], "\nbrewing-fire: ", on["3"] >>>;
+    <<< "pasta-geese: ", on["1"], "\nfactory-birb: ", on["2"], "\nfire-scream: ", on["3"] >>>;
     <<< gt.axis[0], gt.axis[1], gt.axis[2], gt.axis[3], gt.axis[4], gt.axis[5] >>> ;
     100::ms => now;
 }

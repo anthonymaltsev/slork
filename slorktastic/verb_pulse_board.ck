@@ -19,7 +19,6 @@ new ArbSynth("data/verbs/pulse/liquid-swirl.arr", dac) @=> sounds["C"];
 new ArbSynth("data/verbs/cont/coffee-brewing-percolation.arr", dac) @=> sounds["D"]; //
 new ArbSynth("data/verbs/cont/cooking-frying.arr", dac) @=> sounds["E"]; //
 new ArbSynth("data/verbs/cont/cooking-pasta.arr", dac) @=> sounds["F"];
-new ArbSynth("data/verbs/cont/keurig-kcup-brewing.arr", dac) @=> sounds["G"]; // put to mech?
 new ArbSynth("data/verbs/cont/whisking.arr", dac) @=> sounds["H"]; //
 
 // mech pulse
