@@ -1,4 +1,7 @@
 public class LightsManager {
+  1 => int MIN_CHANNEL;
+  17 => int MAX_CHANNEL;
+
   1 => int HOUSE_LEFT_SCREEN;
   2 => int HOUSE_RIGHT_SCREEN;
   3 => int HOUSE_LEFT_MIDFRONT;
@@ -31,8 +34,8 @@ public class LightsManager {
     HOUSE_RIGHT_BIGBOY
   ] @=> int COOKING_LIGHTS[];
 
-  // "localhost" => string hostname;
-  "192.168.185.187" => string hostname;
+  "localhost" => string hostname;
+  // "192.168.185.187" => string hostname;
   8005 => int port;
 
   Shred @ _flash_spork;
@@ -49,6 +52,15 @@ public class LightsManager {
       _reset_blue();
     }
     spork ~ _flash() @=> _flash_spork;
+  }
+
+  fun void all_out() {
+    for (MIN_CHANNEL => int ch; ch <= MAX_CHANNEL; ch++)
+      _set_val(ch, 0);
+  }
+
+  fun void set_spotlight(int val) {
+    _set_val(SPOTLIGHT_1, val);
   }
 
   fun set_cooking_lights(int on) {
@@ -75,10 +87,6 @@ public class LightsManager {
     _set_cooking_lights_color(270, 100);
   }
 
-  fun void set_spotlight(int val) {
-    _set_val(11, val);
-  }
-
   fun void _set_color(int chan, int hue, int sat) {
     _select_chan(chan);
     _send_osc("/cs/color/hs/" + hue + "/" + sat);
@@ -98,7 +106,9 @@ public class LightsManager {
     _send_osc(msg);
   }
   fun void _send_osc(OscOut msg) {
-    spork ~ msg.send();
+    // don't spork bc a child shred gets killed
+    // if the caller exits before it runs (my bad guys)
+    msg.send();
   }
 
   fun OscOut _make_message(string chan) {
@@ -108,3 +118,17 @@ public class LightsManager {
     return xmit;
   }
 }
+
+// LightsManager manager;
+
+// while (true) {
+//   manager.init();
+//   1::second => now;
+//   manager.set_cooking_lights(true);
+//   manager.set_spotlight(100);
+//   3::second => now;
+//   manager.all_out();
+//   5::second => now;
+//   manager.set_spotlight(100);
+//   10::second => now;
+// }

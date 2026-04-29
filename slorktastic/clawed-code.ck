@@ -170,6 +170,7 @@ public class ClawedCode extends GGen {
 
   int _chrome_attached;
   Shred @ _demon_flash_shred;
+  Shred @ _tts_loop;
 
   Shred spinner_shred;
   Shred verb_shred;
@@ -180,6 +181,9 @@ public class ClawedCode extends GGen {
 
   GlitchCloud @ glitch_cloud;
 
+  2::second => dur END_SEQUENCE_DELAY;
+  0.1 => float demon_prob;
+  0.25 => float MAX_DEMON_PROB;
   DemonSounder demon_sounder;
   Sayer sayer;
   LightsManager _lights;
@@ -363,7 +367,7 @@ public class ClawedCode extends GGen {
     clawed.animate_flapping();
     new WordCloud(100::ms, 1.25) @=> word_cloud;
     spork ~ _run_add_birdies();
-    spork ~ _run_tts_loop();
+    spork ~ _run_tts_loop() @=> _tts_loop;
   }
 
   fun void _run_add_birdies() {
@@ -440,18 +444,30 @@ public class ClawedCode extends GGen {
 
   fun void _begin_end_sequence() {
     true => begun_end_sequence;
+    spork ~ _handle_end_sequence_lights();
     spork ~ _run_end_sequence();
   }
 
+  fun void _handle_end_sequence_lights() {
+    END_SEQUENCE_DELAY => now;
+    <<< "calling all out, waiting" >>>;
+    _lights.all_out();
+    5::second => now;
+    <<< "set spotlight!!!" >>>;
+    _lights.set_spotlight(100);
+  }
+
   fun void _run_end_sequence() {
+    END_SEQUENCE_DELAY => now;
     // stop demon flashing first and foremost
     _kill_spork(_demon_flash_shred);
+    _kill_spork(_tts_loop);
+    sayer.set_gain(0);
     // TODO: consider making this more than a black screen
     // (the idea being that the screen goes black, then the bird
     // comes out in a suit)
     // not sure that positioning a giant black GPlane over the scene
     // is the most efficient way, but fttb it's quick'n'dirty
-    2::second => now;
     if (final_view_shown) return;
     FlatMaterial mat;
     mat.color(COLOR_BG);
@@ -536,8 +552,11 @@ public class ClawedCode extends GGen {
         } else {
           clawed.sca(@(clawed_scale,clawed_scale,1.));
 
-          // basically a bernoulli rv: Ber(0.2)
-          if (Math.random2f(0,1) > 0.8) flash_demon();
+          // basically a bernoulli rv: Ber(demon_prob)
+          if (Math.random2f(0,1) < demon_prob) {
+            flash_demon();
+          }
+          if (demon_prob < MAX_DEMON_PROB) 1.04 *=> demon_prob;
           
           // linear interpolation between start & end points
           // 2x so it centers before it finishes scaling
