@@ -1,4 +1,4 @@
-@import {"clawed.ck", "gkr.ck", "state.ck", "tts.ck"}
+@import {"clawed.ck", "gkr.ck", "lights.ck", "state.ck", "tts.ck"}
 
 public class ClawedCodePromptEvent extends Event {
   string prompt;
@@ -78,60 +78,6 @@ public class DemonSounder {
 
       5::ms => now;
     }
-  }
-}
-
-public class LightsManager {
-  // "localhost" => string hostname;
-  "192.168.185.187" => string hostname;
-  8005 => int port;
-
-  Shred @ _flash_spork;
-
-  fun void init() {
-    _reset_blue();
-  }
-
-  fun void flash() {
-    if (_flash_spork != null) {
-      Machine.remove(_flash_spork.id());
-      null => _flash_spork;
-      _reset_blue();
-    }
-    spork ~ _flash() @=> _flash_spork;
-  }
-
-  fun void _flash() {
-    _send_osc("/cs/chan/select/1");
-    _send_osc("/cs/color/hs/0/100");
-    200::ms => now;
-    _reset_blue();
-    200::ms => now;
-  }
-
-  fun void _reset_blue() {
-    _send_osc("/cs/chan/select/1");
-    _send_osc("/cs/color/hs/270/100");
-  }
-
-  fun void set_spotlight(int val) {
-    _send_osc("/cs/chan/select/11");
-    _send_osc("/cs/chan/at/" + val);
-  }
-
-  fun void _send_osc(string chan) {
-    _make_message(chan) @=> OscOut msg;
-    _send_osc(msg);
-  }
-  fun void _send_osc(OscOut msg) {
-    spork ~ msg.send();
-  }
-
-  fun OscOut _make_message(string chan) {
-    OscOut xmit;
-    xmit.dest(hostname, port);
-    xmit.start(chan);
-    return xmit;
   }
 }
 
@@ -291,6 +237,9 @@ public class ClawedCode extends GGen {
   fun void set_prompt_editable(int enabled) {
     enabled => prompt_editable;
     _lights.set_spotlight(enabled ? 100 : 0);
+    // cooking lights OFF when prompt is editable
+    // hence the negation
+    _lights.set_cooking_lights(!enabled);
   }
 
   fun void set_desktop_state(DesktopState st) {
