@@ -74,6 +74,10 @@ public class keyBeats {
 
     }
 
+    fun void set_beatDur(dur newDur) {
+        newDur => beatDur;
+    }
+
     fun void playBeats() {
         // infinite time-loop
         while( true ){
@@ -270,6 +274,11 @@ public class keySynths {
             synths[i].silence();
         }
         0. => bus.gain; 
+    }
+
+    fun void disconnect() {
+        silence();
+        ps =< dac;
     }
 
     fun dur getCurrentDur() {

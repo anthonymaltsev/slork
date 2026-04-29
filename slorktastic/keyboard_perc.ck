@@ -91,14 +91,14 @@ keyBeats kb4(400::ms, [5, 3], 4); // crash
 
 
 // instantiate keySynths
-keySynths cook1(0.5::second, [1, 2, 1], 0); // food synths
-keySynths cook2(0.5::second, [1, 2, 1], 1); // food synths
+keySynths @cook1; // food synths
+keySynths @cook2; // food synths
 
-keySynths mech1(0.2::second, [3, 1], 2); // mech synths pulse
-keySynths mech2(0.3::second, [1, 2], 3); // mech synths long
+keySynths @mech1; // mech synths pulse
+keySynths @mech2; // mech synths long
 
-keySynths man1(0.5::second, [1, 1], 4); // man synths pulse
-keySynths man2(0.5::second, [2, 1], 5); // man synth long
+keySynths @man1; // man synths pulse
+keySynths @man2; // man synth long
 
 
 // ======== play perc stuff ========
@@ -138,6 +138,8 @@ fun void cookSynths1(){
         <<< "synths activated!" >>>;
         0 => percs[1].deactivateHappened; 
         1 => percs[1].activateHappened;
+        // construct cook synth
+        new keySynths(0.5::second, [1, 2, 1], 0) @=> cook1;
         // play synths
         spork ~ cook1.addSynthTrack(0::second) @=> cookShred1;
     } else if (percs[1].activateHappened == 1 && percs[1].state == 0) {
@@ -153,6 +155,8 @@ fun void deactivateCookSynths1() {
     cook1.silence();
     300::ms => now; // wait a bit
     cookShred1.exit();
+    cook1.disconnect();
+    null @=> cook1;
 }
 
 fun void cookSynths2(){
@@ -160,6 +164,8 @@ fun void cookSynths2(){
         <<< "synths activated!" >>>;
         0 => percs[2].deactivateHappened; 
         1 => percs[2].activateHappened;
+        // construct cook synth
+        new keySynths(0.5::second, [1, 2, 1], 1) @=> cook2;
         // play synths
         spork ~ cook2.addSynthTrack(0::second) @=> cookShred2;
     } else if (percs[2].activateHappened == 1 && percs[2].state == 0) {
@@ -174,7 +180,9 @@ fun void deactivateCookSynths2() {
     // NEEDS DEBUGGING - currently silences but has residual sine / FM-like tones when reactivated
     cook2.silence();
     300::ms => now; // wait a bit
-    cookShred2.exit();
+    cookShred2.exit();  
+    cook2.disconnect();
+    null @=> cook2;
 }
 
 
@@ -183,6 +191,8 @@ fun void mechSynths1(){
         <<< "synths activated!" >>>;
         0 => percs[3].deactivateHappened; 
         1 => percs[3].activateHappened;
+        // construct mech synth
+        new keySynths(0.2::second, [3, 1], 2) @=> mech1;
         // play synths
         spork ~ mech1.addSynthTrack(0::second) @=> mechShred1;
     } else if (percs[3].activateHappened == 1 && percs[3].state == 0) {
@@ -198,6 +208,8 @@ fun void deactivateMechSynths1() {
     mech1.silence();
     300::ms => now; // wait a bit
     mechShred1.exit();
+    mech1.disconnect();
+    null @=> mech1;
 }
 
 fun void mechSynths2(){
@@ -205,6 +217,8 @@ fun void mechSynths2(){
         <<< "synths activated!" >>>;
         0 => percs[4].deactivateHappened; 
         1 => percs[4].activateHappened;
+        // construct mech synth
+        new keySynths(0.3::second, [1, 2], 3) @=> mech2;
         // play synths
         spork ~ mech2.addSynthTrack(0::second) @=> mechShred2;
     } else if (percs[4].activateHappened == 1 && percs[4].state == 0) {
@@ -220,6 +234,8 @@ fun void deactivateMechSynths2() {
     mech2.silence();
     300::ms => now; // wait a bit
     mechShred2.exit();
+    mech2.disconnect();
+    null @=> mech2;
 }
 
 fun void manSynths1(){
@@ -227,6 +243,8 @@ fun void manSynths1(){
         <<< "synths activated!" >>>;
         0 => percs[5].deactivateHappened; 
         1 => percs[5].activateHappened;
+        // construct man synth
+        new keySynths(0.5::second, [1, 1], 4) @=> man1;
         // play synths
         spork ~ man1.addSynthTrack(0::second) @=> manShred1;
     } else if (percs[5].activateHappened == 1 && percs[5].state == 0) {
@@ -242,6 +260,8 @@ fun void deactivateManSynths1() {
     man1.silence();
     300::ms => now; // wait a bit
     manShred1.exit();
+    man1.disconnect();
+    null @=> man1;
 }   
 
 fun void manSynths2(){
@@ -249,6 +269,8 @@ fun void manSynths2(){
         <<< "synths activated!" >>>;
         0 => percs[6].deactivateHappened; 
         1 => percs[6].activateHappened;
+        // construct man synth
+        new keySynths(0.5::second, [2, 1], 5) @=> man2; 
         // play synths
         spork ~ man2.addSynthTrack(0::second) @=> manShred2;
     } else if (percs[6].activateHappened == 1 && percs[6].state == 0) {
@@ -264,6 +286,8 @@ fun void deactivateManSynths2() {
     man2.silence();
     300::ms => now; // wait a bit
     manShred2.exit();
+    man2.disconnect();
+    null @=> man2;
 }
 
 
@@ -292,22 +316,22 @@ fun void keyboardLoop() {
                 1 => kb3.wasKeyDown;
                 1 => kb4.wasKeyDown;
 
-                if (percs[1].active()){
+                if (percs[1].active() && cook1 != null){
                     1 => cook1.wasKeyDown;
                 }
-                if (percs[2].active()){
+                if (percs[2].active() && cook2 != null){
                     1 => cook2.wasKeyDown;
                 }
-                if (percs[3].active()){
+                if (percs[3].active() && mech1 != null){
                     1 => mech1.wasKeyDown;    
                 }
-                if (percs[4].active()){
+                if (percs[4].active() && mech2 != null){
                     1 => mech2.wasKeyDown;
                 } 
-                if (percs[5].active()){
+                if (percs[5].active() && man1 != null){
                     1 => man1.wasKeyDown;
                 }
-                if (percs[6].active()){
+                if (percs[6].active() && man2 != null){
                     1 => man2.wasKeyDown;
                 }
             }
