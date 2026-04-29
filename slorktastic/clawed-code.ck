@@ -498,6 +498,49 @@ public class ClawedCode extends GGen {
     // ungruck cover screen and clawed
     clawed --< this;
     cover --< GG.scene();
+    spork ~ _run_final_view_click_listener();
+  }
+
+  fun void _run_final_view_click_listener() {
+    // ignore any mouse already held when final view first appears
+    // so the window doesnt insta-close (just in case !)
+    while (GWindow.mouseLeft()) GG.nextFrame() => now;
+    while (final_view_shown) {
+      GG.nextFrame() => now;
+      if (!GWindow.mouseLeftDown()) continue;
+      GG.camera().screenCoordToWorldPos(GWindow.mousePos(), 1.) => vec3 mp;
+      this.posWorld() => vec3 wp;
+      WINDOW_W/2. => float hx;
+      WINDOW_H/2. => float hy;
+      if (mp.x > wp.x - hx && mp.x < wp.x + hx && mp.y > wp.y - hy && mp.y < wp.y + hy) {
+        this --< GG.scene();
+        // force next frame on close
+        GG.nextFrame() => now;
+        _run_end_fade();
+        return;
+      }
+    }
+  }
+
+  fun void _run_end_fade() {
+    2::second => now;
+    _lights.all_out();
+    // fade cover in to black over whole scene
+    FlatMaterial fade_mat;
+    fade_mat.color(@(0.,0.,0.));
+    0. => fade_mat.alpha;
+    cover.material(fade_mat);
+    cover --> GG.scene();
+    
+    2::second => dur fade_dur;
+    now => time fade_start;
+    float t;
+    while (now - fade_start < fade_dur) {
+      (now - fade_start) / fade_dur => t;
+      t => fade_mat.alpha;
+      GG.nextFrame() => now;
+    }
+    1. => fade_mat.alpha;
   }
 
   fun void _hide_verb_spinner() {
