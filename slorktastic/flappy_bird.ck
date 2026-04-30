@@ -70,7 +70,7 @@ new Gain @=> g["3"] => bus;
 
 FlappyBird f[0];
 new FlappyBird("data/verbs/cont/geese-honking.arr", "data/verbs/cont/cooking-pasta.arr", g["1"]) @=> f["1"];
-new FlappyBird("data/verbs/cont/stomach-gurgle.arr", "data/verbs/cont/cooking-frying.arr", g["2"]) @=> f["2"];
+new FlappyBird("data/sparrows_real.arr", "data/verbs/cont/factory.arr", g["2"]) @=> f["2"];
 new FlappyBird("data/verbs/cont/cry-of-pain.arr", "data/verbs/cont/wood-burning-stove-fire.arr", g["3"]) @=> f["3"];
 
 f["1"].play_pad(15::second);
