@@ -11,12 +11,12 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-kb_device=$(chuck --probe 2>&1 | awk '/keyboard-device/{kb=1} kb && /Apple Internal Keyboard/{gsub(/[][]/, "", $2); print $2; exit}')
+kb_device=$(chuck --probe 2>&1 | awk '/keyboard/{kb=1} kb && /Apple Internal Keyboard/{gsub(/[][]/, "", $2); print $2; exit}')
 
 if [ "$1" = "perc" ]; then
     chuck keyboard_perc.ck:"$kb_device"
 elif [ "$1" = "pad" ]; then 
-    chuck flappy_bird.ck
+    chuck flappy_bird.ck:"$kb_device"
 elif [ "$1" = "vis" ]; then
     chuck desktop.ck
 else
