@@ -99,10 +99,10 @@ class PianoKey {
     }
 
     _s.init(
-          base_freq, 
+          2 * base_freq, 
           150::ms,
-          150::ms,
-          0.3,
+          100::ms,
+          0.4,
           dac
       );
   }
@@ -147,7 +147,8 @@ class PianoKey {
   }
 
   fun void _stop_chirp() {
-    Machine.remove(_bird_mode_chirp_shred);
+    Machine.remove(_bird_mode_chirp_shred.id());
+    0 => _s.g.gain;
   }
 
   fun void hit() {

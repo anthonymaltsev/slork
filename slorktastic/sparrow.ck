@@ -15,6 +15,10 @@ public class Sparrow {
     160::ms => dur BASE_CHIRP_DURATION;
     150::ms => dur BASE_INTER_CHIRP_DURATION;
 
+    [0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.] @=> float timepoints[];
+    [0.75, 0.8,  0.85, 0.88, 0.92, 0.95, 1.0,  0.98, 0.92, 0.85, 0.75] @=> float relfreqs[];
+    [0.0,  0.4,  0.7,  0.85, 0.95, 1.0,  1.0,  0.9,  0.7,  0.4,  0.0 ] @=> float relvols[];
+
     fun void init() {
         init(4000, 160::ms, 150::ms, 0.3, [1.0, 0.078, 0.015, 0.0025], dac);
     }
@@ -49,10 +53,6 @@ public class Sparrow {
     }
 
     fun void chirp(float chirp_freq, dur duration, float gain_mul) {
-        
-        [0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.] @=> float timepoints[];
-        [0.75, 0.8,  0.85, 0.88, 0.92, 0.95, 1.0,  0.98, 0.92, 0.85, 0.75] @=> float relfreqs[];
-        [0.0,  0.4,  0.7,  0.85, 0.95, 1.0,  1.0,  0.9,  0.7,  0.4,  0.0 ] @=> float relvols[];
 
         (duration / chirp_step) $ int => int steps;
 
@@ -95,7 +95,8 @@ public class Sparrow {
 
     fun void be_loose(float freq_in) {
         while (true) {
-            Math.random2f(0.5, 2) * BASE_INTER_CHIRP_DURATION => now;
+            // Math.random2f(0.5, 2) * BASE_INTER_CHIRP_DURATION => now;
+            BASE_INTER_CHIRP_DURATION => now;
             spork ~ chirp(Math.random2f(0.95, 1.05) * freq_in, Math.random2f(0.95, 1.05) * BASE_CHIRP_DURATION, Math.random2f(0.95, 1.05) * BASE_GAIN);
         }
     }
