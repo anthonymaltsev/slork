@@ -1,3 +1,5 @@
+@import "sparrow.ck"
+
 class Mouse {
   vec3 world_pos;
   Shred @ _loop;
@@ -70,6 +72,9 @@ class PianoKey {
   Shred @ _vibrato_messer;
   Shred @ _lfo_loop;
 
+  Sparrow _s;
+  Shred @ _bird_mode_chirp_shred;
+
   fun @construct(int note, int black, int idx) {
     note => midi_note;
     black => is_black;
@@ -92,6 +97,14 @@ class PianoKey {
     } else {
       recolor_white();
     }
+
+    _s.init(
+          base_freq, 
+          150::ms,
+          150::ms,
+          0.3,
+          dac
+      );
   }
 
   fun void _init_geometry() {
@@ -129,6 +142,14 @@ class PianoKey {
             mp.y > p.y - s.y/2. && mp.y < p.y + s.y/2.);
   }
 
+  fun void _start_chirp() {
+    spork ~ _s.be_loose() @=> _bird_mode_chirp_shred;
+  }
+
+  fun void _stop_chirp() {
+    Machine.remove(_bird_mode_chirp_shred);
+  }
+
   fun void hit() {
     // call when we want to press the key
     if (is_pressed) return;
@@ -146,7 +167,11 @@ class PianoKey {
     mat.color(pressed_color);
     key.pos() => vec3 p;
     key.pos(@(p.x, rest_y, p.z));
-    env.keyOn();
+    if (bird_mode) {
+      _start_chirp();
+    } else {
+      env.keyOn();
+    }
   }
 
   fun void unhit() {
@@ -158,7 +183,11 @@ class PianoKey {
     mat.color(base_color);
     key.pos() => vec3 p;
     key.pos(@(p.x, rest_y, p.z));
-    env.keyOff();
+    if (bird_mode) {
+      _stop_chirp();
+    } else {
+      env.keyOff();
+    }
   }
 
   fun void recolor_white() {
