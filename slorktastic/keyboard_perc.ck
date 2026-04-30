@@ -23,13 +23,46 @@ GGen percGroup --> GG.scene();
 7 => int NUM_PERCS;
 percSets percs(mouse)[NUM_PERCS];
 
-percs[0].setName("kb");
-percs[1].setName("cookPulse");
-percs[2].setName("cookLong");
-percs[3].setName("mechPulse");
-percs[4].setName("mechLong");
-percs[5].setName("manPulse");
-percs[6].setName("manLong");
+percs[0].setName(
+    "keyboard 
+    drums 
+    for fun...");
+percs[1].setName(
+    "...
+    ...
+    Stirring...
+    Chopping onions..."
+    );
+percs[2].setName(
+    "Cooking...
+    Brewing...
+    Caramelizing...
+    Whisking..."
+    );
+percs[3].setName(
+    "...
+    Newspapering...
+    Calculating...
+    Vibing..."
+    );
+percs[4].setName(
+    "...
+    ...
+    Doodling...
+    Scampering"
+    );
+percs[5].setName(
+    "Honking...
+    Breaking...
+    Screaming...
+    Hurting..."
+    );
+percs[6].setName(
+    "...
+    Withering...
+    Rotting...
+    Dying..."
+    );
 
 
 fun void placePercGroup() {
@@ -49,7 +82,7 @@ fun void placePercGroup() {
         // set transform
         perc.sca(padSpacing * 2.);
         perc.posX(padSpacing * i - frustrumWidth / 2.0 + padSpacing / 2.0);
-        perc.posY(frustrumHeight / 2.0 - padSpacing / 2.0 - 2);
+        perc.posY(frustrumHeight / 2.0 - padSpacing / 2.0 - 4);
     }
 }
 
@@ -139,7 +172,7 @@ fun void cookSynths1(){
         0 => percs[1].deactivateHappened; 
         1 => percs[1].activateHappened;
         // construct cook synth
-        new keySynths(0.5::second, [1, 2, 1], 0) @=> cook1;
+        new keySynths(0.4::second, [2, 1, 1], 0) @=> cook1;
         // play synths
         spork ~ cook1.addSynthTrack(0::second) @=> cookShred1;
     } else if (percs[1].activateHappened == 1 && percs[1].state == 0) {
@@ -165,7 +198,7 @@ fun void cookSynths2(){
         0 => percs[2].deactivateHappened; 
         1 => percs[2].activateHappened;
         // construct cook synth
-        new keySynths(0.5::second, [1, 2, 1], 1) @=> cook2;
+        new keySynths(0.2::second, [2, 3, 3], 1) @=> cook2;
         // play synths
         spork ~ cook2.addSynthTrack(0::second) @=> cookShred2;
     } else if (percs[2].activateHappened == 1 && percs[2].state == 0) {
@@ -192,7 +225,7 @@ fun void mechSynths1(){
         0 => percs[3].deactivateHappened; 
         1 => percs[3].activateHappened;
         // construct mech synth
-        new keySynths(0.2::second, [3, 1], 2) @=> mech1;
+        new keySynths(0.1::second, [1, 2, 1], 2) @=> mech1;
         // play synths
         spork ~ mech1.addSynthTrack(0::second) @=> mechShred1;
     } else if (percs[3].activateHappened == 1 && percs[3].state == 0) {
@@ -244,7 +277,7 @@ fun void manSynths1(){
         0 => percs[5].deactivateHappened; 
         1 => percs[5].activateHappened;
         // construct man synth
-        new keySynths(0.5::second, [1, 1], 4) @=> man1;
+        new keySynths(0.1::second, [1, 1, 2], 4) @=> man1;
         // play synths
         spork ~ man1.addSynthTrack(0::second) @=> manShred1;
     } else if (percs[5].activateHappened == 1 && percs[5].state == 0) {

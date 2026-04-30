@@ -35,7 +35,7 @@ public class Desktop {
       // 2::second,
       6::second,
       false,
-      ["Cooking","Brewing", "Newspapering", "Doodling", "Calculating", "Scampering", "Vibing"],
+      ["Cooking","Brewing", "Doodling", "Scampering", "Calculating", "Newspapering", "Vibing"],
       new PianoState(
         false,
         true,
@@ -54,7 +54,7 @@ public class Desktop {
       5::minute,
       4::second,
       true,
-      ["Cooking","Brewing","Frying" , "Newspapering", "Honking", "Writing", "Raining", "Vibing", "Worrying","Breaking","Hurting","Screaming","Withering","Rotting","Dying","Burning"],
+      ["Cooking", "Brewing", "Frying", "Honking", "Writing", "Panicking", "Worrying","Breaking", "Hurting","Screaming", "Withering", "Rotting", "Dying", "Burning"],
       new PianoState(0,1)
     )
   ] @=> DesktopState STATES[];

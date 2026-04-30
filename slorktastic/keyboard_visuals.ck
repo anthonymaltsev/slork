@@ -50,7 +50,7 @@ public class percSets extends GGen {
     Event onHoverEvent, onClickEvent;  // onExit, onRelease
 
     @(2, 2, 2) => vec3 COLOR_ICONBG_NONE;
-    @(0.1, .1, .1) => vec3 LABEL_COLOR;
+    @(1, 1, 1) => vec3 LABEL_COLOR;
     
     // states
     0 => static int NONE;
@@ -80,9 +80,11 @@ public class percSets extends GGen {
         0.4 => icon_bg.sca;
         COLOR_ICONBG_NONE => icon_bg.color;
 
-        0.06 => label.sca;
+        0.05 => label.sca;
         LABEL_COLOR => label.color;
-        label.posY(-0.1);
+        label.posY(0.7);
+        label.maxWidth(0.1);
+        label.align(1);
 
         spork ~ this.clickListener();
     }
