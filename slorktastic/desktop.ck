@@ -16,11 +16,11 @@ public class Desktop {
   [
     new DesktopState(
       "Clawed, my concert is starting in 10 minutes, make me a cool instrument in ChucK.",
-      20::second,
+      40::second,
       // 2::second,
-      2::second,
+      7::second,
       false,
-      ["Cooking","Brewing","Frying","Flambéing","Whisking"],
+      ["Cooking","Brewing","Caramelizing","Whisking", "Stirring", "Chopping onions"],
       new PianoState(
         false,
         true,
@@ -31,11 +31,11 @@ public class Desktop {
     ),
     new DesktopState(
       "That's fine but I need it cooler. My friends and my parents are here to see my performance, and I also want an A for this class. I want a smart instrument. Add some AI and ML and MIR to make it pop or something. Make no mistakes",
-      20::second,
+      40::second,
       // 2::second,
-      1.75::second,
+      6::second,
       false,
-      ["Cooking","Brewing", "Newspapering", "Honking", "Frying", "Writing", "Raining", "Vibing"],
+      ["Cooking","Brewing", "Newspapering", "Doodling", "Calculating", "Scampering", "Vibing"],
       new PianoState(
         false,
         true,
@@ -52,9 +52,9 @@ public class Desktop {
       // ClawedCode deciding that on vibes. When I am better rested I hope to take
       // another pass
       5::minute,
-      1.75::second,
+      4::second,
       true,
-      ["Cooking","Brewing", "Newspapering", "Honking", "Frying", "Writing", "Raining", "Vibing", "Worrying","Breaking","Hurting","Screaming","Withering","Rotting","Dying","Burning"],
+      ["Cooking","Brewing","Frying" , "Newspapering", "Honking", "Writing", "Raining", "Vibing", "Worrying","Breaking","Hurting","Screaming","Withering","Rotting","Dying","Burning"],
       new PianoState(0,1)
     )
   ] @=> DesktopState STATES[];
@@ -65,11 +65,11 @@ public class Desktop {
   FlatMaterial wallpaper_filter_mat;
   ClawedCode @ terminal;
   PianoKeyboard piano;
-  keyBeats kbs(200::ms, [1, 2, 1], 1); // basic snare 
-  keyBeats kbs1(100::ms, [4, 1, 1, 1, 1], 0); // hats
-  keyBeats kbs2(200::ms, [5, 3], 2); // kick drum
-  keyBeats kbs3(100::ms, [3, 1, 2, 2], 3); // high snare
-  keyBeats kbs4(400::ms, [5, 3], 4); // crash
+  keyBeats kbs(160::ms, [1, 2, 1, 2, 2], 1); // basic snare 
+  keyBeats kbs1(80::ms, [4, 1, 1, 1, 1], 0); // hats
+  keyBeats kbs2(160::ms, [5, 3], 2); // kick drum
+  keyBeats kbs3(80::ms, [3, 1, 2, 1, 1, 3, 3, 2], 3); // high snare
+  keyBeats kbs4(320::ms, [5, 3], 4); // crash
 
   
   
