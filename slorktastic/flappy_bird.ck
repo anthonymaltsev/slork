@@ -45,9 +45,18 @@ class FlappyBird {
 
     fun void pad_param_propagater() {
         while (true) {
-            s.set_pad_mix(gt.axis[2]);
+            s.set_pad_mix(Math.clampf(Math.fabs(gt.axis[0]), 0., 1.));
             // gain ramp 0 to 1 from lengths 0 to 0.25, flat at 1 after
-            s.set_pad_gain(Math.clampf(gt.axis[2], 0., 0.25));
+            gt.axis[2] => float gt2;
+            0 => float new_gain;
+            if (gt2 < 0.3) {
+                gt2 * 0.5 => new_gain;
+            } else if (gt2 < 0.7) {
+                (gt2 - 0.3) * 1.75 + 0.15 => new_gain;
+            } else {
+                (gt2 - 0.3 ) / 2. + 0.85 => new_gain;
+            }
+            s.set_pad_gain(Math.clampf(new_gain, 0., 1.0)*0.4);
 
             1::ms => now;
         }
