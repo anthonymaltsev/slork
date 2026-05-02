@@ -58,7 +58,7 @@ public class DemonSounder {
   fun stop() {
     if (_shred == null) return;
     0 => master_gain.gain;
-    Machine.remove(_shred.id());
+    _shred.exit();
     null @=> _shred;
   }
 
@@ -169,7 +169,8 @@ public class ClawedCode extends GGen {
   GText info;
 
   int _chrome_attached;
-  Shred @ _demon_flash_shred;
+  // Shred @ _demon_flash_shred;
+  Shred @ _flash_cues_shred;
   Shred @ _tts_loop;
 
   Shred spinner_shred;
@@ -281,6 +282,7 @@ public class ClawedCode extends GGen {
 
     spork ~ _run_spinner() @=> spinner_shred;
     spork ~ _run_change_verb() @=> verb_shred;
+    spork ~ _run_flash_cues() @=> _flash_cues_shred;
 
     // wait to kill & remove until cook duration passes
     desktop_state.cook_duration => now;
@@ -460,7 +462,7 @@ public class ClawedCode extends GGen {
   fun void _run_end_sequence() {
     END_SEQUENCE_DELAY => now;
     // stop demon flashing first and foremost
-    _kill_spork(_demon_flash_shred);
+    // _kill_spork(_demon_flash_shred);
     _kill_spork(_tts_loop);
     sayer.set_gain(0);
     // TODO: consider making this more than a black screen
@@ -546,6 +548,7 @@ public class ClawedCode extends GGen {
   fun void _hide_verb_spinner() {
     _kill_spork(spinner_shred);
     _kill_spork(verb_shred);
+    _kill_spork(_flash_cues_shred);
     verb_line --< this;
     verb_spinner --< this;
   }
@@ -614,23 +617,43 @@ public class ClawedCode extends GGen {
   }
 
   fun void flash_demon() {
-    _kill_spork(_demon_flash_shred);
-    // happens on its own
-    _lights.flash();
-    spork ~ _run_flash_demon() @=> _demon_flash_shred;
+    // crazy-mode default: random short flash
+    flash_demon(Math.random2(60,300)::ms);
   }
 
-  fun void _run_flash_demon() {
+  fun void flash_demon(dur d) {
+    // happens on its own
+    _lights.flash();
+    // no longer sporked - blocking so it actually finishes lol
+    _run_flash_demon(d);
+  }
+
+  fun void _run_flash_demon(dur d) {
     demon_sounder.start();
     clawed.set_demonic(1);
     glitch_cloud.populate(Math.random2(60, 120));
     glitch_cloud.enable();
-    Math.random2(60,300)::ms => now;
+    d => now;
     clawed.set_demonic(0);
     glitch_cloud.disable();
     demon_sounder.stop();
     // higher pitch on next
     demon_sounder.escalate_pitch();
+  }
+
+  fun void _run_flash_cues() {
+    desktop_state.flash_cues @=> FlashCue cues[];
+    if (cues.size() == 0) return;
+
+    // offsets are absolute from cook start fyi
+    now => time start;
+    for (0 => int i; i < cues.size(); i++) {
+      cues[i] @=> FlashCue cue;
+      (start+cue.offset) - now => dur wait;
+      if (wait > 0::samp) wait => now;
+      if (got_crazy) return;
+      flash_demon(cue.duration);
+    }
   }
 
   fun void _run_spinner() {
@@ -870,6 +893,6 @@ public class ClawedCode extends GGen {
   }
 
   fun void _kill_spork(Shred sp) {
-    if (sp != null) Machine.remove(sp.id());
+    if (sp != null) sp.exit();
   }
 }

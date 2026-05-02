@@ -42,7 +42,9 @@ public class Desktop {
         false,
         true,
         true
-      )
+      ),
+      // TODO: consider where the flashes should best happen
+      [new FlashCue(14::second,100::ms),new FlashCue(33::second,170::ms)]
     ),
     new DesktopState(
       "This is not enough. It needs more AI and ML, make it into a musical AGI. I want you to combine an on-device SLM, a cloud LLM, and a VLM to interpret user sentiment for HAI (HITL). Actually that's perfect. Make it a startup. I am meeting up with a VC next week who invests in physical AI. Make the instrument embodied so I have a nice demo. Guaranteed $1M MRR. 10 DF at least.",
