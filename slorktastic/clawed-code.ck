@@ -29,6 +29,12 @@ public class DemonSounder {
   Shred @ _shred;
 
   1000. => float base_freq;
+  
+  .1 => float INITIAL_GAIN;
+  .5 => float MAX_GAIN;
+  1.2 => float GAIN_RAMP;
+
+  INITIAL_GAIN => float current_gain;
 
   fun @construct() {
     300::ms => lfo_env.duration;
@@ -51,7 +57,7 @@ public class DemonSounder {
 
   fun start() {
     if (_shred != null) return; // noop
-    1 => master_gain.gain;
+    .4 => master_gain.gain;
     spork ~ _run_sound_loop() @=> _shred;
   }
   
@@ -62,8 +68,11 @@ public class DemonSounder {
     null @=> _shred;
   }
 
-  function escalate_pitch() {
+  function escalate() {
     30 +=> base_freq;
+    if (current_gain < MAX_GAIN) {
+      GAIN_RAMP *=> current_gain;
+    }
   }
 
   fun _run_sound_loop() {
@@ -637,8 +646,8 @@ public class ClawedCode extends GGen {
     clawed.set_demonic(0);
     glitch_cloud.disable();
     demon_sounder.stop();
-    // higher pitch on next
-    demon_sounder.escalate_pitch();
+    // higher pitch & gain on next
+    demon_sounder.escalate();
   }
 
   fun void _run_flash_cues() {
