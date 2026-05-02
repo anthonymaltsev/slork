@@ -17,7 +17,7 @@ public class LightsManager {
   11 => int SPOTLIGHT_1;
   12 => int SPOTLIGHT_2;
   // 13 seems skipped... spoooooky
-  14 => int HOUSE_LIGHS_REAR;
+  14 => int HOUSE_LIGHTS_REAR;
   15 => int HOUSE_LIGHTS_FRONT;
   // 16???
   17 => int CEILING_LIGHTS_FRONT;
@@ -34,11 +34,17 @@ public class LightsManager {
     HOUSE_RIGHT_BIGBOY
   ] @=> int COOKING_LIGHTS[];
 
-  "localhost" => string hostname;
-  // "192.168.185.187" => string hostname;
+  // brightness consts for cooking light show!!
+  20 => int COOKING_DIM_VAL;
+  50 => int COOKING_PULSE_MIN;
+  100 => int COOKING_PULSE_MAX;
+
+  // "localhost" => string hostname;
+  "192.168.185.187" => string hostname;
   8005 => int port;
 
   Shred @ _flash_spork;
+  Shred @ _pulse_spork;
 
   fun void init() {
     _reset_blue();
@@ -55,6 +61,7 @@ public class LightsManager {
   }
 
   fun void all_out() {
+    _kill_pulse();
     for (MIN_CHANNEL => int ch; ch <= MAX_CHANNEL; ch++)
       _set_val(ch, 0);
   }
@@ -63,10 +70,35 @@ public class LightsManager {
     _set_val(SPOTLIGHT_1, val);
   }
 
-  fun set_cooking_lights(int on) {
+  fun void set_cooking_lights(int on) {
     <<< "set cook lights:", on ? "on" : "off" >>>;
-    for (0 => int i; i < COOKING_LIGHTS.size(); i++) {
-      _set_val(COOKING_LIGHTS[i], on ? 100 : 0);
+    _kill_pulse();
+    if (on) {
+      spork ~ _run_cooking_pulse() @=> _pulse_spork;
+    } else {
+      for (0 => int i; i < COOKING_LIGHTS.size(); i++) {
+        _set_val(COOKING_LIGHTS[i], COOKING_DIM_VAL);
+      }
+    }
+  }
+
+  fun void _run_cooking_pulse() {
+    // TODO: see how this looks on CCRMA stage, and maybe add some more
+    // variation to the pulse (rn it's just random brightness changes
+    // at random intervals)
+    while (true) {
+      for (0 => int i; i < COOKING_LIGHTS.size(); i++) {
+        Math.random2(COOKING_PULSE_MIN, COOKING_PULSE_MAX) => int v;
+        _set_val(COOKING_LIGHTS[i], v);
+      }
+      Math.random2f(120.,350.)::ms => now;
+    }
+  }
+
+  fun void _kill_pulse() {
+    if (_pulse_spork != null) {
+      Machine.remove(_pulse_spork.id());
+      null => _pulse_spork;
     }
   }
 
