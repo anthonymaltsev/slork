@@ -16,6 +16,11 @@ public class Clawed extends GGen {
   .3 => float WINGTIP_HEIGHT;
   .3 => float FOOT_WIDTH;
   .35 => float FOOT_HEIGHT;
+  .08 => float CLAW_WIDTH;
+  .42 => float CLAW_HEIGHT;
+  .07 => float CLAW_CURVE;
+  3 => int CLAWS_PER_FOOT;
+  @(.7,.8,.2) => vec3 CLAW_COLOR;
 
   [
     [@(0.,0.,0.), @(WINGTIP_WIDTH,WINGTIP_HEIGHT,0.), @(0.,0.,0.), @(0.,0.,0.)],
@@ -51,9 +56,12 @@ public class Clawed extends GGen {
   GMesh horn_right;
   Geometry horn_left_geo;
   Geometry horn_right_geo;
+  GMesh @ claws[6];
+  Geometry claw_geos[6];
   FlatMaterial body_mat;
   FlatMaterial eye_mat;
   FlatMaterial horn_mat;
+  FlatMaterial claw_mat;
 
   fun @construct() {
     return Clawed(1., @(0.,0.,0.));
@@ -84,6 +92,9 @@ public class Clawed extends GGen {
     // feet
     _init_plane(foot_left, @(-(BODY_WIDTH-.8)/2,-(BODY_HEIGHT+FOOT_HEIGHT)/2,0.), @(FOOT_WIDTH,FOOT_HEIGHT,1.), @(.7,.8,.2));
     _init_plane(foot_right, @((BODY_WIDTH-.8)/2,-(BODY_HEIGHT+FOOT_HEIGHT)/2,0.), @(FOOT_WIDTH,FOOT_HEIGHT,1.), @(.7,.8,.2));
+
+    // claws (new, hope u guys like!)
+    _init_claws();
 
     // beak
     _init_beak();
@@ -117,7 +128,8 @@ public class Clawed extends GGen {
     return (BODY_WIDTH + (2 * WING_WIDTH) + (2 * WINGTIP_WIDTH)) * this.sca().x;
   }
   fun float get_full_height() {
-    return (BODY_HEIGHT + FOOT_HEIGHT) * this.sca().y;
+    (is_demonic ? CLAW_HEIGHT : 0.) => float claw_h;
+    return (BODY_HEIGHT + FOOT_HEIGHT + claw_h) * this.sca().y;
   }
 
   fun void set_demonic(int on) {
@@ -128,12 +140,14 @@ public class Clawed extends GGen {
       beak_geo.positions([@(-0.1,0.,0.),@(0.1,0.,0.),@(0.,0.2,0.)]);
       horn_left --> this;
       horn_right --> this;
+      for (0 => int i; i < claws.size(); i++) claws[i] --> this;
     } else {
       BODY_COLOR => body_mat.color;
       @(0.,0.,0.) => eye_mat.color;
       beak_geo.positions([@(-0.1,0.,0.),@(0.1,0.,0.),@(0.,-0.2,0.)]);
       horn_left --< this;
       horn_right --< this;
+      for (0 => int i; i < claws.size(); i++) claws[i] --< this;
     }
   }
 
@@ -228,6 +242,31 @@ public class Clawed extends GGen {
     sca => plane.sca;
     pos => plane.pos;
     plane --> this;
+  }
+
+  fun void _init_claws() {
+    // claws are not connected until we call set_demonic(1)
+    CLAW_COLOR => claw_mat.color;
+    -(BODY_HEIGHT/2) - FOOT_HEIGHT => float foot_bottom_y;
+
+    for (0 => int s; s < 2; s++) {
+      (s == 0 ? -1. : 1.) => float side_sign;
+      side_sign * (BODY_WIDTH-.8)/2 => float foot_cx;
+      for (0 => int i; i < CLAWS_PER_FOOT; i++) {
+        s * CLAWS_PER_FOOT + i => int aidx;
+        claw_geos[aidx].vertexCount(3);
+        claw_geos[aidx].indices([0,1,2]);
+        //tips curve outward from each foot's center as talons would be
+        claw_geos[aidx].positions([
+          @(-CLAW_WIDTH/2, 0., 0.),
+          @(CLAW_WIDTH/2, 0., 0.),
+          @(side_sign * CLAW_CURVE, -CLAW_HEIGHT, 0.)
+        ]);
+        new GMesh(claw_geos[aidx], claw_mat) @=> claws[aidx];
+        (i - (CLAWS_PER_FOOT - 1) / 2.) * (FOOT_WIDTH / CLAWS_PER_FOOT) => float dx;
+        claws[aidx].pos(@(foot_cx + dx, foot_bottom_y, 0.));
+      }
+    }
   }
 
   fun void _init_horns() {
