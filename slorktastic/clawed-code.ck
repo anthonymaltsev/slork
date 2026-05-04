@@ -196,6 +196,7 @@ public class ClawedCode extends GGen {
   0.1 => float WORD_CLOUD_MARGIN_X;
   0.1 => float WORD_CLOUD_MARGIN_Y;
   0 => int _clouds_release_started;
+  0 => int _clouds_unconstrained;
   0.1 => float demon_prob;
   0.25 => float MAX_DEMON_PROB;
   DemonSounder demon_sounder;
@@ -643,8 +644,7 @@ public class ClawedCode extends GGen {
   }
 
   fun void flash_demon(dur d) {
-    // happens on its own
-    _lights.flash();
+    if (_clouds_unconstrained) _lights.flash();
     // no longer sporked - blocking so it actually finishes lol
     _run_flash_demon(d);
   }
@@ -860,6 +860,7 @@ public class ClawedCode extends GGen {
   fun void _run_release_clouds_constraint() {
     CLOUDS_CONSTRAINED_WINDOW => now;
     _set_clouds_constrained(0);
+    1 => _clouds_unconstrained;
   }
 
   fun void _draw_prompt_container() {
