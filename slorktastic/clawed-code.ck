@@ -1,4 +1,4 @@
-@import {"clawed.ck", "gkr.ck", "lights.ck", "state.ck", "tts.ck"}
+@import {"clawed.ck", "gkr.ck", "lights.ck", "sounders.ck", "state.ck", "tts.ck"}
 
 public class ClawedCodePromptEvent extends Event {
   string prompt;
@@ -11,115 +11,6 @@ public class ClawedCodePromptEvent extends Event {
   fun @construct(string pr, string buzz) {
     pr => prompt;
     buzz => buzzwords;
-  }
-}
-
-public class DemonSounder {
-  Gain master_gain => dac;
-
-  SawOsc base_osc => master_gain;
-  SawOsc fifth_osc => master_gain;
-  TriOsc bassy_osc => master_gain;
-  Noise scary_noise => master_gain;
-
-  // vibrato
-  TriOsc lfo => Envelope lfo_env => blackhole;
-
-  // implicit state here - if null, not running
-  Shred @ _shred;
-
-  1000. => float base_freq;
-
-  .1 => float INITIAL_GAIN;
-  .5 => float MAX_GAIN;
-  1.2 => float GAIN_RAMP;
-
-  INITIAL_GAIN => float current_gain;
-
-  .2 => float CONSTRAINED_MASTER_GAIN;
-  .4 => float UNCONSTRAINED_MASTER_GAIN;
-  .15 => float CONSTRAINED_NOISE_GAIN;
-  .7 => float UNCONSTRAINED_NOISE_GAIN;
-  300::ms => dur UNCONSTRAINED_RAMP_DUR;
-
-  CONSTRAINED_MASTER_GAIN => float target_master_gain;
-  0 => int _unconstrained;
-
-  fun @construct() {
-    300::ms => lfo_env.duration;
-
-    1 => base_osc.gain;
-    .6 => fifth_osc.gain;
-    .8 => bassy_osc.gain;
-    CONSTRAINED_NOISE_GAIN => scary_noise.gain;
-
-    // never changes (for now)
-    (base_freq * 1/8) => bassy_osc.freq;
-
-    10 => lfo.freq;
-    -0.25 => lfo.phase;
-    lfo_env.keyOn();
-    
-    // start muted
-    0 => master_gain.gain;
-  }
-
-  fun start() {
-    if (_shred != null) return; // noop
-    target_master_gain => master_gain.gain;
-    spork ~ _run_sound_loop() @=> _shred;
-  }
-
-  fun void set_unconstrained(int on) {
-    on => _unconstrained;
-    if (on) {
-      spork ~ _ramp_to_unconstrained();
-    } else {
-      CONSTRAINED_MASTER_GAIN => target_master_gain;
-      CONSTRAINED_NOISE_GAIN => scary_noise.gain;
-      if (_shred != null) target_master_gain => master_gain.gain;
-    }
-  }
-
-  fun void _ramp_to_unconstrained() {
-    UNCONSTRAINED_NOISE_GAIN => scary_noise.gain;
-    UNCONSTRAINED_MASTER_GAIN => target_master_gain;
-    master_gain.gain() => float start_gain;
-    now => time t0;
-    while (now - t0 < UNCONSTRAINED_RAMP_DUR) {
-      (now-t0) / UNCONSTRAINED_RAMP_DUR => float t;
-      ((1.-t) * start_gain + t * UNCONSTRAINED_MASTER_GAIN) => master_gain.gain;
-      10::ms => now;
-    }
-    UNCONSTRAINED_MASTER_GAIN => master_gain.gain;
-  }
-  
-  fun stop() {
-    if (_shred == null) return;
-    0 => master_gain.gain;
-    _shred.exit();
-    null @=> _shred;
-  }
-
-  function escalate() {
-    30 +=> base_freq;
-    if (current_gain < MAX_GAIN) {
-      GAIN_RAMP *=> current_gain;
-    }
-  }
-
-  fun _run_sound_loop() {
-    float cur_freq;
-    while(true){
-      0.03*lfo_env.last() + 1 => float vibrato_waver;
-      (base_freq*vibrato_waver) => cur_freq;
-
-      cur_freq => base_osc.freq;
-      // perfect fifth ratio 3/2
-      (cur_freq*3/2) => fifth_osc.freq;
-
-      5::ms => now;
-    }
   }
 }
 
@@ -234,6 +125,7 @@ public class ClawedCode extends GGen {
   0.1 => float demon_prob;
   0.25 => float MAX_DEMON_PROB;
   DemonSounder demon_sounder;
+  BeepSounder beep_sounder;
   Sayer sayer;
   LightsManager _lights;
 
@@ -787,6 +679,20 @@ public class ClawedCode extends GGen {
     verb => current_verb;
     _kill_spork(verb_pulse);
     if (crazy) spork ~ _pulse_verb_once() @=> verb_pulse;
+    _trigger_verb_beep();
+  }
+
+  fun void _trigger_verb_beep() {
+    desktop_state.verb_duration / 1::ms => float initial_ms;
+    verb_change_delay / 1::ms => float current_ms;
+    200. => float min_ms;
+    Math.max(initial_ms - min_ms, 1.) => float range_ms;
+    Math.clampf((initial_ms - current_ms) / range_ms, 0., 1.) => float chaos;
+    // full volume until the last 30% of chaos then fade to silence
+    Math.clampf(1. - (chaos - 0.7) / 0.3, 0., 1.) => float fade;
+    beep_sounder.set_chaos(chaos);
+    beep_sounder.set_fade(fade);
+    beep_sounder.beep();
   }
 
   fun void _init_bg() {
