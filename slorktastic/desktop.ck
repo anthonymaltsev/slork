@@ -257,4 +257,21 @@ public class Desktop {
 }
 
 Desktop desktop();
+
+// NEW FEATURE @Anthony @Siqi (hopefully this is helpful):
+// dev mode: pass "dev" as a script arg to shorten the first two states'
+// durations to 1::second each (chaos state untouched). avoids having to
+// comment/uncomment durations when iterating (mea culpa for the original)
+false => int dev_mode;
+for (0 => int i; i < me.args(); ++i) {
+  if (me.arg(i) == "dev") true => dev_mode;
+}
+if (dev_mode) {
+  <<< "[dev] shortening first two state durations to 1::second" >>>;
+  for (0 => int i; i < desktop.STATES.size() - 1; ++i) {
+    1::second => desktop.STATES[i].cook_duration;
+    1::second => desktop.STATES[i].verb_duration;
+  }
+}
+
 desktop.run();

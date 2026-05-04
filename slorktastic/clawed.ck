@@ -279,10 +279,6 @@ public class ClawedAnimated extends Clawed {
 }
 
 public class ClawedFlock extends PerlinCloud {
-  0 => int started;
-  time start_time;
-  20::second => dur constrained_window;
-
   4.5 => float term_w;
   term_w * (2./3) => float term_h;
   0.5 => float bird_w;
@@ -295,17 +291,11 @@ public class ClawedFlock extends PerlinCloud {
 
   fun @construct(int size, dur freq_in, float scale_in) {
     PerlinCloud(freq_in, scale_in, 10);
+    set_constraint_bounds(term_center, term_w, term_h, bird_w, bird_h);
     for (0 => int i; i < size; i++) add_birdie();
   }
 
   fun int birdie_count() { return count(); }
-
-  fun void start() {
-    if (!started) {
-      1 => started;
-      now => start_time;
-    }
-  }
 
   fun void add_birdie() {
     new ClawedAnimated(
@@ -318,18 +308,6 @@ public class ClawedFlock extends PerlinCloud {
     b.animate_flapping();
     add(b);
   }
-
-  fun vec3 _position_for(int i, vec3 base, vec2 offset) {
-    base + @(offset.x, offset.y, 0.) => vec3 p;
-    if ((now - start_time) < constrained_window) {
-      @(
-        Math.clampf(p.x, term_center.x - term_w/2. + bird_w, term_center.x + term_w/2. - bird_w),
-        Math.clampf(p.y, term_center.y - term_h/2. + bird_h, term_center.y + term_h/2. - bird_h),
-        Math.clampf(p.z, 0., 0.)
-      ) => p;
-    }
-    return p;
-  }
 }
 
 public class WordCloud extends PerlinCloud {
@@ -338,6 +316,15 @@ public class WordCloud extends PerlinCloud {
   @(0.6, 1.1) => vec2 spawn_size_range;
   0.4 => float size_factor;
   @(-2., 2.) => vec2 spawn_xy_range;
+
+  // ratios for our font (DejaVuSansMono) used to estimate each word
+  // bounding half-extent for constraint clamp
+  0.6 => float CHAR_W_RATIO;
+  0.5 => float LINE_H_RATIO;
+
+  // half-extent (half-width, half-height) per element: populated as
+  // we add words to the cloud :)
+  vec2 _word_half_extents[0];
 
   fun @construct(dur freq_in, float scale_in) {
     PerlinCloud(freq_in, scale_in, 16);
@@ -362,11 +349,15 @@ public class WordCloud extends PerlinCloud {
   fun GText create_word_text(string word, vec3 pos) {
     GText txt;
     txt.font(font_face);
-    txt.size(scale * size_factor * Math.random2f(spawn_size_range.x, spawn_size_range.y));
+    scale * size_factor * Math.random2f(spawn_size_range.x, spawn_size_range.y) => float font_size;
+    txt.size(font_size);
     txt.color(word_color);
-    txt.controlPoints(@(0., 1.));
+    txt.controlPoints(@(0.5, 0.5));
     txt.text(word);
     txt.pos(pos);
+    // record half-extents IN LOCKSTEP (!) with PerlinCloud.elements
+    _word_half_extents << @(font_size * CHAR_W_RATIO * word.length() / 2.,
+                            font_size * LINE_H_RATIO);
     return txt;
   }
 
@@ -377,6 +368,11 @@ public class WordCloud extends PerlinCloud {
   fun vec3 _position_for(int i, vec3 base, vec2 offset) {
     GG.camera().viewSize() => float vs;
     return base + @(vs * offset.x, vs * offset.y, 0.);
+  }
+
+  fun vec2 _element_half_extent(int i) {
+    if (i < 0 || i >= _word_half_extents.size()) return @(0., 0.);
+    return _word_half_extents[i];
   }
 }
 

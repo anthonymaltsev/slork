@@ -192,6 +192,10 @@ public class ClawedCode extends GGen {
   GlitchCloud @ glitch_cloud;
 
   2::second => dur END_SEQUENCE_DELAY;
+  20::second => dur CLOUDS_CONSTRAINED_WINDOW;
+  0.1 => float WORD_CLOUD_MARGIN_X;
+  0.1 => float WORD_CLOUD_MARGIN_Y;
+  0 => int _clouds_release_started;
   0.1 => float demon_prob;
   0.25 => float MAX_DEMON_PROB;
   DemonSounder demon_sounder;
@@ -377,6 +381,14 @@ public class ClawedCode extends GGen {
     // flap bird
     clawed.animate_flapping();
     new WordCloud(100::ms, 1.25) @=> word_cloud;
+    word_cloud.set_constraint_bounds(
+      flock.term_center,
+      flock.term_w,
+      flock.term_h,
+      WORD_CLOUD_MARGIN_X,
+      WORD_CLOUD_MARGIN_Y
+    );
+    word_cloud.set_constrained(1);
     spork ~ _run_add_birdies();
     spork ~ _run_tts_loop() @=> _tts_loop;
   }
@@ -601,7 +613,7 @@ public class ClawedCode extends GGen {
           _get_crazy_with_it();
           1 => got_crazy;
         }
-        flock.start(); // set start time for bird additions
+        _release_clouds_constraint();
         if (clawed_scale >= max_clawed_scale) {
           if (!begun_end_sequence) _begin_end_sequence();
         } else {
@@ -830,7 +842,24 @@ public class ClawedCode extends GGen {
     clawed.pos(RELATIVE + clawed_pos);
     clawed.animate_blinking();
     flock.pos(@(0.,0.,0.));
+    flock.set_constrained(1);
     clawed --> this;
+  }
+
+  fun void _set_clouds_constrained(int on) {
+    flock.set_constrained(on);
+    if (word_cloud != null) word_cloud.set_constrained(on);
+  }
+
+  fun void _release_clouds_constraint() {
+    if (_clouds_release_started) return;
+    1 => _clouds_release_started;
+    spork ~ _run_release_clouds_constraint();
+  }
+
+  fun void _run_release_clouds_constraint() {
+    CLOUDS_CONSTRAINED_WINDOW => now;
+    _set_clouds_constrained(0);
   }
 
   fun void _draw_prompt_container() {
