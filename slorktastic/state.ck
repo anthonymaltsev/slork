@@ -36,6 +36,13 @@ public class DesktopState {
   dur cook_duration;
   dur verb_duration;
   int gets_crazy;
+  // word cloud appears at prompt-submit (during cook, before chaos) rather
+  // than waiting for the chaos ramp. populated with the same buzzwords
+  // ClawedCode otherwise gathers at crazy-time.
+  int word_cloud_early;
+  // gates the tts sayer that reads buzzwords aloud. defaults on for backward
+  // compat with the original chaos behavior, turn off to get a silent cloud.
+  int tts_enabled;
   string cooking_verbs[];
   PianoState @ piano_state;
   // NOTEs provided to any brave soul interacting with my code:
@@ -72,6 +79,19 @@ public class DesktopState {
     PianoState piano,
     FlashCue cues[]
   ) {
+    DesktopState(pr, cook_dur, verb_dur, crazy, verbs, piano, cues, false, true);
+  }
+  fun @construct(
+    string pr,
+    dur cook_dur,
+    dur verb_dur,
+    int crazy,
+    string verbs[],
+    PianoState piano,
+    FlashCue cues[],
+    int wc_early,
+    int tts
+  ) {
     pr => prompt;
     cook_dur => cook_duration;
     verb_dur => verb_duration;
@@ -79,5 +99,7 @@ public class DesktopState {
     verbs @=> cooking_verbs;
     piano @=> piano_state;
     cues @=> flash_cues;
+    wc_early => word_cloud_early;
+    tts => tts_enabled;
   }
 }

@@ -214,6 +214,7 @@ public class ClawedCode extends GGen {
   // Shred @ _demon_flash_shred;
   Shred @ _flash_cues_shred;
   Shred @ _tts_loop;
+  Shred @ _add_words_shred;
 
   Shred spinner_shred;
   Shred verb_shred;
@@ -300,6 +301,18 @@ public class ClawedCode extends GGen {
     0 => got_crazy;
     set_prompt_editable(1);
 
+    //tear down any cloud/TTS from prev state
+    _kill_spork(_tts_loop);
+    null @=> _tts_loop;
+    _kill_spork(_add_words_shred);
+    null @=> _add_words_shred;
+    if (word_cloud != null) {
+      word_cloud.disable();
+      word_cloud.clear();
+      null @=> word_cloud;
+    }
+    sayer.set_gain(0);
+
     st @=> desktop_state;
 
     _update_prompt_display();
@@ -316,6 +329,8 @@ public class ClawedCode extends GGen {
 
     // verb/spinner init
     _redraw_verb();
+    // start the cloud (and optionally TTS) before chaos if the state opts in
+    if (desktop_state.word_cloud_early) _start_word_cloud();
     // sporked so _run_text_input can keep polling keyboard events
     // whoops lol glad i fixed that
     spork ~ _run_verb();
@@ -414,6 +429,12 @@ public class ClawedCode extends GGen {
   fun void _get_crazy_with_it() {
     // flap bird
     clawed.animate_flapping();
+    _start_word_cloud();
+    spork ~ _run_add_birdies();
+  }
+
+  fun void _start_word_cloud() {
+    if (word_cloud != null) return;
     new WordCloud(100::ms, 1.25) @=> word_cloud;
     word_cloud.set_constraint_bounds(
       flock.term_center,
@@ -423,15 +444,21 @@ public class ClawedCode extends GGen {
       WORD_CLOUD_MARGIN_Y
     );
     word_cloud.set_constrained(1);
-    spork ~ _run_add_birdies();
-    spork ~ _run_tts_loop() @=> _tts_loop;
+    spork ~ _run_add_words() @=> _add_words_shred;
+    if (desktop_state.tts_enabled) spork ~ _run_tts_loop() @=> _tts_loop;
+  }
+
+  fun void _run_add_words() {
+    0 => int i;
+    while (i < terminal_buzzwords.size()) {
+      word_cloud.add_word(terminal_buzzwords[i++]);
+      700::ms => now;
+    }
   }
 
   fun void _run_add_birdies() {
-    0 => int i;
-    while (flock.count() < 32 || word_cloud.count() < terminal_buzzwords.size()){//128) {
-      if (flock.count() < 32) flock.add_birdie();
-      if (word_cloud.count() < terminal_buzzwords.size()) word_cloud.add_word(terminal_buzzwords[i++]);
+    while (flock.count() < 32) {
+      flock.add_birdie();
       700::ms => now;
     }
   }
