@@ -29,12 +29,21 @@ public class DemonSounder {
   Shred @ _shred;
 
   1000. => float base_freq;
-  
+
   .1 => float INITIAL_GAIN;
   .5 => float MAX_GAIN;
   1.2 => float GAIN_RAMP;
 
   INITIAL_GAIN => float current_gain;
+
+  .2 => float CONSTRAINED_MASTER_GAIN;
+  .4 => float UNCONSTRAINED_MASTER_GAIN;
+  .15 => float CONSTRAINED_NOISE_GAIN;
+  .7 => float UNCONSTRAINED_NOISE_GAIN;
+  300::ms => dur UNCONSTRAINED_RAMP_DUR;
+
+  CONSTRAINED_MASTER_GAIN => float target_master_gain;
+  0 => int _unconstrained;
 
   fun @construct() {
     300::ms => lfo_env.duration;
@@ -42,7 +51,7 @@ public class DemonSounder {
     1 => base_osc.gain;
     .6 => fifth_osc.gain;
     .8 => bassy_osc.gain;
-    .5 => scary_noise.gain;
+    CONSTRAINED_NOISE_GAIN => scary_noise.gain;
 
     // never changes (for now)
     (base_freq * 1/8) => bassy_osc.freq;
@@ -57,8 +66,32 @@ public class DemonSounder {
 
   fun start() {
     if (_shred != null) return; // noop
-    .4 => master_gain.gain;
+    target_master_gain => master_gain.gain;
     spork ~ _run_sound_loop() @=> _shred;
+  }
+
+  fun void set_unconstrained(int on) {
+    on => _unconstrained;
+    if (on) {
+      spork ~ _ramp_to_unconstrained();
+    } else {
+      CONSTRAINED_MASTER_GAIN => target_master_gain;
+      CONSTRAINED_NOISE_GAIN => scary_noise.gain;
+      if (_shred != null) target_master_gain => master_gain.gain;
+    }
+  }
+
+  fun void _ramp_to_unconstrained() {
+    UNCONSTRAINED_NOISE_GAIN => scary_noise.gain;
+    UNCONSTRAINED_MASTER_GAIN => target_master_gain;
+    master_gain.gain() => float start_gain;
+    now => time t0;
+    while (now - t0 < UNCONSTRAINED_RAMP_DUR) {
+      (now-t0) / UNCONSTRAINED_RAMP_DUR => float t;
+      ((1.-t) * start_gain + t * UNCONSTRAINED_MASTER_GAIN) => master_gain.gain;
+      10::ms => now;
+    }
+    UNCONSTRAINED_MASTER_GAIN => master_gain.gain;
   }
   
   fun stop() {
@@ -652,11 +685,14 @@ public class ClawedCode extends GGen {
   fun void _run_flash_demon(dur d) {
     demon_sounder.start();
     clawed.set_demonic(1);
-    glitch_cloud.populate(Math.random2(60, 120));
-    glitch_cloud.enable();
+    _clouds_unconstrained => int show_glitch;
+    if (show_glitch) {
+      glitch_cloud.populate(Math.random2(60, 120));
+      glitch_cloud.enable();
+    }
     d => now;
     clawed.set_demonic(0);
-    glitch_cloud.disable();
+    if (show_glitch) glitch_cloud.disable();
     demon_sounder.stop();
     // higher pitch & gain on next
     demon_sounder.escalate();
@@ -861,6 +897,7 @@ public class ClawedCode extends GGen {
     CLOUDS_CONSTRAINED_WINDOW => now;
     _set_clouds_constrained(0);
     1 => _clouds_unconstrained;
+    demon_sounder.set_unconstrained(1);
   }
 
   fun void _draw_prompt_container() {
