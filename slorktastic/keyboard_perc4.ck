@@ -85,21 +85,12 @@ if( !hi.openKeyboard( device ) ) me.exit();
 
 // Keyboard beats sounds ====================================================
 
-
-
-// pre-load all keySynths at startup for low latency on pad activation
-new keySynths(0.4::second, [2, 1, 1], 4) @=> keySynths @ cooking;
-new keySynths(0.4::second, [2, 1, 1], 3) @=> keySynths @ caramelizing;
-new keySynths(0.4::second, [2, 1, 1], 8) @=> keySynths @ vibing;
-new keySynths(0.4::second, [2, 1, 1], 12) @=> keySynths @ screaming;
-new keySynths(0.4::second, [2, 1, 1], 16) @=> keySynths @ burning;
-
-// mute all at start
-cooking.silence();
-caramelizing.silence();
-vibing.silence();
-screaming.silence();
-burning.silence();
+// instantiate keySynths
+keySynths @cooking;
+keySynths @caramelizing;
+keySynths @vibing;
+keySynths @screaming;
+keySynths @burning;
 
 
 // ======== play perc stuff ========
@@ -112,14 +103,22 @@ fun void Cooking() {
         <<< "perc 0 activated!" >>>;
         0 => percs[0].deactivateHappened; 
         1 => percs[0].activateHappened;
+        new keySynths(0.4::second, [2, 1, 1], 4) @=> cooking;
         spork ~ cooking.playSynths() @=> cookingShred;
     } else if (percs[0].activateHappened == 1 && percs[0].state == 0) {
         1 => percs[0].deactivateHappened;
         0 => percs[0].activateHappened;
         <<< "cooking deactivated!" >>>;
-        cookingShred.exit();
-        cooking.silence();
+        spork ~ deactivateCooking();
     }
+}
+
+fun void deactivateCooking() {
+    cooking.silence();
+    300::ms => now;
+    cookingShred.exit();
+    cooking.disconnect();
+    null @=> cooking;
 }
 
 fun void Caramelizing() {
@@ -127,14 +126,22 @@ fun void Caramelizing() {
         <<< "perc 1 activated!" >>>;
         0 => percs[1].deactivateHappened; 
         1 => percs[1].activateHappened;
+        new keySynths(0.4::second, [2, 1, 1], 3) @=> caramelizing;
         spork ~ caramelizing.playSynths() @=> caramelizingShred;
     } else if (percs[1].activateHappened == 1 && percs[1].state == 0) {
         1 => percs[1].deactivateHappened;
         0 => percs[1].activateHappened;
         <<< "caramelizing deactivated!" >>>;
-        caramelizingShred.exit();
-        caramelizing.silence();
+        spork ~ deactivateCaramelizing();
     }
+}
+
+fun void deactivateCaramelizing() {
+    caramelizing.silence();
+    300::ms => now;
+    caramelizingShred.exit();
+    caramelizing.disconnect();
+    null @=> caramelizing;
 }
 
 fun void Vibing() {
@@ -142,14 +149,22 @@ fun void Vibing() {
         <<< "perc 2 activated!" >>>;
         0 => percs[2].deactivateHappened; 
         1 => percs[2].activateHappened;
+        new keySynths(0.4::second, [2, 1, 1], 8) @=> vibing;
         spork ~ vibing.playSynths() @=> vibingShred;
     } else if (percs[2].activateHappened == 1 && percs[2].state == 0) {
         1 => percs[2].deactivateHappened;
         0 => percs[2].activateHappened;
         <<< "vibing deactivated!" >>>;
-        vibingShred.exit();
-        vibing.silence();
+        spork ~ deactivateVibing();
     }
+}
+
+fun void deactivateVibing() {
+    vibing.silence();
+    300::ms => now;
+    vibingShred.exit();
+    vibing.disconnect();
+    null @=> vibing;
 }
 
 fun void Screaming() {
@@ -157,14 +172,22 @@ fun void Screaming() {
         <<< "perc 3 activated!" >>>;
         0 => percs[3].deactivateHappened; 
         1 => percs[3].activateHappened;
+        new keySynths(0.4::second, [2, 1, 1], 12) @=> screaming;
         spork ~ screaming.playSynths() @=> screamingShred;
     } else if (percs[3].activateHappened == 1 && percs[3].state == 0) {
         1 => percs[3].deactivateHappened;
         0 => percs[3].activateHappened;
         <<< "screaming deactivated!" >>>;
-        screamingShred.exit();
-        screaming.silence();
+        spork ~ deactivateScreaming();
     }
+}
+
+fun void deactivateScreaming() {
+    screaming.silence();
+    300::ms => now;
+    screamingShred.exit();
+    screaming.disconnect();
+    null @=> screaming;
 }
 
 fun void Burning() {
@@ -172,14 +195,22 @@ fun void Burning() {
         <<< "perc 4 activated!" >>>;
         0 => percs[4].deactivateHappened; 
         1 => percs[4].activateHappened;
+        new keySynths(0.4::second, [2, 1, 1], 16) @=> burning;
         spork ~ burning.playSynths() @=> burningShred;
     } else if (percs[4].activateHappened == 1 && percs[4].state == 0) {
         1 => percs[4].deactivateHappened;
         0 => percs[4].activateHappened;
         <<< "burning deactivated!" >>>;
-        burningShred.exit();
-        burning.silence();
+        spork ~ deactivateBurning();
     }
+}
+
+fun void deactivateBurning() {
+    burning.silence();
+    300::ms => now;
+    burningShred.exit();
+    burning.disconnect();
+    null @=> burning;
 }
 
 
@@ -200,19 +231,19 @@ fun void keyboardLoop() {
             // check for action type
             if( msg.isButtonDown() )
             {
-                if (percs[0].active()){
+                if (percs[0].active() && cooking != null){
                     1 => cooking.wasKeyDown;
                 }
-                if (percs[1].active()){
+                if (percs[1].active() && caramelizing != null){
                     1 => caramelizing.wasKeyDown;
                 }
-                if (percs[2].active()){
+                if (percs[2].active() && vibing != null){
                     1 => vibing.wasKeyDown;
                 }
-                if (percs[3].active()){
+                if (percs[3].active() && screaming != null){
                     1 => screaming.wasKeyDown;
                 }
-                if (percs[4].active()){
+                if (percs[4].active() && burning != null){
                     1 => burning.wasKeyDown;
                 }
             }
