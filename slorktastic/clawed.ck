@@ -15,9 +15,9 @@ public class Clawed extends GGen {
   .15 => float WINGTIP_WIDTH;
   .3 => float WINGTIP_HEIGHT;
   .3 => float FOOT_WIDTH;
-  .35 => float FOOT_HEIGHT;
+  .25 => float FOOT_HEIGHT;
   .08 => float CLAW_WIDTH;
-  .42 => float CLAW_HEIGHT;
+  .22 => float CLAW_HEIGHT;
   .07 => float CLAW_CURVE;
   3 => int CLAWS_PER_FOOT;
   @(.7,.8,.2) => vec3 CLAW_COLOR;
