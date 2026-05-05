@@ -24,20 +24,15 @@ GGen percGroup --> GG.scene();
 percSets percs(mouse)[NUM_PERCS];
 
 percs[0].setName(
-    "cooking...");
+    "Cooking...");
 percs[1].setName(
-    "
-    Chopping onions..."
-    );
+    "Caramelizing...");
 percs[2].setName(
-    "Doodling..."
-    );
+    "Vibing...");
 percs[3].setName(
-    "Panicking..."
-    );
+    "Screaming...");
 percs[4].setName(
-    "Rotting"
-    );
+    "Burning...");
 
 
 fun void placePercGroup() {
@@ -94,23 +89,23 @@ if( !hi.openKeyboard( device ) ) me.exit();
 
 // pre-load all keySynths at startup for low latency on pad activation
 new keySynths(0.4::second, [2, 1, 1], 4) @=> keySynths @ cooking;
-new keySynths(0.4::second, [2, 1, 1], 0) @=> keySynths @ chopOnions;
-new keySynths(0.4::second, [2, 1, 1], 5) @=> keySynths @ doodling;
-new keySynths(0.4::second, [2, 1, 1], 9) @=> keySynths @ panicking;
-new keySynths(0.4::second, [2, 1, 1], 13) @=> keySynths @ rotting;
+new keySynths(0.4::second, [2, 1, 1], 3) @=> keySynths @ caramelizing;
+new keySynths(0.4::second, [2, 1, 1], 8) @=> keySynths @ vibing;
+new keySynths(0.4::second, [2, 1, 1], 12) @=> keySynths @ screaming;
+new keySynths(0.4::second, [2, 1, 1], 16) @=> keySynths @ burning;
 
 // mute all at start
 cooking.silence();
-chopOnions.silence();
-doodling.silence();
-panicking.silence();
-rotting.silence();
+caramelizing.silence();
+vibing.silence();
+screaming.silence();
+burning.silence();
 
 
 // ======== play perc stuff ========
 
 // initialize the shreds
-Shred cookingShred, chopOnionsShred, doodlingShred, panickingShred, rottingShred;
+Shred cookingShred, caramelizingShred, vibingShred, screamingShred, burningShred;
 
 fun void Cooking() {
     if (percs[0].active() && percs[0].deactivateHappened == 1) {
@@ -127,63 +122,63 @@ fun void Cooking() {
     }
 }
 
-fun void ChopOnions() {
+fun void Caramelizing() {
     if (percs[1].active() && percs[1].deactivateHappened == 1) {
         <<< "perc 1 activated!" >>>;
         0 => percs[1].deactivateHappened; 
         1 => percs[1].activateHappened;
-        spork ~ chopOnions.playSynths() @=> chopOnionsShred;
+        spork ~ caramelizing.playSynths() @=> caramelizingShred;
     } else if (percs[1].activateHappened == 1 && percs[1].state == 0) {
         1 => percs[1].deactivateHappened;
         0 => percs[1].activateHappened;
-        <<< "chopOnions deactivated!" >>>;
-        chopOnionsShred.exit();
-        chopOnions.silence();
+        <<< "caramelizing deactivated!" >>>;
+        caramelizingShred.exit();
+        caramelizing.silence();
     }
 }
 
-fun void Doodling() {
+fun void Vibing() {
     if (percs[2].active() && percs[2].deactivateHappened == 1) {
         <<< "perc 2 activated!" >>>;
         0 => percs[2].deactivateHappened; 
         1 => percs[2].activateHappened;
-        spork ~ doodling.playSynths() @=> doodlingShred;
+        spork ~ vibing.playSynths() @=> vibingShred;
     } else if (percs[2].activateHappened == 1 && percs[2].state == 0) {
         1 => percs[2].deactivateHappened;
         0 => percs[2].activateHappened;
-        <<< "doodling deactivated!" >>>;
-        doodlingShred.exit();
-        doodling.silence();
+        <<< "vibing deactivated!" >>>;
+        vibingShred.exit();
+        vibing.silence();
     }
 }
 
-fun void Panicking() {
+fun void Screaming() {
     if (percs[3].active() && percs[3].deactivateHappened == 1) {
         <<< "perc 3 activated!" >>>;
         0 => percs[3].deactivateHappened; 
         1 => percs[3].activateHappened;
-        spork ~ panicking.playSynths() @=> panickingShred;
+        spork ~ screaming.playSynths() @=> screamingShred;
     } else if (percs[3].activateHappened == 1 && percs[3].state == 0) {
         1 => percs[3].deactivateHappened;
         0 => percs[3].activateHappened;
-        <<< "panicking deactivated!" >>>;
-        panickingShred.exit();
-        panicking.silence();
+        <<< "screaming deactivated!" >>>;
+        screamingShred.exit();
+        screaming.silence();
     }
 }
 
-fun void Rotting() {
+fun void Burning() {
     if (percs[4].active() && percs[4].deactivateHappened == 1) {
         <<< "perc 4 activated!" >>>;
         0 => percs[4].deactivateHappened; 
         1 => percs[4].activateHappened;
-        spork ~ rotting.playSynths() @=> rottingShred;
+        spork ~ burning.playSynths() @=> burningShred;
     } else if (percs[4].activateHappened == 1 && percs[4].state == 0) {
         1 => percs[4].deactivateHappened;
         0 => percs[4].activateHappened;
-        <<< "rotting deactivated!" >>>;
-        rottingShred.exit();
-        rotting.silence();
+        <<< "burning deactivated!" >>>;
+        burningShred.exit();
+        burning.silence();
     }
 }
 
@@ -209,16 +204,16 @@ fun void keyboardLoop() {
                     1 => cooking.wasKeyDown;
                 }
                 if (percs[1].active()){
-                    1 => chopOnions.wasKeyDown;
+                    1 => caramelizing.wasKeyDown;
                 }
                 if (percs[2].active()){
-                    1 => doodling.wasKeyDown;
+                    1 => vibing.wasKeyDown;
                 }
                 if (percs[3].active()){
-                    1 => panicking.wasKeyDown;
+                    1 => screaming.wasKeyDown;
                 }
                 if (percs[4].active()){
-                    1 => rotting.wasKeyDown;
+                    1 => burning.wasKeyDown;
                 }
             }
             else
@@ -246,10 +241,10 @@ while( true )
     GG.nextFrame() => now;
     placePercGroup();
     Cooking();
-    ChopOnions();
-    Doodling();
-    Panicking();
-    Rotting();
+    Caramelizing();
+    Vibing();
+    Screaming();
+    Burning();
     
 }
 
