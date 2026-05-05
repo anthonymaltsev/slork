@@ -48,6 +48,8 @@ public class LightsManager {
   Shred @ _flash_spork;
   Shred @ _pulse_spork;
 
+  1 => int is_enabled;
+
   fun void init() {
     all_out();
     _reset_blue();
@@ -154,6 +156,7 @@ public class LightsManager {
   }
 
   fun void _send_osc(string chan) {
+    if (!is_enabled) return;
     _make_message(chan) @=> OscOut msg;
     _send_osc(msg);
   }

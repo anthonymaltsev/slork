@@ -179,6 +179,11 @@ public class ClawedCode extends GGen {
     verb_line.text("  " + current_verb + "…");
   }
 
+  fun void disable_lights() {
+    <<< "[clawed-code] disabling lights" >>>;
+    0 => _lights.is_enabled;
+  }
+
   fun void set_prompt_editable(int enabled) {
     enabled => prompt_editable;
     _lights.set_spotlight(enabled ? 100 : 0);

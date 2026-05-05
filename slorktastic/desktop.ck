@@ -273,6 +273,7 @@ if (dev_mode) {
   for (0 => int i; i < desktop.STATES.size() - 1; ++i) {
     1::second => desktop.STATES[i].cook_duration;
     1::second => desktop.STATES[i].verb_duration;
+    desktop.terminal.disable_lights();
   }
 }
 
