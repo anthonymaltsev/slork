@@ -170,9 +170,3 @@ public class LightsManager {
     return xmit;
   }
 }
-
-LightsManager manager;
-
-manager.init();
-1::second => now;
-manager.house_neutral();
