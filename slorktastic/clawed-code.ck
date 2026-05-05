@@ -517,6 +517,9 @@ public class ClawedCode extends GGen {
       GG.nextFrame() => now;
     }
     1. => fade_mat.alpha;
+
+    2::second => now;
+    _lights.house_neutral();
   }
 
   fun void _hide_verb_spinner() {

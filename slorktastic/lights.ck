@@ -30,13 +30,15 @@ public class LightsManager {
     HOUSE_RIGHT_SCREEN,
     HOUSE_LEFT_MIDFRONT,
     HOUSE_RIGHT_MIDFRONT,
+    HOUSE_LEFT_MIDBACK,
+    HOUSE_RIGHT_MIDBACK,
     HOUSE_LEFT_BIGBOY,
     HOUSE_RIGHT_BIGBOY
   ] @=> int COOKING_LIGHTS[];
 
   // brightness consts for cooking light show!!
-  20 => int COOKING_DIM_VAL;
-  50 => int COOKING_PULSE_MIN;
+  10 => int COOKING_DIM_VAL;
+  10 => int COOKING_PULSE_MIN;
   100 => int COOKING_PULSE_MAX;
 
   // "localhost" => string hostname;
@@ -47,8 +49,12 @@ public class LightsManager {
   Shred @ _pulse_spork;
 
   fun void init() {
+    all_out();
     _reset_blue();
     set_cooking_lights(false);
+    _set_val(HOUSE_LIGHTS_REAR, 0);
+    _set_val(HOUSE_LIGHTS_FRONT, 0);
+    _set_val(CEILING_LIGHTS_FRONT, 0);
   }
 
   fun void flash() {
@@ -60,6 +66,17 @@ public class LightsManager {
     spork ~ _flash() @=> _flash_spork;
   }
 
+  // set house lights on for when piece is over
+  fun void house_neutral() {
+    _kill_pulse();
+    _set_val(HOUSE_LIGHTS_REAR, 50);
+    _set_val(HOUSE_LIGHTS_FRONT, 50);
+    _set_val(CEILING_LIGHTS_FRONT, 50);
+    for (0 => int i; i < COOKING_LIGHTS.size(); i++) {
+      _set_val(COOKING_LIGHTS[i], 0);
+    }
+  }
+
   fun void all_out() {
     _kill_pulse();
     for (MIN_CHANNEL => int ch; ch <= MAX_CHANNEL; ch++)
@@ -67,7 +84,10 @@ public class LightsManager {
   }
 
   fun void set_spotlight(int val) {
-    _set_val(SPOTLIGHT_1, val);
+    // _set_val(SPOTLIGHT_1, val);
+    <<< val >>>;
+    _set_color(HOUSE_LEFT_MOVINGARM_LIGHT, 0, 0);
+    _set_val(HOUSE_LEFT_MOVINGARM_LIGHT, val);
   }
 
   fun void set_cooking_lights(int on) {
@@ -91,7 +111,7 @@ public class LightsManager {
         Math.random2(COOKING_PULSE_MIN, COOKING_PULSE_MAX) => int v;
         _set_val(COOKING_LIGHTS[i], v);
       }
-      Math.random2f(120.,350.)::ms => now;
+      Math.random2f(140.,280.)::ms => now;
     }
   }
 
@@ -109,14 +129,14 @@ public class LightsManager {
   }
 
   fun void _flash() {
-    _set_cooking_lights_color(0, 100);
+    _set_cooking_lights_color(0, 90);
     200::ms => now;
     _reset_blue();
     200::ms => now;
   }
 
   fun void _reset_blue() {
-    _set_cooking_lights_color(270, 100);
+    _set_cooking_lights_color(230, 95);
   }
 
   fun void _set_color(int chan, int hue, int sat) {
@@ -151,16 +171,8 @@ public class LightsManager {
   }
 }
 
-// LightsManager manager;
+LightsManager manager;
 
-// while (true) {
-//   manager.init();
-//   1::second => now;
-//   manager.set_cooking_lights(true);
-//   manager.set_spotlight(100);
-//   3::second => now;
-//   manager.all_out();
-//   5::second => now;
-//   manager.set_spotlight(100);
-//   10::second => now;
-// }
+manager.init();
+1::second => now;
+manager.house_neutral();
