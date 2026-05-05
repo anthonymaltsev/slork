@@ -52,8 +52,9 @@ new ArbSynth("data/verbs/cont/puppy-crying.arr", dac) @=> sounds["4"];
 new ArbSynth("data/verbs/cont/woman-screaming-sfx-screaming.arr", dac) @=> sounds["5"];
 new ArbSynth("data/verbs/cont/wood-burning-stove-fire.arr", dac) @=> sounds["6"];
 new ArbSynth("data/verbs/cont/geese-honking.arr", dac) @=> sounds["7"]; 
-new ArbSynth("data/synthPads/UnderwaterTemple_bip1.arr", dac) @=> sounds["9"];
-new ArbSynth("data/synthPads/UnderwaterTemple_bip_2.arr", dac) @=> sounds["0"];
+new ArbSynth("data/verbs/pulse/cracking-bones.arr", dac) @=> sounds["8"]; 
+new ArbSynth("data/verbs/cont/stomach-gurgle.arr", dac) @=> sounds["9"];
+new ArbSynth("data/verbs/cont/keurig-kcup-brewing.arr", dac) @=> sounds["0"];
 
 <<<"made synths", "" >>>;
 Hid hi;

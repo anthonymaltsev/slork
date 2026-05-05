@@ -133,6 +133,7 @@ public class keySynths {
     JCRev r;
     PitShift ps;
     Gain bus;
+    Gain bus1;
 
     dur currentDur;
 
@@ -142,12 +143,13 @@ public class keySynths {
         synthDur_in => synthDur;
         synthPattern_in @=> synthPattern;
 
+        // Stage 1: cook synths
+        // chopping onions...
         if (synth_group_in == 0) {
             // cooking synths pulses
-            new ArbSynth[3] @=> synths; // sized number of cooking sounds
+            new ArbSynth[1] @=> synths; // sized number of cooking sounds
             new ArbSynth("data/verbs/pulse/cutting-vegetables.arr", bus) @=> synths[0];
-            new ArbSynth("data/verbs/pulse/egg-crack.arr", bus) @=> synths[1];
-            new ArbSynth("data/verbs/pulse/liquid-swirl.arr", bus) @=> synths[2];
+
             
             // connect to effects and dac
             bus => ps => dac;
@@ -156,13 +158,37 @@ public class keySynths {
             0.5 => ps.shift;
         } 
 
-        else if (synth_group_in == 1) {
-            // cooking synth continuous
-            new ArbSynth[4] @=> synths; // sized number of cooking sounds
+        // whisking...
+        if (synth_group_in == 1) {
+            // cooking synths pulses
+            new ArbSynth[2] @=> synths; // sized number of cooking sounds
+            new ArbSynth("data/verbs/pulse/egg-crack.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/cont/whisking.arr", bus) @=> synths[1];
+
+            
+            // connect to effects and dac
+            bus => ps => dac;
+            0.8 => bus.gain; 
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        } 
+
+        // brewing...
+        if (synth_group_in == 2) {
+            new ArbSynth[1] @=> synths; // sized number of cooking sounds
             new ArbSynth("data/verbs/cont/coffee-brewing-percolation.arr", bus) @=> synths[0];
-            new ArbSynth("data/verbs/cont/cooking-frying.arr", bus) @=> synths[1];
-            new ArbSynth("data/verbs/cont/cooking-pasta.arr", bus) @=> synths[2];
-            new ArbSynth("data/verbs/cont/whisking.arr", bus) @=> synths[3];
+            
+            // connect to effects and dac
+            bus => ps => dac;
+            0.8 => bus.gain; 
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        } 
+
+        // caramelizing...
+        else if (synth_group_in == 3) {
+            new ArbSynth[1] @=> synths; // sized number of cooking sounds
+            new ArbSynth("data/verbs/cont/cooking-frying.arr", bus) @=> synths[0];
 
             // connect to effects and dac
             bus => ps => dac;
@@ -170,14 +196,71 @@ public class keySynths {
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
-        
-        else if (synth_group_in == 2) {
-            // mech synths pulse
-            new ArbSynth[4] @=> synths;
+
+        // cooking
+        else if (synth_group_in == 4) {
+            // cooking synth continuous
+            new ArbSynth[2] @=> synths; // sized number of cooking sounds
+            new ArbSynth("data/verbs/cont/cooking-pasta.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/pulse/liquid-swirl.arr", bus1) @=> synths[1];
+
+
+            // connect to effects and dac
+            0.15 => bus1.gain;
+            bus1 => ps => dac;
+            bus => ps => dac;
+            0.9 => bus.gain;
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        }
+
+        // Stage 2: mech synths
+        // Doodling
+        else if (synth_group_in == 5) {
+            // mech synths continuous
+            new ArbSynth[2] @=> synths;
+            new ArbSynth("data/verbs/cont/pencil-on-paper-1.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/cont/pencil-on-paper-2.arr", bus) @=> synths[1];
+
+            // connect to effects and dac
+            bus => ps => dac;   
+            0.3 => bus.gain; // this stuff too loud LOL
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        }
+
+        // calculating
+        else if (synth_group_in == 6) {
+
+            new ArbSynth[2] @=> synths;
             new ArbSynth("data/verbs/pulse/buttons_calculator.arr", bus) @=> synths[0];
             new ArbSynth("data/verbs/pulse/buttons_calculator1.arr", bus) @=> synths[1];
-            new ArbSynth("data/verbs/pulse/cell-phone-vibrate-high-quality.arr", bus) @=> synths[2];
-            new ArbSynth("data/verbs/pulse/rustling-a-newspaper.arr", bus) @=> synths[3];
+
+            // connect to effects and dac
+            bus => ps => dac;   
+            0.3 => bus.gain; // this stuff too loud LOL
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        }
+        
+        // newspapering
+        else if (synth_group_in == 7) {
+            // mech synths pulse
+            new ArbSynth[1] @=> synths;
+            new ArbSynth("data/verbs/pulse/rustling-a-newspaper.arr", bus) @=> synths[0];
+
+            // connect to effects and dac
+            bus => ps => dac;
+            0.8 => bus.gain; // this stuff too loud LOL
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        }
+
+        // vibing
+        else if (synth_group_in == 8) {
+            // mech synths pulse
+            new ArbSynth[1] @=> synths;
+            new ArbSynth("data/verbs/pulse/cell-phone-vibrate-high-quality.arr", bus) @=> synths[0];
 
             // connect to effects and dac
             bus => ps => dac;   
@@ -185,45 +268,112 @@ public class keySynths {
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
-        else if (synth_group_in == 3) {
-            // mech synths continuous
-            new ArbSynth[3] @=> synths;
-            new ArbSynth("data/verbs/cont/pencil-on-paper-1.arr", bus) @=> synths[0];
-            new ArbSynth("data/verbs/cont/pencil-on-paper-2.arr", bus) @=> synths[1];
-            new ArbSynth("data/verbs/cont/rain.arr", bus) @=> synths[2];
 
-            // connect to effects and dac
-            bus => ps => dac;   
-            0.8 => bus.gain; // this stuff too loud LOL
-            0.7 => ps.mix;
-            0.5 => ps.shift;
-        } else if (synth_group_in == 4) {
-            // man synths pulse
-            new ArbSynth[10] @=> synths;
-            new ArbSynth("data/verbs/pulse/blade-piercing-body.arr", bus) @=> synths[0];
-            new ArbSynth("data/verbs/pulse/e-oh.arr", bus) @=> synths[1];
-            new ArbSynth("data/verbs/pulse/glass-breaking.arr", bus) @=> synths[2];
-            new ArbSynth("data/verbs/pulse/groaning-gurgle.arr", bus) @=> synths[3];
-            new ArbSynth("data/verbs/pulse/knife-stab.arr", bus) @=> synths[4];
-            new ArbSynth("data/verbs/pulse/little-creature-hurt.arr", bus) @=> synths[5];
-            new ArbSynth("data/verbs/pulse/man-screaming.arr", bus) @=> synths[6];
-            new ArbSynth("data/verbs/pulse/ouch-oof-hurt-1.arr", bus) @=> synths[7];
-            new ArbSynth("data/verbs/pulse/ouch-oof-hurt-3.arr", bus) @=> synths[8];
-            new ArbSynth("data/verbs/pulse/screaming-man.arr", bus) @=> synths[9];
+        // Stage 3: man synths
+        // panicking 
+        else if (synth_group_in == 9) {
+
+            new ArbSynth[2] @=> synths;
+            new ArbSynth("data/verbs/cont/puppy-crying.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/pulse/groaning-gurgle.arr", bus) @=> synths[1];
 
             // connect to effects and dac
             bus => ps => dac;
             0.3 => bus.gain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
-        } else if (synth_group_in == 5) {
-            // man synth continuous
-            new ArbSynth[5] @=> synths;
-            new ArbSynth("data/verbs/cont/crying-man.arr", bus) @=> synths[0];
-            new ArbSynth("data/verbs/cont/frantic-screaming.arr", bus) @=> synths[1];
-            new ArbSynth("data/verbs/cont/puppy-crying.arr", bus) @=> synths[2];
+        }
+
+        // breaking
+        else if (synth_group_in == 10) {
+
+            new ArbSynth[2] @=> synths;
+            new ArbSynth("data/verbs/pulse/glass-breaking.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/pulse/knife-stab.arr", bus) @=> synths[1];
+
+            // connect to effects and dac
+            bus => ps => dac;
+            0.3 => bus.gain; // this stuff too loud LOL
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        }
+
+        // honking
+        else if (synth_group_in == 11) {
+            // man synths pulse
+            new ArbSynth[2] @=> synths;
+            new ArbSynth("data/verbs/pulse/e-oh.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/cont/crying-man.arr", bus1) @=> synths[1];
+
+            // connect to effects and dac
+            0.1 => bus1.gain;
+            bus1 => ps => dac;
+            bus => ps => dac;
+            0.2 => bus.gain; // this stuff too loud LOL
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        }
+
+        // screaming
+        else if (synth_group_in == 12) {
+            new ArbSynth[4] @=> synths;
+            new ArbSynth("data/verbs/pulse/man-screaming.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/pulse/screaming-man.arr", bus) @=> synths[1];
+            new ArbSynth("data/verbs/cont/frantic-screaming.arr", bus) @=> synths[2];
             new ArbSynth("data/verbs/cont/woman-screaming-sfx-screaming.arr", bus) @=> synths[3];
-            new ArbSynth("data/verbs/cont/wood-burning-stove-fire.arr", bus) @=> synths[4];
+
+            // connect to effects and dac
+            bus => ps => dac;
+            0.3 => bus.gain; // this stuff too loud LOL
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        }
+
+        // rotting
+        else if (synth_group_in == 13) {
+            new ArbSynth[2] @=> synths;
+            new ArbSynth("data/verbs/cont/keurig-kcup-brewing.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/cont/stomach-gurgle.arr", bus) @=> synths[1];
+
+            // connect to effects and dac
+            bus => ps => dac;
+            0.3 => bus.gain; // this stuff too loud LOL
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        }
+
+        // withering
+        else if (synth_group_in == 14) {
+            new ArbSynth[2] @=> synths;
+            new ArbSynth("data/verbs/pulse/cracking-bones.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/cont/swirling-crickets.arr", bus) @=> synths[1];
+
+            // connect to effects and dac
+            bus => ps => dac;
+            0.3 => bus.gain; // this stuff too loud LOL
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        }
+
+        // dying
+        else if (synth_group_in == 15) {
+            new ArbSynth[3] @=> synths;
+            new ArbSynth("data/verbs/pulse/blade-piercing-body.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/pulse/ouch-oof-hurt-1.arr", bus) @=> synths[1];
+            new ArbSynth("data/verbs/pulse/ouch-oof-hurt-3.arr", bus) @=> synths[2];
+
+            // connect to effects and dac
+            bus => ps => dac;
+            0.3 => bus.gain; // this stuff too loud LOL
+            0.7 => ps.mix;
+            0.5 => ps.shift;
+        } 
+
+        // burning
+        else if (synth_group_in == 16) {
+            new ArbSynth[2] @=> synths;
+            new ArbSynth("data/verbs/cont/wood-burning-stove-fire.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/cont/rain.arr", bus) @=> synths[1];
 
 
             // connect to effects and dac
