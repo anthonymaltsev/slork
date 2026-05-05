@@ -16,11 +16,11 @@ public class Desktop {
   [
     new DesktopState(
       "Clawed, my concert is starting in 10 minutes, make me a cool instrument in ChucK.",
-      40::second,
+      30::second,
       // 2::second,
-      7::second,
+      6::second,
       false,
-      ["Cooking","Brewing","Caramelizing","Whisking", "Stirring", "Chopping onions"],
+      ["Cooking", "Chopping onions", "Brewing", "Caramelizing", "Whisking"],
       new PianoState(
         false,
         true,
@@ -35,7 +35,7 @@ public class Desktop {
       // 2::second,
       6::second,
       false,
-      ["Cooking","Brewing", "Doodling", "Scampering", "Calculating", "Newspapering", "Vibing"],
+      ["Cooking", "Brewing", "Caramelizing", "Doodling", "Calculating", "Newspapering", "Vibing"],
       new PianoState(
         false,
         true,
@@ -56,9 +56,9 @@ public class Desktop {
       // ClawedCode deciding that on vibes. When I am better rested I hope to take
       // another pass
       5::minute,
-      4::second,
+      3::second,
       true,
-      ["Cooking", "Brewing", "Frying", "Honking", "Writing", "Panicking", "Worrying","Breaking", "Hurting","Screaming", "Withering", "Rotting", "Dying", "Burning"],
+      ["Cooking", "Frying", "Vibing", "Panicking", "Breaking", "Screaming", "Honking", "Rotting", "Withering", "Dying", "Burning"],
       new PianoState(0,1)
     )
   ] @=> DesktopState STATES[];
