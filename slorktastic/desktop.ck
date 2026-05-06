@@ -273,6 +273,10 @@ Desktop desktop();
 false => int dev_mode;
 for (0 => int i; i < me.args(); ++i) {
   if (me.arg(i) == "dev") true => dev_mode;
+  if (me.arg(i) == "nolights") {
+    <<< "disabling terminal lights" >>>;
+    desktop.terminal.disable_lights();
+  }
 }
 if (dev_mode) {
   <<< "[dev] shortening first two state durations to 1::second" >>>;
