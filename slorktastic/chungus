@@ -6,7 +6,7 @@ osascript -e "set Volume 5"
 pushd ~/slork/groups/2026/chungus/slorktastic
 # pushd ~/college/spring26/cs170/slork/slorktastic
 
-if [ "$#" -le 1 ]; then
+if [ "$#" -lt 1 ]; then
     echo "Usage: $0 [perc,pad,vis] [if perc: specify 1, 2, 3, or 4]"
     exit 1
 fi
