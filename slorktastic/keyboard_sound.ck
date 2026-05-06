@@ -9,6 +9,35 @@
 
 @import "arbsynth.ck"
 
+public class impulses {
+    Impulse i => JCRev rev => dac;
+
+    fun @construct() {
+        0.5 => i.gain;
+        0.01 => rev.mix;
+    }
+
+    fun void play() {
+        3000 => int a;
+        while (true) {
+            1.0 => i.next;
+            a::samp => now;
+            Math.random2(2000, 40000) => a;
+            Math.random2f(0, 0.5) => i.gain;
+            Math.random2f(0, 0.03) => rev.mix;
+        }
+    }
+
+    fun void silence() {
+        0 => i.gain;
+    }
+
+    fun void disconnect() {
+        rev =< dac;
+    }
+}
+
+
 public class keyBeats {
     dur beatDur;
     int beatPattern[];

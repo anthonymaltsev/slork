@@ -20,7 +20,7 @@ spork ~ mouse.selfUpdate(); // start updating mouse position
 
 // visual stuff ===================================================
 GGen percGroup --> GG.scene();
-5 => int NUM_PERCS;
+6 => int NUM_PERCS;
 percSets percs(mouse)[NUM_PERCS];
 
 percs[0].setName(
@@ -33,6 +33,8 @@ percs[3].setName(
     "Breaking...");
 percs[4].setName(
     "Withering...");
+percs[5].setName(
+    "IMPULSE");
 
 
 fun void placePercGroup() {
@@ -92,11 +94,13 @@ keySynths @calculating;
 keySynths @breaking;
 keySynths @withering;
 
+impulses @imp;
+
 
 // ======== play perc stuff ========
 
 // initialize the shreds
-Shred cookingShred, whiskingShred, calculatingShred, breakingShred, witheringShred;
+Shred cookingShred, whiskingShred, calculatingShred, breakingShred, witheringShred, impShred;
 
 fun void Cooking() {
     if (percs[0].active() && percs[0].deactivateHappened == 1) {
@@ -213,6 +217,28 @@ fun void deactivateWithering() {
     null @=> withering;
 }
 
+fun void Impulses() {
+    if (percs[5].active() && percs[5].deactivateHappened == 1) {
+        <<< "impulses activated!" >>>;
+        0 => percs[5].deactivateHappened;
+        1 => percs[5].activateHappened;
+        new impulses() @=> imp;
+        spork ~ imp.play() @=> impShred;
+    } else if (percs[5].activateHappened == 1 && percs[5].state == 0) {
+        1 => percs[5].deactivateHappened;
+        0 => percs[5].activateHappened;
+        <<< "impulses deactivated!" >>>;
+        spork ~ deactivateImpulses();
+    }
+}
+
+fun void deactivateImpulses() {
+    imp.silence();
+    300::ms => now;
+    impShred.exit();
+    imp.disconnect();
+    null @=> imp;
+}
 
 
 // Loops =================================================================
@@ -276,6 +302,7 @@ while( true )
     Calculating();
     Breaking();
     Withering();
+    Impulses();
     
 }
 
