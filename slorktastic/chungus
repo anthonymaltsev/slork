@@ -6,15 +6,23 @@ osascript -e "set Volume 5"
 pushd ~/slork/groups/2026/chungus/slorktastic
 # pushd ~/college/spring26/cs170/slork/slorktastic
 
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 [perc,pad,vis]"
+if [ "$#" -le 1 ]; then
+    echo "Usage: $0 [perc,pad,vis] [if perc: specify 1, 2, 3, or 4]"
     exit 1
 fi
 
 kb_device=$(chuck --probe 2>&1 | awk '/keyboard/{kb=1} kb && /Apple Internal Keyboard/{gsub(/[][]/, "", $2); print $2; exit}')
 
 if [ "$1" = "perc" ]; then
-    chuck keyboard_perc.ck:"$kb_device"
+    if [ "$2" = "1" ]; then
+        chuck keyboard_perc1.ck:"$kb_device"
+    elif [ "$2" = "2" ]; then
+        chuck keyboard_perc2.ck:"$kb_device"
+    elif [ "$2" = "3" ]; then
+        chuck keyboard_perc3.ck:"$kb_device"
+    else 
+        chuck keyboard_perc1.ck:"$kb_device"
+    fi
 elif [ "$1" = "pad" ]; then 
     chuck flappy_bird.ck:"$kb_device"
 elif [ "$1" = "vis" ]; then
