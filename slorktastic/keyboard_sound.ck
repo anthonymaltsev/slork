@@ -10,11 +10,12 @@
 @import "arbsynth.ck"
 
 public class impulses {
-    Impulse i => JCRev rev => dac;
+    Impulse i => JCRev rev => LPF lpf => dac;
 
     fun @construct() {
         0.5 => i.gain;
         0.01 => rev.mix;
+        8000 => lpf.freq;
     }
 
     fun void play() {
@@ -25,6 +26,7 @@ public class impulses {
             Math.random2(2000, 40000) => a;
             Math.random2f(0, 0.5) => i.gain;
             Math.random2f(0, 0.03) => rev.mix;
+            Math.random2f(200, 15000) => lpf.freq;
         }
     }
 
