@@ -31,6 +31,19 @@ public class FlashCue {
   }
 }
 
+public class VerbCue {
+  string verb;
+  float scale;
+
+  fun @construct(string v) {
+    VerbCue(v, 1.);
+  }
+  fun @construct(string v, float s) {
+    v => verb;
+    s => scale;
+  }
+}
+
 public class DesktopState {
   string prompt;
   dur cook_duration;
@@ -44,6 +57,9 @@ public class DesktopState {
   // compat with the original chaos behavior, turn off to get a silent cloud.
   int tts_enabled;
   string cooking_verbs[];
+  // parallel to cooking_verbs w/ relative multiplier applied to
+  // verb_duration per verb, jsyk
+  float verb_scales[];
   PianoState @ piano_state;
   // NOTEs provided to any brave soul interacting with my code:
   // 1. scheduled demonic flashes: fired during cook_duration only,
@@ -101,5 +117,50 @@ public class DesktopState {
     cues @=> flash_cues;
     wc_early => word_cloud_early;
     tts => tts_enabled;
+    //default, every verb gets the same duration!
+    float scales[verbs.size()];
+    for (0 => int i; i < verbs.size(); i++) 1. => scales[i];
+    scales @=> verb_scales;
+  }
+  fun @construct(
+    string pr,
+    dur cook_dur,
+    dur verb_dur,
+    int crazy,
+    VerbCue verb_cues[],
+    PianoState piano
+  ) {
+    DesktopState(pr, cook_dur, verb_dur, crazy, verb_cues, piano, new FlashCue[0]);
+  }
+  fun @construct(
+    string pr,
+    dur cook_dur,
+    dur verb_dur,
+    int crazy,
+    VerbCue verb_cues[],
+    PianoState piano,
+    FlashCue cues[]
+  ) {
+    DesktopState(pr, cook_dur, verb_dur, crazy, verb_cues, piano, cues, false, true);
+  }
+  fun @construct(
+    string pr,
+    dur cook_dur,
+    dur verb_dur,
+    int crazy,
+    VerbCue verb_cues[],
+    PianoState piano,
+    FlashCue cues[],
+    int wc_early,
+    int tts
+  ) {
+    string verbs[verb_cues.size()];
+    float scales[verb_cues.size()];
+    for (0 => int i; i < verb_cues.size(); i++) {
+      verb_cues[i].verb => verbs[i];
+      verb_cues[i].scale => scales[i];
+    }
+    DesktopState(pr, cook_dur, verb_dur, crazy, verbs, piano, cues, wc_early, tts);
+    scales @=> verb_scales;
   }
 }

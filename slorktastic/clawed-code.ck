@@ -53,6 +53,7 @@ public class ClawedCode extends GGen {
   DEFAULT_VERB => string current_verb;
   0 => int spinner_idx;
   1000::ms => dur verb_change_delay;
+  1000::ms => dur base_verb_delay;
   1 => int num_lines;
   1 => int prompt_editable;
   string terminal_buzzwords[0];
@@ -370,7 +371,7 @@ public class ClawedCode extends GGen {
       word_cloud.count() => int visible;
       if (visible > 0) {
         idx % visible => idx;
-        Math.clampf((1. - (verb_change_delay / 1::ms - delay_end_ms) / delay_range_ms)*2., 0., 2.) => float g;
+        Math.clampf((1. - (base_verb_delay / 1::ms - delay_end_ms) / delay_range_ms)*2., 0., 2.) => float g;
         sayer.set_gain(g);
         sayer.say(terminal_buzzwords[idx].lower());
         Math.random2f(250, 350)::ms => now;
@@ -546,6 +547,9 @@ public class ClawedCode extends GGen {
     clawed.posWorld() => vec3 start_point;
     @(0.,0.,8.) => vec3 end_point;
 
+    desktop_state.verb_duration => base_verb_delay;
+    base_verb_delay * desktop_state.verb_scales[verb_idx] => verb_change_delay;
+
     _show_verb(desktop_state.cooking_verbs[verb_idx], 0);
 
     while (true) {
@@ -557,17 +561,19 @@ public class ClawedCode extends GGen {
 
       _show_verb(verbs_ready ? desktop_state.cooking_verbs[verb_idx] : DEFAULT_VERB, passed_extra_crazy_threshold);
 
+      if (desktop_state.gets_crazy) {
+        if (base_verb_delay > 200::ms) .95 *=> base_verb_delay;
+        if (clawed.flap_delay > 15::ms) {
+          .93 *=> clawed.flap_delay;
+        }
+      }
+      base_verb_delay * desktop_state.verb_scales[verb_idx] => verb_change_delay;
+
       // what happens below here is exclusively for crazy mode
       // but to me crazy mode is normal mode. gotta stop writing
       // incessant comments and get to bed. soz
       if (!desktop_state.gets_crazy) continue;
 
-      // all this below the sentry above is for CRAZY MODE only,
-      // aka when s#!t gets crazy...
-      if (verb_change_delay > 200::ms) .95 *=> verb_change_delay;
-      if (clawed.flap_delay > 15::ms) {
-        .93 *=> clawed.flap_delay;
-      }
       if (passed_extra_crazy_threshold) {
         // get crazy and set the flag
         if (!got_crazy) {
@@ -692,7 +698,7 @@ public class ClawedCode extends GGen {
 
   fun void _trigger_verb_beep() {
     desktop_state.verb_duration / 1::ms => float initial_ms;
-    verb_change_delay / 1::ms => float current_ms;
+    base_verb_delay / 1::ms => float current_ms;
     200. => float min_ms;
     Math.max(initial_ms - min_ms, 1.) => float range_ms;
     Math.clampf((initial_ms - current_ms) / range_ms, 0., 1.) => float chaos;

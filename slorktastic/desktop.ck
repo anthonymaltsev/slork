@@ -20,7 +20,13 @@ public class Desktop {
       // 2::second,
       6::second,
       false,
-      ["Cooking", "Chopping onions", "Brewing", "Caramelizing", "Whisking"],
+      [
+        new VerbCue("Cooking", 1.),
+        new VerbCue("Chopping onions", .5),
+        new VerbCue("Brewing", 2.),
+        new VerbCue("Caramelizing", 1.12),
+        new VerbCue("Whisking", 1.)
+      ],
       new PianoState(
         false,
         true,
