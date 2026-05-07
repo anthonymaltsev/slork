@@ -90,7 +90,7 @@ new FlappyBird("data/verbs/cont/cry-of-pain.arr", "data/verbs/cont/wood-burning-
 
 1. => f["1"].gain_mul;
 1. => f["2"].gain_mul;
-3.5 => f["3"].gain_mul;
+2.5 => f["3"].gain_mul;
 
 f["1"].play_pad(15::second);
 f["1"].play_pad(21::second);
