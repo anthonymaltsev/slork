@@ -21,6 +21,8 @@ class FlappyBird {
     ArbSynth2 s;
     Shred play_shred;
 
+    1. => float gain_mul;
+
     fun @construct(string fname1, string fname2) {
         __init(fname1, fname2, dac);
     }
@@ -56,7 +58,11 @@ class FlappyBird {
             } else {
                 (gt2 - 0.3 ) / 2. + 0.85 => new_gain;
             }
-            s.set_pad_gain(Math.clampf(new_gain, 0., 1.0)*0.4);
+
+            Math.clampf(new_gain, 0., 1.0)*0.4 => new_gain;
+            gain_mul *=> new_gain;
+
+            s.set_pad_gain(new_gain);
 
             1::ms => now;
         }
@@ -81,6 +87,10 @@ FlappyBird f[0];
 new FlappyBird("data/verbs/cont/geese-honking.arr", "data/verbs/cont/cooking-pasta.arr", g["1"]) @=> f["1"];
 new FlappyBird("data/sparrows_real.arr", "data/verbs/cont/factory.arr", g["2"]) @=> f["2"];
 new FlappyBird("data/verbs/cont/cry-of-pain.arr", "data/verbs/cont/wood-burning-stove-fire.arr", g["3"]) @=> f["3"];
+
+1. => f["1"].gain_mul;
+1. => f["2"].gain_mul;
+3.5 => f["3"].gain_mul;
 
 f["1"].play_pad(15::second);
 f["1"].play_pad(21::second);
