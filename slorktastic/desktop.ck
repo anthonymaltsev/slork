@@ -21,6 +21,7 @@ public class Desktop {
       6::second,
       false,
       [
+        new VerbCue("...", 1.6)
         new VerbCue("Cooking", 1.),
         new VerbCue("Chopping onions", .5),
         new VerbCue("Brewing", 2.),
@@ -41,7 +42,7 @@ public class Desktop {
       // 2::second,
       6::second,
       false,
-      ["Cooking", "Brewing", "Caramelizing", "Doodling", "Calculating", "Newspapering", "Vibing"],
+      ["...", "Cooking", "Brewing", "Caramelizing", "Doodling", "Calculating", "Newspapering", "Vibing"],
       new PianoState(
         false,
         true,
@@ -64,7 +65,7 @@ public class Desktop {
       5::minute,
       3::second,
       true,
-      ["Cooking", "Frying", "Vibing", "Panicking", "Breaking", "Screaming", "Honking", "Rotting", "Withering", "Dying", "Burning"],
+      ["...", "Cooking", "Frying", "Vibing", "Panicking", "Breaking", "Screaming", "Honking", "Rotting", "Withering", "Dying", "Burning"],
       new PianoState(0,1)
     )
   ] @=> DesktopState STATES[];

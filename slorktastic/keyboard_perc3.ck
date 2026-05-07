@@ -135,7 +135,7 @@ fun void Brewing() {
         <<< "perc 1 activated!" >>>;
         0 => percs[1].deactivateHappened; 
         1 => percs[1].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 2) @=> brewing;
+        new keySynths(0.4::second, [3, 1, 2], 2) @=> brewing;
         spork ~ brewing.playSynths() @=> brewingShred;
     } else if (percs[1].activateHappened == 1 && percs[1].state == 0) {
         1 => percs[1].deactivateHappened;

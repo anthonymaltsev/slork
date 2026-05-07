@@ -113,7 +113,7 @@ fun void Cooking() {
         <<< "perc 0 activated!" >>>;
         0 => percs[0].deactivateHappened; 
         1 => percs[0].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 4) @=> cooking;
+        new keySynths(0.4::second, [2, 1, 3], 4) @=> cooking;
         spork ~ cooking.playSynths() @=> cookingShred;
     } else if (percs[0].activateHappened == 1 && percs[0].state == 0) {
         1 => percs[0].deactivateHappened;
@@ -136,7 +136,7 @@ fun void ChopOnions() {
         <<< "perc 1 activated!" >>>;
         0 => percs[1].deactivateHappened; 
         1 => percs[1].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 0) @=> chopOnions;
+        new keySynths(0.3::second, [1, 3, 4], 0) @=> chopOnions;
         spork ~ chopOnions.playSynths() @=> chopOnionsShred;
     } else if (percs[1].activateHappened == 1 && percs[1].state == 0) {
         1 => percs[1].deactivateHappened;
@@ -159,7 +159,7 @@ fun void Doodling() {
         <<< "perc 2 activated!" >>>;
         0 => percs[2].deactivateHappened; 
         1 => percs[2].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 5) @=> doodling;
+        new keySynths(0.4::second, [3, 5, 6, 6, 6], 5) @=> doodling;
         spork ~ doodling.playSynths() @=> doodlingShred;
     } else if (percs[2].activateHappened == 1 && percs[2].state == 0) {
         1 => percs[2].deactivateHappened;
@@ -182,7 +182,7 @@ fun void Panicking() {
         <<< "perc 3 activated!" >>>;
         0 => percs[3].deactivateHappened; 
         1 => percs[3].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 9) @=> panicking;
+        new keySynths(0.4::second, [2, 3, 7], 9) @=> panicking;
         spork ~ panicking.playSynths() @=> panickingShred;
     } else if (percs[3].activateHappened == 1 && percs[3].state == 0) {
         1 => percs[3].deactivateHappened;

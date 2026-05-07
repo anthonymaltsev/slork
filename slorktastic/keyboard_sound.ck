@@ -25,8 +25,8 @@ public class impulses {
             a::samp => now;
             Math.random2(2000, 40000) => a;
             Math.random2f(0, 0.5) => i.gain;
-            Math.random2f(0, 0.03) => rev.mix;
-            Math.random2f(200, 15000) => lpf.freq;
+            Math.random2f(0, 0.015) => rev.mix;
+            Math.random2f(800, 20000) => lpf.freq;
         }
     }
 
@@ -151,6 +151,8 @@ public class keyBeats {
 public class keySynths {
     dur synthDur;
     int synthPattern[];
+    float busGain;
+    float bus1Gain;
 
     0 => int wasKeyDown;
 
@@ -184,7 +186,7 @@ public class keySynths {
             
             // connect to effects and dac
             bus => ps => dac;
-            0.8 => bus.gain; 
+            0.4 => bus.gain => busGain; 
             0.7 => ps.mix;
             0.5 => ps.shift;
         } 
@@ -199,7 +201,7 @@ public class keySynths {
             
             // connect to effects and dac
             bus => ps => dac;
-            0.8 => bus.gain; 
+            0.8 => bus.gain => busGain;
             0.7 => ps.mix;
             0.5 => ps.shift;
         } 
@@ -211,7 +213,7 @@ public class keySynths {
             
             // connect to effects and dac
             bus => ps => dac;
-            0.8 => bus.gain; 
+            0.8 => bus.gain => busGain; 
             0.7 => ps.mix;
             0.5 => ps.shift;
         } 
@@ -223,7 +225,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.8 => bus.gain;
+            0.8 => bus.gain => busGain;
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -237,10 +239,10 @@ public class keySynths {
 
 
             // connect to effects and dac
-            0.15 => bus1.gain;
+            0.15 => bus1.gain => bus1Gain;
             bus1 => ps => dac;
             bus => ps => dac;
-            0.9 => bus.gain;
+            0.9 => bus.gain => busGain;
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -255,7 +257,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;   
-            0.3 => bus.gain; // this stuff too loud LOL
+            0.3 => bus.gain => busGain;
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -269,7 +271,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;   
-            0.3 => bus.gain; // this stuff too loud LOL
+            0.3 => bus.gain => busGain;
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -282,7 +284,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.8 => bus.gain; // this stuff too loud LOL
+            0.8 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -295,7 +297,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;   
-            0.8 => bus.gain; // this stuff too loud LOL
+            0.8 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -310,7 +312,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.3 => bus.gain; // this stuff too loud LOL
+            0.3 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -324,7 +326,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.3 => bus.gain; // this stuff too loud LOL
+            0.3 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -337,10 +339,10 @@ public class keySynths {
             new ArbSynth("data/verbs/cont/crying-man.arr", bus1) @=> synths[1];
 
             // connect to effects and dac
-            0.1 => bus1.gain;
+            0.1 => bus1.gain => bus1Gain;
             bus1 => ps => dac;
             bus => ps => dac;
-            0.2 => bus.gain; // this stuff too loud LOL
+            0.2 => bus.gain => bus1Gain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -355,7 +357,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.3 => bus.gain; // this stuff too loud LOL
+            0.3 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -368,7 +370,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.3 => bus.gain; // this stuff too loud LOL
+            0.3 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -381,7 +383,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.3 => bus.gain; // this stuff too loud LOL
+            0.3 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -395,7 +397,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.3 => bus.gain; // this stuff too loud LOL
+            0.3 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         } 
@@ -409,7 +411,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.3 => bus.gain; // this stuff too loud LOL
+            0.3 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -417,7 +419,8 @@ public class keySynths {
 
 
     fun void playSynths() {
-        1 => bus.gain; // unmute bus to play synths
+        busGain => bus.gain; // unmute bus to play synths
+        bus1Gain => bus1.gain;
 
         // each time a key event is detected, we randomly select one of the synths and play it
         while( true ){
@@ -452,6 +455,7 @@ public class keySynths {
             synths[i].silence();
         }
         0. => bus.gain; 
+        0. => bus1.gain;
     }
 
     fun void disconnect() {

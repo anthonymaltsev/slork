@@ -107,7 +107,7 @@ fun void Cooking() {
         <<< "perc 0 activated!" >>>;
         0 => percs[0].deactivateHappened; 
         1 => percs[0].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 4) @=> cooking;
+        new keySynths(0.4::second, [1, 2, 3], 4) @=> cooking;
         spork ~ cooking.playSynths() @=> cookingShred;
     } else if (percs[0].activateHappened == 1 && percs[0].state == 0) {
         1 => percs[0].deactivateHappened;
