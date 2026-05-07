@@ -14,7 +14,7 @@ GWindow.title( "Keyboard" );
 
 // visual stuff ===================================================
 GGen percGroup --> GG.scene();
-6 => int NUM_PERCS;
+5 => int NUM_PERCS;
 percSets percs[NUM_PERCS];
 
 percs[0].setName(
@@ -37,9 +37,7 @@ percs[4].setName(
     "Dying..."
     );
 percs[4].setNum(5);
-percs[5].setName(
-    "IMPULSE");
-percs[5].setNum(6);
+
 
 
 fun void placePercGroup() {
@@ -99,13 +97,11 @@ keySynths @newspapering;
 keySynths @honking;
 keySynths @dying;
 
-impulses @imp;
-
 
 // ======== play perc stuff ========
 
 // initialize the shreds
-Shred cookingShred, brewingShred, newspaperingShred, honkingShred, dyingShred, impShred;
+Shred cookingShred, brewingShred, newspaperingShred, honkingShred, dyingShred;
 
 fun void Cooking() {
     if (percs[0].active() && percs[0].deactivateHappened == 1) {
@@ -222,28 +218,6 @@ fun void deactivateDying() {
     null @=> dying;
 }
 
-fun void Impulses() {
-    if (percs[5].active() && percs[5].deactivateHappened == 1) {
-        <<< "impulses activated!" >>>;
-        0 => percs[5].deactivateHappened;
-        1 => percs[5].activateHappened;
-        new impulses() @=> imp;
-        spork ~ imp.play() @=> impShred;
-    } else if (percs[5].activateHappened == 1 && percs[5].state == 0) {
-        1 => percs[5].deactivateHappened;
-        0 => percs[5].activateHappened;
-        <<< "impulses deactivated!" >>>;
-        spork ~ deactivateImpulses();
-    }
-}
-
-fun void deactivateImpulses() {
-    imp.silence();
-    300::ms => now;
-    impShred.exit();
-    imp.disconnect();
-    null @=> imp;
-}
 
 
 // Loops =================================================================
@@ -293,20 +267,18 @@ while( true )
     GG.nextFrame() => now;
     placePercGroup();
 
-    // toggle pads with number keys 1-6
+    // toggle pads with number keys 1-5
     if (GWindow.keyDown(GWindow.KEY_1)) percs[0].toggle();
     if (GWindow.keyDown(GWindow.KEY_2)) percs[1].toggle();
     if (GWindow.keyDown(GWindow.KEY_3)) percs[2].toggle();
     if (GWindow.keyDown(GWindow.KEY_4)) percs[3].toggle();
     if (GWindow.keyDown(GWindow.KEY_5)) percs[4].toggle();
-    if (GWindow.keyDown(GWindow.KEY_6)) percs[5].toggle();
 
     Cooking();
     Brewing();
     Newspapering();
     Honking();
     Dying();
-    Impulses();
 }
 
 
