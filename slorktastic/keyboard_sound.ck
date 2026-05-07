@@ -417,10 +417,20 @@ public class keySynths {
         }
     } 
 
+    Shred @ riseBusGainShred;
+
+    fun void riseBusGain(dur duration) {
+        (duration/10.0::ms) $ int => int steps;
+        for (1 => int i; i <= steps; i++) {
+            (i / steps) * busGain => bus.gain;
+            (i / steps) * bus1Gain => bus1.gain;
+            10::ms => now;
+        }
+    }
 
     fun void playSynths() {
-        busGain => bus.gain; // unmute bus to play synths
-        bus1Gain => bus1.gain;
+        // 1 => bus.gain; // unmute bus to play synths
+        spork ~ riseBusGain(250::ms) @=> riseBusGainShred;
 
         // each time a key event is detected, we randomly select one of the synths and play it
         while( true ){
@@ -451,11 +461,21 @@ public class keySynths {
     }
 
     fun void silence() {
-        for (0 => int i; i < synths.size(); i++) {
-            synths[i].silence();
+        if (riseBusGainShred.running()) riseBusGainShred.exit();
+        // ramp off
+        250::ms => dur duration;
+        (duration/10.0::ms) $ int => int steps;
+        for (1 => int i; i <= steps; i++) {
+            1-(i / steps) => bus.gain;
+            1-(i / steps) => bus1.gain;
+            10::ms => now;
         }
         0. => bus.gain; 
         0. => bus1.gain;
+
+        for (0 => int i; i < synths.size(); i++) {
+            synths[i].silence();
+        }
     }
 
     fun void disconnect() {
