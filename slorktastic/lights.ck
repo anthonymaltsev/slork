@@ -51,7 +51,7 @@ public class LightsManager {
   1 => int is_enabled;
 
   fun void init() {
-    all_out();
+    // all_out();
     _reset_blue();
     set_cooking_lights(false);
     _set_val(HOUSE_LIGHTS_REAR, 0);
@@ -71,12 +71,15 @@ public class LightsManager {
   // set house lights on for when piece is over
   fun void house_neutral() {
     _kill_pulse();
-    _set_val(HOUSE_LIGHTS_REAR, 50);
-    _set_val(HOUSE_LIGHTS_FRONT, 50);
-    _set_val(CEILING_LIGHTS_FRONT, 50);
-    for (0 => int i; i < COOKING_LIGHTS.size(); i++) {
-      _set_val(COOKING_LIGHTS[i], 0);
-    }
+    // _set_val(HOUSE_LIGHTS_REAR, 50);
+    // _set_val(HOUSE_LIGHTS_FRONT, 50);
+    // _set_val(CEILING_LIGHTS_FRONT, 50);
+    // for (0 => int i; i < COOKING_LIGHTS.size(); i++) {
+    //   _set_val(COOKING_LIGHTS[i], 0);
+    // }
+    // UPDATE - we send cue # to reset lights for next piece
+    _send_cue("675");
+    2::second => now;
   }
 
   fun void all_out() {
@@ -99,6 +102,7 @@ public class LightsManager {
       spork ~ _run_cooking_pulse() @=> _pulse_spork;
     } else {
       for (0 => int i; i < COOKING_LIGHTS.size(); i++) {
+        _set_color(COOKING_LIGHTS[i], 230, 95);
         _set_val(COOKING_LIGHTS[i], COOKING_DIM_VAL);
       }
     }
@@ -139,6 +143,10 @@ public class LightsManager {
 
   fun void _reset_blue() {
     _set_cooking_lights_color(230, 95);
+  }
+
+  fun void _send_cue(string num) {
+    _send_osc("/cs/playback/gotocue/" + num);
   }
 
   fun void _set_color(int chan, int hue, int sat) {
