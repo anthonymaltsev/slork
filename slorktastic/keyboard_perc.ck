@@ -12,45 +12,49 @@ cam.orthographic();  // Orthographic camera mode for 2D scene
 GWindow.title( "Keyboard" );
 @(0.02, 0.02, 0.02) => GG.scene().backgroundColor;
 
-// Initialize Mouse Manager
-
-Mouse mouse;
-spork ~ mouse.selfUpdate(); // start updating mouse position
-
-
 // visual stuff ===================================================
 GGen percGroup --> GG.scene();
 7 => int NUM_PERCS;
-percSets percs(mouse)[NUM_PERCS];
+percSets percs[NUM_PERCS];
 
 percs[0].setName(
     "keyboard 
     drums 
     for fun...");
+percs[0].setNum(1);
+
 percs[1].setName(
     "...
     ...
     Stirring...
     Chopping onions..."
     );
+percs[1].setNum(2);
+
 percs[2].setName(
     "Cooking...
     Brewing...
     Caramelizing...
     Whisking..."
     );
+percs.[2].setNum(3);
+
+
 percs[3].setName(
     "...
     Newspapering...
     Calculating...
     Vibing..."
     );
+percs[3].setNum(4);
+
 percs[4].setName(
     "...
     ...
     Doodling...
     Scampering"
     );
+    
 percs[5].setName(
     "Honking...
     Breaking...
@@ -337,12 +341,9 @@ fun void keyboardLoop() {
         // get one or more messages
         while( hi.recv( msg ) )
         {
-            // check for action type
-            if( msg.isButtonDown() )
+            // skip number keys 0-9 (ascii 48-57) — reserved for pad toggles
+            if( msg.isButtonDown() && !(msg.ascii >= 48 && msg.ascii <= 57) )
             {
-                // <<< "down:", msg.which, "(code)", msg.key, "(usb key)", msg.ascii, "(ascii)" >>>;
-
-                // set state wasKeyDown to true
                 1 => kb.wasKeyDown;
                 1 => kb1.wasKeyDown;
                 1 => kb2.wasKeyDown;
@@ -368,15 +369,6 @@ fun void keyboardLoop() {
                     1 => man2.wasKeyDown;
                 }
             }
-            else
-            {
-                //<<< "up:", msg.which, "(code)", msg.key, "(usb key)", msg.ascii, "(ascii)" >>>;
-            }
-
-            if (msg.isButtonDown() && 64 < msg.ascii && msg.ascii < 91) {
-                // print "letter"
-                // <<< "letter:", msg.ascii >>>;
-            }
             
             
         }
@@ -389,17 +381,25 @@ spork ~ keyboardLoop();
 
 while( true )
 {
+    GG.nextFrame() => now;
+    placePercGroup();
 
-    GG.nextFrame() => now; // update graphics each loop iteration
-    placePercGroup(); // update visuals each loop iteration, can this be optimized?
-    kbPercs(); // check for active kb groups 
-    cookSynths1(); // check for active synth groups
+    // toggle pads with number keys 1-7
+    if (GWindow.keyDown(GWindow.KEY_1)) percs[0].toggle();
+    if (GWindow.keyDown(GWindow.KEY_2)) percs[1].toggle();
+    if (GWindow.keyDown(GWindow.KEY_3)) percs[2].toggle();
+    if (GWindow.keyDown(GWindow.KEY_4)) percs[3].toggle();
+    if (GWindow.keyDown(GWindow.KEY_5)) percs[4].toggle();
+    if (GWindow.keyDown(GWindow.KEY_6)) percs[5].toggle();
+    if (GWindow.keyDown(GWindow.KEY_7)) percs[6].toggle();
+
+    kbPercs();
+    cookSynths1();
     cookSynths2();
     mechSynths1();
     mechSynths2();
     manSynths1();
     manSynths2();
-    
 }
 
 

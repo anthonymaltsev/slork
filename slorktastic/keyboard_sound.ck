@@ -24,7 +24,7 @@ public class impulses {
             1.0 => i.next;
             a::samp => now;
             Math.random2(2000, 40000) => a;
-            Math.random2f(0, 0.5) => i.gain;
+            Math.random2f(0, 0.8) => i.gain;
             Math.random2f(0, 0.015) => rev.mix;
             Math.random2f(800, 20000) => lpf.freq;
         }

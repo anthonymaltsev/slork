@@ -12,34 +12,34 @@ cam.orthographic();  // Orthographic camera mode for 2D scene
 GWindow.title( "Keyboard" );
 @(0.02, 0.02, 0.02) => GG.scene().backgroundColor;
 
-// Initialize Mouse Manager
-
-Mouse mouse;
-spork ~ mouse.selfUpdate(); // start updating mouse position
-
-
 // visual stuff ===================================================
 GGen percGroup --> GG.scene();
 6 => int NUM_PERCS;
-percSets percs(mouse)[NUM_PERCS];
+percSets percs[NUM_PERCS];
 
 percs[0].setName(
     "cooking...");
+percs[0].setNum(1);
 percs[1].setName(
     "
     Brewing..."
     );
+percs[1].setNum(2);
 percs[2].setName(
     "Newspapering..."
     );
+percs[2].setNum(3);
 percs[3].setName(
     "Honking..."
     );
+percs[3].setNum(4);
 percs[4].setName(
     "Dying..."
     );
+percs[4].setNum(5);
 percs[5].setName(
     "IMPULSE");
+percs[5].setNum(6);
 
 
 fun void placePercGroup() {
@@ -259,8 +259,8 @@ fun void keyboardLoop() {
         // get one or more messages
         while( hi.recv( msg ) )
         {
-            // check for action type
-            if( msg.isButtonDown() )
+            // skip number keys 0-9 (ascii 48-57) — reserved for pad toggles
+            if( msg.isButtonDown() && !(msg.ascii >= 48 && msg.ascii <= 57) )
             {
                 if (percs[0].active() && cooking != null){
                     1 => cooking.wasKeyDown;
@@ -278,15 +278,6 @@ fun void keyboardLoop() {
                     1 => dying.wasKeyDown;
                 }
             }
-            else
-            {
-                //<<< "up:", msg.which, "(code)", msg.key, "(usb key)", msg.ascii, "(ascii)" >>>;
-            }
-
-            if (msg.isButtonDown() && 64 < msg.ascii && msg.ascii < 91) {
-                // print "letter"
-                // <<< "letter:", msg.ascii >>>;
-            }
             
             
         }
@@ -299,16 +290,23 @@ spork ~ keyboardLoop();
 
 while( true )
 {
-
     GG.nextFrame() => now;
     placePercGroup();
+
+    // toggle pads with number keys 1-6
+    if (GWindow.keyDown(GWindow.KEY_1)) percs[0].toggle();
+    if (GWindow.keyDown(GWindow.KEY_2)) percs[1].toggle();
+    if (GWindow.keyDown(GWindow.KEY_3)) percs[2].toggle();
+    if (GWindow.keyDown(GWindow.KEY_4)) percs[3].toggle();
+    if (GWindow.keyDown(GWindow.KEY_5)) percs[4].toggle();
+    if (GWindow.keyDown(GWindow.KEY_6)) percs[5].toggle();
+
     Cooking();
     Brewing();
     Newspapering();
     Honking();
     Dying();
     Impulses();
-    
 }
 
 
