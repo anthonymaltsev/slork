@@ -11,6 +11,8 @@ if [ "$#" -lt 1 ]; then
     exit 1
 fi
 
+open instructions.pdf
+
 kb_device=$(chuck --probe 2>&1 | awk '/keyboard/{kb=1} kb && /Apple Internal Keyboard/{gsub(/[][]/, "", $2); print $2; exit}')
 
 if [ "$1" = "perc" ]; then
