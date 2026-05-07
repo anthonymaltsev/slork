@@ -112,7 +112,7 @@ fun void Cooking() {
         <<< "perc 0 activated!" >>>;
         0 => percs[0].deactivateHappened; 
         1 => percs[0].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 4) @=> cooking;
+        new keySynths(0.4::second, [3, 1, 2], 4) @=> cooking;
         spork ~ cooking.playSynths() @=> cookingShred;
     } else if (percs[0].activateHappened == 1 && percs[0].state == 0) {
         1 => percs[0].deactivateHappened;
@@ -135,7 +135,7 @@ fun void Brewing() {
         <<< "perc 1 activated!" >>>;
         0 => percs[1].deactivateHappened; 
         1 => percs[1].activateHappened;
-        new keySynths(0.4::second, [3, 1, 2], 2) @=> brewing;
+        new keySynths(1.3::second, [1, 1, 2], 2) @=> brewing;
         spork ~ brewing.playSynths() @=> brewingShred;
     } else if (percs[1].activateHappened == 1 && percs[1].state == 0) {
         1 => percs[1].deactivateHappened;
@@ -158,7 +158,7 @@ fun void Newspapering() {
         <<< "perc 2 activated!" >>>;
         0 => percs[2].deactivateHappened; 
         1 => percs[2].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 7) @=> newspapering;
+        new keySynths(0.4::second, [2, 2, 3], 7) @=> newspapering;
         spork ~ newspapering.playSynths() @=> newspaperingShred;
     } else if (percs[2].activateHappened == 1 && percs[2].state == 0) {
         1 => percs[2].deactivateHappened;
@@ -181,7 +181,7 @@ fun void Honking() {
         <<< "perc 3 activated!" >>>;
         0 => percs[3].deactivateHappened; 
         1 => percs[3].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 11) @=> honking;
+        new keySynths(0.1::second, [1, 1, 2], 11) @=> honking;
         spork ~ honking.playSynths() @=> honkingShred;
     } else if (percs[3].activateHappened == 1 && percs[3].state == 0) {
         1 => percs[3].deactivateHappened;
@@ -204,7 +204,7 @@ fun void Dying() {
         <<< "perc 4 activated!" >>>;
         0 => percs[4].deactivateHappened; 
         1 => percs[4].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 15) @=> dying;
+        new keySynths(0.3::second, [1, 1, 1, 2, 1, 2], 15) @=> dying;
         spork ~ dying.playSynths() @=> dyingShred;
     } else if (percs[4].activateHappened == 1 && percs[4].state == 0) {
         1 => percs[4].deactivateHappened;

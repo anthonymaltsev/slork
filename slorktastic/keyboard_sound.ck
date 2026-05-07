@@ -201,7 +201,7 @@ public class keySynths {
             
             // connect to effects and dac
             bus => ps => dac;
-            0.8 => bus.gain => busGain;
+            0.5 => bus.gain => busGain;
             0.7 => ps.mix;
             0.5 => ps.shift;
         } 
@@ -271,7 +271,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;   
-            0.3 => bus.gain => busGain;
+            0.23 => bus.gain => busGain;
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -284,7 +284,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.8 => bus.gain => busGain; // this stuff too loud LOL
+            0.2 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -297,7 +297,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;   
-            0.8 => bus.gain => busGain; // this stuff too loud LOL
+            0.6 => bus.gain => busGain; 
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -326,7 +326,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.3 => bus.gain => busGain; // this stuff too loud LOL
+            0.2 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -334,15 +334,13 @@ public class keySynths {
         // honking
         else if (synth_group_in == 11) {
             // man synths pulse
-            new ArbSynth[2] @=> synths;
+            new ArbSynth[8] @=> synths;
             new ArbSynth("data/verbs/pulse/e-oh.arr", bus) @=> synths[0];
-            new ArbSynth("data/verbs/cont/crying-man.arr", bus1) @=> synths[1];
 
             // connect to effects and dac
-            0.1 => bus1.gain => bus1Gain;
-            bus1 => ps => dac;
+            0.1 => bus.gain => busGain;
             bus => ps => dac;
-            0.2 => bus.gain => bus1Gain; // this stuff too loud LOL
+            0.05 => bus.gain => bus1Gain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -379,25 +377,26 @@ public class keySynths {
         else if (synth_group_in == 14) {
             new ArbSynth[2] @=> synths;
             new ArbSynth("data/verbs/pulse/cracking-bones.arr", bus) @=> synths[0];
-            new ArbSynth("data/verbs/cont/swirling-crickets.arr", bus) @=> synths[1];
+            new ArbSynth("data/verbs/cont/swirling-crickets.arr", bus1) @=> synths[1];
 
             // connect to effects and dac
             bus => ps => dac;
+            bus1 => ps => dac;
             0.3 => bus.gain => busGain; // this stuff too loud LOL
+            0.05 => bus1.gain => bus1Gain;
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
 
         // dying
         else if (synth_group_in == 15) {
-            new ArbSynth[3] @=> synths;
-            new ArbSynth("data/verbs/pulse/blade-piercing-body.arr", bus) @=> synths[0];
-            new ArbSynth("data/verbs/pulse/ouch-oof-hurt-1.arr", bus) @=> synths[1];
-            new ArbSynth("data/verbs/pulse/ouch-oof-hurt-3.arr", bus) @=> synths[2];
+            new ArbSynth[2] @=> synths;
+            new ArbSynth("data/verbs/pulse/ouch-oof-hurt-1.arr", bus) @=> synths[0];
+            new ArbSynth("data/verbs/pulse/ouch-oof-hurt-3.arr", bus) @=> synths[1];
 
             // connect to effects and dac
             bus => ps => dac;
-            0.3 => bus.gain => busGain; // this stuff too loud LOL
+            0.23 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         } 
@@ -411,7 +410,7 @@ public class keySynths {
 
             // connect to effects and dac
             bus => ps => dac;
-            0.3 => bus.gain => busGain; // this stuff too loud LOL
+            0.2 => bus.gain => busGain; // this stuff too loud LOL
             0.7 => ps.mix;
             0.5 => ps.shift;
         }
@@ -436,6 +435,7 @@ public class keySynths {
                     spork ~ synths[synth_idx].playback();
                     synths[synth_idx].getDur() => currentDur;
                     <<< "synth:", synth_idx >>>;
+                    <<< "pitch shift:", ps.shift() >>>;
                     0 => wasKeyDown; // reset state
                 }
                 (synthPattern[i] * synthDur) => now;

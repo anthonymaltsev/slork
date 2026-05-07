@@ -182,7 +182,7 @@ fun void Panicking() {
         <<< "perc 3 activated!" >>>;
         0 => percs[3].deactivateHappened; 
         1 => percs[3].activateHappened;
-        new keySynths(0.4::second, [2, 3, 7], 9) @=> panicking;
+        new keySynths(0.4::second, [2, 3, 3], 9) @=> panicking;
         spork ~ panicking.playSynths() @=> panickingShred;
     } else if (percs[3].activateHappened == 1 && percs[3].state == 0) {
         1 => percs[3].deactivateHappened;
@@ -205,7 +205,7 @@ fun void Rotting() {
         <<< "perc 4 activated!" >>>;
         0 => percs[4].deactivateHappened; 
         1 => percs[4].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 13) @=> rotting;
+        new keySynths(0.4::second, [1, 11, 12], 13) @=> rotting;
         spork ~ rotting.playSynths() @=> rottingShred;
     } else if (percs[4].activateHappened == 1 && percs[4].state == 0) {
         1 => percs[4].deactivateHappened;

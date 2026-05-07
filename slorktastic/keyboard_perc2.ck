@@ -130,7 +130,7 @@ fun void Whisking() {
         <<< "perc 1 activated!" >>>;
         0 => percs[1].deactivateHappened; 
         1 => percs[1].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 1) @=> whisking;
+        new keySynths(0.8::second, [2, 3, 1], 1) @=> whisking;
         spork ~ whisking.playSynths() @=> whiskingShred;
     } else if (percs[1].activateHappened == 1 && percs[1].state == 0) {
         1 => percs[1].deactivateHappened;
@@ -153,7 +153,7 @@ fun void Calculating() {
         <<< "perc 2 activated!" >>>;
         0 => percs[2].deactivateHappened; 
         1 => percs[2].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 6) @=> calculating;
+        new keySynths(0.05::second, [2, 1, 1], 6) @=> calculating;
         spork ~ calculating.playSynths() @=> calculatingShred;
     } else if (percs[2].activateHappened == 1 && percs[2].state == 0) {
         1 => percs[2].deactivateHappened;
@@ -176,7 +176,7 @@ fun void Breaking() {
         <<< "perc 3 activated!" >>>;
         0 => percs[3].deactivateHappened; 
         1 => percs[3].activateHappened;
-        new keySynths(0.4::second, [2, 1, 1], 10) @=> breaking;
+        new keySynths(0.23::second, [1, 1, 1], 10) @=> breaking;
         spork ~ breaking.playSynths() @=> breakingShred;
     } else if (percs[3].activateHappened == 1 && percs[3].state == 0) {
         1 => percs[3].deactivateHappened;
