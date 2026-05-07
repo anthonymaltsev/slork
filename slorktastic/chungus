@@ -15,18 +15,18 @@ kb_device=$(chuck --probe 2>&1 | awk '/keyboard/{kb=1} kb && /Apple Internal Key
 
 if [ "$1" = "perc" ]; then
     if [ "$2" = "1" ]; then
-        chuck keyboard_perc1.ck:"$kb_device"
+        chuck -c8 keyboard_perc1.ck:"$kb_device"
     elif [ "$2" = "2" ]; then
-        chuck keyboard_perc2.ck:"$kb_device"
+        chuck -c8 keyboard_perc2.ck:"$kb_device"
     elif [ "$2" = "3" ]; then
-        chuck keyboard_perc3.ck:"$kb_device"
+        chuck -c8 keyboard_perc3.ck:"$kb_device"
     else 
-        chuck keyboard_perc1.ck:"$kb_device"
+        chuck -c8 keyboard_perc1.ck:"$kb_device"
     fi
 elif [ "$1" = "pad" ]; then 
-    chuck flappy_bird.ck:"$kb_device"
+    chuck -c8 flappy_bird.ck:"$kb_device"
 elif [ "$1" = "vis" ]; then
-    chuck desktop.ck
+    chuck -c8 desktop.ck
 else
     echo "Supplied argument must be one of [perc,pad,vis]"
     exit 1
