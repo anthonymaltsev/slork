@@ -420,17 +420,17 @@ public class keySynths {
     Shred @ riseBusGainShred;
 
     fun void riseBusGain(dur duration) {
-        (duration/10.0::ms) $ int => int steps;
+        (duration/5.0::ms) $ int => int steps;
         for (1 => int i; i <= steps; i++) {
-            (i / steps) * busGain => bus.gain;
-            (i / steps) * bus1Gain => bus1.gain;
+            (i $ float / steps $ float) * busGain => bus.gain;
+            (i $ float / steps $ float) * bus1Gain => bus1.gain;
             10::ms => now;
         }
     }
 
     fun void playSynths() {
         // 1 => bus.gain; // unmute bus to play synths
-        spork ~ riseBusGain(250::ms) @=> riseBusGainShred;
+        spork ~ riseBusGain(65::ms) @=> riseBusGainShred;
 
         // each time a key event is detected, we randomly select one of the synths and play it
         while( true ){
@@ -463,11 +463,12 @@ public class keySynths {
     fun void silence() {
         if (riseBusGainShred.running()) riseBusGainShred.exit();
         // ramp off
-        250::ms => dur duration;
+        1000::ms => dur duration;
         (duration/10.0::ms) $ int => int steps;
         for (1 => int i; i <= steps; i++) {
-            1-(i / steps) => bus.gain;
-            1-(i / steps) => bus1.gain;
+            <<< "iter ", i, " busGain: ", busGain, "actual bus.gain: ", bus.gain() >>>;
+            busGain*(1-(i $ float / steps $ float)) => bus.gain;
+            bus1Gain*(1-(i $ float/ steps $ float)) => bus1.gain;
             10::ms => now;
         }
         0. => bus.gain; 
@@ -479,7 +480,7 @@ public class keySynths {
     }
 
     fun void disconnect() {
-        silence();
+        // silence();
         ps =< dac;
     }
 
