@@ -1,0 +1,17 @@
+This script outlines how to perform as a coding monkey for Clawed
+
+there are 3 rounds of Clawed-cooking sessions.
+
+Rules for round 1 and 2:
+- when vibe-coder hit "Enter", toggle the rightmost IMPULSE pad, it stays on until the PIANO appears
+- wait for the bird performers (Siqi & Lejun) to flap a bit before verbs start to appear...
+- COOKING always apepar first. toggle and play your COOKING pad 
+- when you see [YOUR VERB] appear on screen, toggle on [YOUR VERB] pad and start typing
+- when the verb changes, stop typing, wait 1 second, and toggle off [YOUR VERB]
+
+Rules for round 3:
+- To begin with, same rule as round 1 & 2, toggle IMPULSE and [YOUR VERB]
+- When the verbs move too fast, toggle on whatever pads you like and just improvise
+
+When screen turns BLACK:
+- hit ESC and exit the pads

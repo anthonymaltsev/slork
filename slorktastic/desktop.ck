@@ -16,15 +16,15 @@ public class Desktop {
   [
     new DesktopState(
       "Clawed, my concert is starting in 10 minutes, make me a cool instrument in ChucK.",
-      30::second,
+      42::second,
       // 2::second,
       6::second,
       false,
       [
-        new VerbCue("...", 1.6)
+        new VerbCue("", 1.6),
         new VerbCue("Cooking", 1.),
-        new VerbCue("Chopping onions", .5),
-        new VerbCue("Brewing", 2.),
+        new VerbCue("Chopping onions", .8),
+        new VerbCue("Brewing", 1.2),
         new VerbCue("Caramelizing", 1.12),
         new VerbCue("Whisking", 1.)
       ],
@@ -38,11 +38,20 @@ public class Desktop {
     ),
     new DesktopState(
       "That's fine but I need it cooler. My friends and my parents are here to see my performance, and I also want an A for this class. I want a smart instrument. Add some AI and ML and MIR to make it pop or something. Make no mistakes",
-      40::second,
+      45::second,
       // 2::second,
-      6::second,
+      5::second,
       false,
-      ["...", "Cooking", "Brewing", "Caramelizing", "Doodling", "Calculating", "Newspapering", "Vibing"],
+      [
+        new VerbCue("", 2), 
+        new VerbCue("Cooking", 1),
+        new VerbCue("Brewing", 0.8),
+        new VerbCue("Caramelizing", 0.7),
+        new VerbCue("Doodling", 1.2),
+        new VerbCue("Calculating", 1),
+        new VerbCue("Newspapering", 1),
+        new VerbCue("Vibing", 1)
+        ],
       new PianoState(
         false,
         true,
@@ -63,9 +72,22 @@ public class Desktop {
       // ClawedCode deciding that on vibes. When I am better rested I hope to take
       // another pass
       5::minute,
-      3::second,
+      2::second,
       true,
-      ["...", "Cooking", "Frying", "Vibing", "Panicking", "Breaking", "Screaming", "Honking", "Rotting", "Withering", "Dying", "Burning"],
+      [
+        new VerbCue("", 3),
+        new VerbCue("Cooking", 1),
+        new VerbCue("Frying", 1),
+        new VerbCue("Vibing", 1),
+        new VerbCue("Panicking", 2),
+        new VerbCue("Breaking", 2),
+        new VerbCue("Screaming", 1.5),
+        new VerbCue("Honking", 1.2),
+        new VerbCue("Rotting", 1.2),
+        new VerbCue("Withering", 2),
+        new VerbCue("Dying", 2),
+        new VerbCue("Burning", 2)
+        ],
       new PianoState(0,1)
     )
   ] @=> DesktopState STATES[];

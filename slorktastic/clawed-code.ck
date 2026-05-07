@@ -562,7 +562,7 @@ public class ClawedCode extends GGen {
       _show_verb(verbs_ready ? desktop_state.cooking_verbs[verb_idx] : DEFAULT_VERB, passed_extra_crazy_threshold);
 
       if (desktop_state.gets_crazy) {
-        if (base_verb_delay > 200::ms) .95 *=> base_verb_delay;
+        if (base_verb_delay > 200::ms) .92 *=> base_verb_delay;
         if (clawed.flap_delay > 15::ms) {
           .93 *=> clawed.flap_delay;
         }
