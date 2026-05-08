@@ -89,10 +89,10 @@ public class LightsManager {
   }
 
   fun void set_spotlight(int val) {
-    // _set_val(SPOTLIGHT_1, val);
+    _set_val(SPOTLIGHT_2, val);
     <<< val >>>;
-    _set_color(HOUSE_LEFT_MOVINGARM_LIGHT, 0, 0);
-    _set_val(HOUSE_LEFT_MOVINGARM_LIGHT, val);
+    // _set_color(HOUSE_LEFT_MOVINGARM_LIGHT, 0, 0);
+    // _set_val(HOUSE_LEFT_MOVINGARM_LIGHT, val);
   }
 
   fun void set_cooking_lights(int on) {
@@ -131,6 +131,7 @@ public class LightsManager {
   fun _set_cooking_lights_color(int hue, int sat) {
     for (0 => int i; i < COOKING_LIGHTS.size(); i++) {
       _set_color(COOKING_LIGHTS[i], hue, sat);
+      0.2::second => now;
     }
   }
 
