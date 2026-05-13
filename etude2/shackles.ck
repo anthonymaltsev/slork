@@ -14,7 +14,7 @@
 
 @import {"gt_kb_dupe.ck"}
 
-GameTrak gt(1);
+GameTrak gt;
 
 // ------------------------ shackle def -----------------------------------
 

@@ -202,13 +202,13 @@ public class GameTrak
 }
 
 
-GameTrak gt;
+// GameTrak gt;
 
-// main loop
-while( true )
-{
-    <<< "axes:", gt.axis[0],gt.axis[1],gt.axis[2],
-                 gt.axis[3],gt.axis[4],gt.axis[5] >>>;
+// // main loop
+// while( true )
+// {
+//     <<< "axes:", gt.axis[0],gt.axis[1],gt.axis[2],
+//                  gt.axis[3],gt.axis[4],gt.axis[5] >>>;
 
-    100::ms => now;
-}
+//     100::ms => now;
+// }
