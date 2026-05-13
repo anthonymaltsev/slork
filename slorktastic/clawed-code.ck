@@ -598,7 +598,7 @@ public class ClawedCode extends GGen {
           (1. - t) * start_point + t * end_point => vec3 lerp;
 
           clawed.posWorld(lerp);
-          1.01 *=> clawed_scale;
+          1.02 *=> clawed_scale;
         }
       }
     }
