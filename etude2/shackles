@@ -1,0 +1,13 @@
+#!/bin/bash
+
+system-sound-to-motu
+osascript -e "set Volume 5"
+
+pushd ~/slork/users/ant/etude2
+# pushd ~/college/spring26/cs170/slork/slorktastic
+
+# kb_device=$(chuck --probe 2>&1 | awk '/keyboard/{kb=1} kb && /Apple Internal Keyboard/{gsub(/[][]/, "", $2); print $2; exit}')
+
+chuck -c8 shackles.ck
+
+popd

@@ -6,7 +6,7 @@
 //
 //       lr  [-1, 1]  -> grain position in buffer
 //       fb  [-1, 1]  -> grain playback rate (pitch)
-//       mag [0, 1]  m-> grain density + size + gain
+//       mag [0, 1]   -> grain density + size + gain
 //
 // author: Anthony Maltsev (amaltsev@stanford.edu)
 // date: spring 2026
