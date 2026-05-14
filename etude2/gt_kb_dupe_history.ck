@@ -3,6 +3,7 @@
 // desc: either a gametrak controller if available, or a keyboard duplicate if not.
 //       the two modes are meant to be drop in replacements of each other.
 //       in the keyboard mode, control left thing by `wasd + eq`, right thing by `ijkl + uo`
+//       modified to hold extra history information
 //
 // author: Anthony Maltsev (amaltsev@stanford.edu), Ge Wang (ge@ccrma.stanford.edu)
 // date: summer 2014, spring 2026
@@ -17,7 +18,8 @@ public class GameTrak
     time lastTime;
     time currTime;
     
-    float lastAxis[6];
+    32 => int HISTORY;
+    float lastAxis[HISTORY][6];
     float axis[6];
 
     fun @construct() {
@@ -51,6 +53,17 @@ public class GameTrak
         }
     }
 
+    fun void _update_history() {
+        for (HISTORY-1 => int i; i >= 1; i--) {
+            for (0 => int j; j < 6; j++) {
+                lastAxis[i-1][j] => lastAxis[i][j];
+            }
+        }
+        for (0 => int j; j < 6; j++) {
+            axis[j] => lastAxis[0][j];
+        }
+    }
+
     fun void gametrak() {
         Hid trak;
         HidMsg trak_msg;
@@ -70,7 +83,6 @@ public class GameTrak
                             currTime => lastTime;
                             now => currTime;
                         }
-                        axis[trak_msg.which] => lastAxis[trak_msg.which];
 
                         if( trak_msg.which != 2 && trak_msg.which != 5 )
                         { 
@@ -93,6 +105,8 @@ public class GameTrak
                 {
                     <<< "button", trak_msg.which, "up" >>>;
                 }
+
+                _update_history();
             }
         }
     }
@@ -122,17 +136,16 @@ public class GameTrak
             
             xyz_to_gt_pos(left_pos) => gt_left;
             xyz_to_gt_pos(right_pos) => gt_right;
-            // <<< gt_left, gt_right >>>;
 
-            for (0 => int i; i < 6; i++) {
-                axis[i] => lastAxis[i];
-            }
+            _update_history();
+
             Math.clampf(gt_left.x, -1., 1.) => axis[0];
             Math.clampf(gt_left.y, -1., 1.) => axis[1];
             Math.clampf(gt_left.z, 0., 1.) => axis[2];
             Math.clampf(gt_right.x, -1., 1.) => axis[3];
             Math.clampf(gt_right.y, -1., 1.) => axis[4];
             Math.clampf(gt_right.z, 0., 1.) => axis[5];
+
             currTime => lastTime;
             now => currTime;
             1::ms => now;
@@ -202,13 +215,13 @@ public class GameTrak
 }
 
 
-// GameTrak gt;
+GameTrak gt;
 
-// // main loop
-// while( true )
-// {
-//     <<< "axes:", gt.axis[0],gt.axis[1],gt.axis[2],
-//                  gt.axis[3],gt.axis[4],gt.axis[5] >>>;
+// main loop
+while( true )
+{
+    // <<< "axes:", gt.axis[0],gt.axis[1],gt.axis[2],
+    //              gt.axis[3],gt.axis[4],gt.axis[5] >>>;
 
-//     100::ms => now;
-// }
+    100::ms => now;
+}

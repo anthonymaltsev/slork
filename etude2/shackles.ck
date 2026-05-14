@@ -12,7 +12,7 @@
 // date: spring 2026
 //-----------------------------------------------------------------------------
 
-@import {"gt_kb_dupe.ck"}
+@import {"gt_kb_dupe_history.ck"}
 
 GameTrak gt;
 
@@ -32,8 +32,9 @@ class Shackle {
     0. => float lr;
     0. => float fb;
     0. => float mag;
+    0. => float totmot;
     0.95 => float SMOOTH;
-    5::ms => dur LISTEN_PERIOD;
+    2::ms => dur LISTEN_PERIOD;
 
     fun @construct(string fn, int offset, GameTrak gt_in) {
         fn => filename;
@@ -61,12 +62,24 @@ class Shackle {
 
     fun void listen() {
         while (true) {
+            0. => float totmot_raw;
+            // 32 = HISTORY size of gt
+            for (1 => int i; i < 32; i++) {
+                for (0 => int j; j < 3; j++) {
+                    Math.fabs(gt.lastAxis[i][axis_offset + j] - gt.lastAxis[i-1][axis_offset+j]) +=> totmot_raw;
+                }
+            }
+            10. *=> totmot_raw;
+            if (totmot_raw < 0.1) 0. => totmot_raw;
+
             gt_ref.axis[axis_offset + 0] => float lr_raw;
             gt_ref.axis[axis_offset + 1] => float fb_raw;
             Math.clampf(gt_ref.axis[axis_offset + 2], 0., 1.) => float mag_raw;
-            SMOOTH * lr  + (1. - SMOOTH) * lr_raw  => lr;
-            SMOOTH * fb  + (1. - SMOOTH) * fb_raw  => fb;
-            SMOOTH * mag + (1. - SMOOTH) * mag_raw => mag;
+            SMOOTH * lr     + (1. - SMOOTH) * lr_raw     => lr;
+            SMOOTH * fb     + (1. - SMOOTH) * fb_raw     => fb;
+            SMOOTH * mag    + (1. - SMOOTH) * mag_raw    => mag;
+            SMOOTH * totmot + (1. - SMOOTH) * totmot_raw => totmot;
+            if (totmot < 0.05) 0. => totmot;
             LISTEN_PERIOD => now;
         }
     }
@@ -104,7 +117,7 @@ class Shackle {
 
         lisa.rate(voice, rate);
         lisa.playPos(voice, grain_pos);
-        lisa.voiceGain(voice, g_mag);
+        lisa.voiceGain(voice, g_mag * totmot);
         lisa.play(voice, 1);
         lisa.rampUp(voice, ramp);
         (grain_dur - 2 * ramp) => now;
