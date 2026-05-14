@@ -33,6 +33,7 @@ class Shackle {
     0. => float fb;
     0. => float mag;
     0. => float totmot;
+    0 => int use_mot;
     0.85 => float SMOOTH;
     2::ms => dur LISTEN_PERIOD;
 
@@ -46,6 +47,13 @@ class Shackle {
         Math.clampf(gt_ref.axis[axis_offset + 0], -1., 1.) => lr;
         Math.clampf(gt_ref.axis[axis_offset + 1], -1., 1.) => fb;
         Math.clampf(gt_ref.axis[axis_offset + 2], 0., 1.) => mag;
+
+        <<< "args: ", me.args(), "\n0: ", me.arg(0) >>>;
+        if (me.args() > 0 && Std.atoi(me.arg(0)) == 1) {
+            <<< "mot regime activated!", "">>>;
+            1 => use_mot;
+        }
+
         spork ~ listen();
         spork ~ run();
     }
@@ -71,7 +79,7 @@ class Shackle {
             }
             10. *=> totmot_raw;
             if (totmot_raw < 0.2) 0. => totmot_raw;
-            <<<totmot_raw>>>;
+            // <<<totmot_raw>>>;
 
             gt_ref.axis[axis_offset + 0] => float lr_raw;
             gt_ref.axis[axis_offset + 1] => float fb_raw;
@@ -118,10 +126,12 @@ class Shackle {
 
         lisa.rate(voice, rate);
         lisa.playPos(voice, grain_pos);
-        if (me.args()>0 && Std.atoi(me.arg(0))) 
-            lisa.voiceGain(voice, g_mag * 1.6);
-        else 
+        if (use_mot) {
             lisa.voiceGain(voice, g_mag * 1.6 * totmot);
+        }
+        else {
+            lisa.voiceGain(voice, g_mag * 1.6);
+        }
         lisa.play(voice, 1);
         lisa.rampUp(voice, ramp);
         (grain_dur - 2 * ramp) => now;
