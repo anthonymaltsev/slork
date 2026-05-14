@@ -118,7 +118,10 @@ class Shackle {
 
         lisa.rate(voice, rate);
         lisa.playPos(voice, grain_pos);
-        lisa.voiceGain(voice, g_mag * 1.6 * totmot);
+        if (me.args()>0 && Std.atoi(me.arg(0))) 
+            lisa.voiceGain(voice, g_mag * 1.6);
+        else 
+            lisa.voiceGain(voice, g_mag * 1.6 * totmot);
         lisa.play(voice, 1);
         lisa.rampUp(voice, ramp);
         (grain_dur - 2 * ramp) => now;
