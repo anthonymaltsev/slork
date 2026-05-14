@@ -8,7 +8,7 @@ pushd ~/slork/users/ant/etude2
 
 # kb_device=$(chuck --probe 2>&1 | awk '/keyboard/{kb=1} kb && /Apple Internal Keyboard/{gsub(/[][]/, "", $2); print $2; exit}')
 
-if [ "$#" -lt 1 ]
+if [ "$#" -lt 1 ]; then
     chuck -c8 shackles.ck
 else
     chuck -c8 shackles.ck:"$1"
