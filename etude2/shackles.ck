@@ -14,11 +14,9 @@
 
 @import {"gt_kb_dupe_history.ck"}
 
-GameTrak gt;
-
 // ------------------------ shackle def -----------------------------------
 
-class Shackle {
+public class Shackle {
 
     LiSa lisa => NRev rev => dac;
     0.1 => rev.mix;
@@ -49,7 +47,7 @@ class Shackle {
         Math.clampf(gt_ref.axis[axis_offset + 2], 0., 1.) => mag;
 
         <<< "args: ", me.args(), "\n0: ", me.arg(0) >>>;
-        if (me.args() > 0 && Std.atoi(me.arg(0)) == 1) {
+        if (me.args() > 1 && Std.atoi(me.arg(1)) == 1) {
             <<< "mot regime activated!", "">>>;
             1 => use_mot;
         }
@@ -74,7 +72,7 @@ class Shackle {
             // 32 = HISTORY size of gt
             for (1 => int i; i < 32; i++) {
                 for (0 => int j; j < 3; j++) {
-                    Math.fabs(gt.lastAxis[i][axis_offset + j] - gt.lastAxis[i-1][axis_offset+j]) +=> totmot_raw;
+                    Math.fabs(gt_ref.lastAxis[i][axis_offset + j] - gt_ref.lastAxis[i-1][axis_offset+j]) +=> totmot_raw;
                 }
             }
             10. *=> totmot_raw;
@@ -143,9 +141,10 @@ class Shackle {
 
 //------------------------- shackle setup ----------------------------------
 
+GameTrak gt;
+
 Shackle left("data/chain.wav", 0, gt);
 Shackle right("data/scrape.wav", 3, gt);
-
 
 // -------------------------- main loop ------------------------------
 

@@ -22,6 +22,8 @@ public class GameTrak
     float lastAxis[HISTORY][6];
     float axis[6];
 
+    0 => int button_ever_pressed;
+
     fun @construct() {
         __init(0);
     }
@@ -99,11 +101,13 @@ public class GameTrak
                 else if( trak_msg.isButtonDown() )
                 {
                     <<< "button", trak_msg.which, "down" >>>;
+                    1 => button_ever_pressed;
                 }
                 
                 else if( trak_msg.isButtonUp() )
                 {
                     <<< "button", trak_msg.which, "up" >>>;
+                    1 => button_ever_pressed;
                 }
 
                 _update_history();
