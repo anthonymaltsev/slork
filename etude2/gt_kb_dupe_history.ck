@@ -168,8 +168,17 @@ public class GameTrak
         while (true) {
             kb => now;
             while (kb.recv(kb_msg)) {
-                if (kb_msg.isButtonDown()) 1 => key_held[kb_msg.which];
-                else if (kb_msg.isButtonUp()) 0 => key_held[kb_msg.which];
+                if (kb_msg.isButtonDown()) {
+                    1 => key_held[kb_msg.which];
+                    // <<< "kb down @ ", kb_msg.which >>>;
+                    if (kb_msg.which == 5) { // b
+                        <<< "button down", "" >>>;
+                        1 => button_ever_pressed;
+                    }
+                }
+                else if (kb_msg.isButtonUp()) {
+                    0 => key_held[kb_msg.which];
+                } 
                 else <<< "huh?? at ", kb_msg.which >>>;
                 // <<< kb_msg.which >>>;
             }

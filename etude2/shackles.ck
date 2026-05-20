@@ -18,7 +18,7 @@
 
 public class Shackle {
 
-    LiSa lisa => NRev rev => dac;
+    LiSa lisa => Gain mix => NRev rev;
     0.1 => rev.mix;
     int axis_offset; // 0:left, 3:right
 
@@ -35,10 +35,12 @@ public class Shackle {
     0.85 => float SMOOTH;
     2::ms => dur LISTEN_PERIOD;
 
-    fun @construct(string fn, int offset, GameTrak gt_in) {
+    fun @construct(string fn, int offset, GameTrak gt_in, UGen outchan) {
         fn => filename;
         offset => axis_offset;
         gt_in @=> gt_ref; 
+        1.5 => mix.gain;
+        rev => outchan;
         _load_file();
         MAX_VOICES => lisa.maxVoices;
         0.6 => lisa.gain;
@@ -139,12 +141,62 @@ public class Shackle {
     }
 }
 
+public class ShackleDrone {
+    LiSa lisa => Gain mix => NRev rev;
+    0.1 => rev.mix;
+    int axis_offset; // 0:left, 3:right
+
+    string filename;
+    dur file_dur;
+    32 => int MAX_VOICES;
+    
+    0.5 => float lisarate;
+
+    fun @construct(string fn, float lisarate_in, UGen outchan) {
+        fn => filename;
+        0.3 => mix.gain;
+        rev => outchan;
+        lisarate_in => lisarate;
+        _load_file();
+        MAX_VOICES => lisa.maxVoices;
+        0.6 => lisa.gain;
+        
+        spork ~ run();
+    }
+
+    fun void _load_file() {
+        SndBuf buf;
+        filename => buf.read;
+        buf.samples()::samp => file_dur => lisa.duration;
+        for (0 => int i; i < buf.samples(); i++) {
+            lisa.valueAt(buf.valueAt(i), i::samp);
+        }
+    }
+
+    fun void run() {
+        1 => lisa.loop;
+        1::second => lisa.loopStart;
+        lisa.duration() => lisa.loopEnd;
+        lisarate => lisa.rate;
+        20::ms => lisa.rampUp;
+        0::ms => lisa.playPos;
+
+        1 => lisa.play;
+
+        while (true) {
+            1::second => now;
+        }
+    }
+}
+
 //------------------------- shackle setup ----------------------------------
 
 GameTrak gt;
 
-Shackle left("data/chain.wav", 0, gt);
-Shackle right("data/scrape.wav", 3, gt);
+Shackle left("data/chain.wav", 0, gt, dac);
+Shackle right("data/scrape.wav", 3, gt, dac);
+
+ShackleDrone droner("data/spookpad.wav", dac);
 
 // -------------------------- main loop ------------------------------
 

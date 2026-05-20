@@ -1,17 +1,20 @@
 
 public class Droner {
-    Phasor p => Gain genbus => Gen10 osc => LPF lp => Gain mix => JCRev r1 => NRev r2 => dac;
+    Phasor p => Gain genbus => Gen10 osc => LPF lp => Gain mix => JCRev r1 => NRev r2;
     // Noise n => HPF n_hp => LPF n_lp => Gain n_g => mix;
     //dirt
     // SinOsc dirt => Gain dirt_amt => genbus;
     Noise noise => LPF noise_lp => Gain noise_amt => genbus;
 
-    fun @construct() {
+    fun @construct(UGen outchan) {
         [1.0, 0.25, 0.0, 0.08, 0.0, 0.04] => osc.coefs;
         2200 => lp.freq;
         0.7 => lp.Q;
         0.02 => r1.mix;
         0.015 => r2.mix;
+        0.15 => mix.gain;
+
+        r2 => outchan;
 
         // 3000 => n_hp.freq;
         // 8000 => n_lp.freq;
@@ -106,14 +109,13 @@ public class Droner {
 
 }
 
-Droner phase;
-Droner drone;
+Droner phase(dac);
+Droner drone(dac);
 
 spork ~ drone.play_drone(Std.mtof(71), 0.75, 50::ms, 150::ms, 0.85);
-
+spork ~ phase.play_pattern_FOREVER(Std.mtof(76));
 // infinite time-loop
 while( true )
 {
-    phase.play_pattern(Std.mtof(76));
-
+    1::second => now;
 }

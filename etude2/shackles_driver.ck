@@ -1,30 +1,34 @@
 //-----------------------------------------------------------------------------
 // name: shackles_driver.ck
 // desc: runner for shackles performance
-//       use :s arg if you are sender
+//       use :s arg if you are sender across network, or :sl if you are sending to localhost
 //
 // author: Anthony Maltsev (amaltsev@stanford.edu)
 // date: spring 2026
 //-----------------------------------------------------------------------------
 
-@import {"gt_kb_dupe_history.ck", "shackles.ck", "phasor.ck"}
+@import {"gt_kb_dupe_history.ck", "shackles.ck", "unshackles.ck", "phasor.ck"}
 
 GameTrak gt;
 
 // init osc in glob scope
 "224.0.0.1" => string hostname;
+"/shackles/scene" => string scene_uri;
 8888 => int port;
 OscOut xmit;
 0 => int sender;
 OscIn oin;
 OscMsg omsg;
 
-if (me.args() > 0 && me.arg(0) == "s") {
+if (me.args() > 0 && (me.arg(0) == "s" || me.arg(0) == "sl")) {
     1 => sender;
+    if (me.arg(0) == "sl") {
+        "127.0.0.1" => hostname;
+    }
     xmit.dest(hostname, port);
 } else {
     port => oin.port;
-    oin.addAddress("/shackles/scene, if"); // scene, scene_fade
+    oin.addAddress(scene_uri + ", if"); // scene, scene_fade
 }
 
 //------------------------- scene setup ----------------------------------
@@ -32,6 +36,9 @@ if (me.args() > 0 && me.arg(0) == "s") {
 // scene in {0,1}: 0 is chains, 1 is pleasant
 0 => int scene;
 1. => float scene_fade;
+
+Gain scene_bus => dac;
+scene_fade => scene_bus.gain;
 
 Shred @ curr_scene;
 fun void play_scene(int i) {
@@ -47,8 +54,11 @@ fun void play_scene(int i) {
 }
 
 fun void _scene0() {
-    Shackle left("data/chain.wav", 0, gt);
-    Shackle right("data/scrape.wav", 3, gt);
+    Shackle left("data/chain.wav", 0, gt, scene_bus);
+    Shackle right("data/scrape.wav", 3, gt, scene_bus);
+
+    ShackleDrone drone1("data/spookpad.wav", 0.5, scene_bus);
+    ShackleDrone drone2("data/spookpad.wav", 0.3, scene_bus);
 
     while (true) {
         1::second => now;
@@ -56,10 +66,14 @@ fun void _scene0() {
 }
 
 fun void _scene1() {
-    Droner pattern;
-    Droner drone;
+    Droner pattern(scene_bus);
+    Droner drone(scene_bus);
+
+    Unshackle left(0, gt, scene_bus);
+    Unshackle right(3, gt, scene_bus);
 
     spork ~ drone.play_drone(Std.mtof(71), 0.75, 50::ms, 150::ms, 0.85);
+    32::second => now;
     spork ~ pattern.play_pattern_FOREVER(Std.mtof(76));
 
     while (true) {
@@ -89,6 +103,15 @@ fun void _scene_transition_01(dur fade_time_out, dur silence_dur, dur fade_time_
     1. => scene_fade;
 }
 
+fun void _scene_fade_listener() {
+    while (true) {
+        scene_fade => scene_bus.gain;
+        10::ms => now;
+        // <<< "scene bus gain: ", scene_bus.gain()>>>;
+    }
+}
+spork ~ _scene_fade_listener();
+
 // init piece
 play_scene(0);
 
@@ -100,7 +123,7 @@ fun void listen_for_scene_progression() {
         if (!scene_transitioned && gt.button_ever_pressed) {
             1 => scene_transitioned;
             <<< "scene transition detected!" >>>;
-            _scene_transition_01(250::ms, 1.5::second, 2.5::second);
+            _scene_transition_01(2::second, 1::second, 12::second);
         }
         30::ms => now;
     }
@@ -110,11 +133,19 @@ if (sender) {
     spork ~ listen_for_scene_progression();
 }
 
+fun void log_state() {
+    while (true) {
+        <<<"\nscene: ", scene, "\nscene_fade:", scene_fade >>>;
+        100::ms => now;
+    }
+} 
+spork ~ log_state();
+
 while( true )
 {
     if (sender) {
 
-        xmit.start("/identity/scene");
+        xmit.start(scene_uri);
         scene => xmit.add; //updated in scene transition, sporked above
         scene_fade => xmit.add; //same
         xmit.send();
@@ -123,6 +154,7 @@ while( true )
     } 
     else { // receiver mode
         oin => now;
+        // <<< "received message", "" >>>;
         while(oin.recv(omsg))
         { 
             omsg.getInt(0) => scene;
