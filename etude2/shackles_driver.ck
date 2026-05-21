@@ -12,7 +12,7 @@
 GameTrak gt;
 
 // init osc in glob scope
-"224.0.0.1" => string hostname;
+"255.255.255.255" => string hostname;
 "/shackles/scene" => string scene_uri;
 8888 => int port;
 OscOut xmit;
