@@ -41,6 +41,7 @@ Gain scene_bus => dac;
 scene_fade => scene_bus.gain;
 
 Shred @ curr_scene;
+0 => int curr_scene_id;
 fun void play_scene(int i) {
     <<< "play_scene(", i, ")" >>>;
     if (i == 0) {
@@ -81,7 +82,7 @@ fun void _scene1() {
     }
 }
 
-fun void _scene_transition_01(dur fade_time_out, dur silence_dur, dur fade_time_in) {
+fun void _scene_transition_01_sender(dur fade_time_out, dur silence_dur, dur fade_time_in) {
     5::ms => dur step;
     (fade_time_out/step) $ int => int fade_out_steps;
     for (0 => int i; i <= fade_out_steps; i++) {
@@ -103,6 +104,13 @@ fun void _scene_transition_01(dur fade_time_out, dur silence_dur, dur fade_time_
     1. => scene_fade;
 }
 
+fun void _scene_transition_01_receiver() {
+    curr_scene.exit();
+    1 => scene;
+    1 => curr_scene_id;
+    play_scene(1);
+}
+
 fun void _scene_fade_listener() {
     while (true) {
         scene_fade => scene_bus.gain;
@@ -120,18 +128,20 @@ play_scene(0);
 fun void listen_for_scene_progression() {
     while( true ) {
         
-        if (!scene_transitioned && gt.button_ever_pressed) {
+        if (sender && !scene_transitioned && gt.button_ever_pressed) { // sender transition
             1 => scene_transitioned;
             <<< "scene transition detected!" >>>;
-            _scene_transition_01(2::second, 1::second, 12::second);
+            _scene_transition_01_sender(2::second, 1::second, 12::second);
+        } else if (!sender && curr_scene_id != scene) { // receiver transition
+            <<< "scene transition detected!" >>>;
+            _scene_transition_01_receiver();
         }
         30::ms => now;
     }
 }
 
-if (sender) {
-    spork ~ listen_for_scene_progression();
-}
+spork ~ listen_for_scene_progression();
+
 
 fun void log_state() {
     while (true) {
