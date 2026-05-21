@@ -35,7 +35,7 @@ if (me.args() > 0 && (me.arg(0) == "s" || me.arg(0) == "sl")) {
 
 // scene in {0,1}: 0 is chains, 1 is pleasant
 0 => int scene;
-1. => float scene_fade;
+0. => float scene_fade;
 
 Gain scene_bus => dac;
 scene_fade => scene_bus.gain;
@@ -82,6 +82,16 @@ fun void _scene1() {
     }
 }
 
+fun void _unfade_sender(dur unfade_time) {
+    5::ms => dur step;
+    (unfade_time/step) $ int => int unfade_steps;
+    for (0 => int i; i <= unfade_steps; i++) {
+        (i $ float) / (unfade_steps $ float) => scene_fade;
+        step => now;
+    }
+    1. => scene_fade;
+}
+
 fun void _scene_transition_01_sender(dur fade_time_out, dur silence_dur, dur fade_time_in) {
     5::ms => dur step;
     (fade_time_out/step) $ int => int fade_out_steps;
@@ -124,14 +134,20 @@ spork ~ _scene_fade_listener();
 play_scene(0);
 
 // -------------------------- main loops ------------------------------
-0 => int scene_transitioned;
+// start silent and unfade. first button press is unfade, second is scene transition
+0 => int unfaded; // first button pressed?
+0 => int scene_transitioned; // second button pressed?
 fun void listen_for_scene_progression() {
     while( true ) {
-        
-        if (sender && !scene_transitioned && gt.button_ever_pressed) { // sender transition
+        if (sender && !unfaded && gt.get_button_pressed_mode()) { // unfade
+            _unfade_sender(8::second);
+            1 => unfaded;
+            gt.set_button_pressed_mode(0);
+        } else if (sender && unfaded && !scene_transitioned && gt.get_button_pressed_mode()) { // sender transition
             1 => scene_transitioned;
             <<< "scene transition detected!" >>>;
             _scene_transition_01_sender(2::second, 1::second, 12::second);
+            gt.set_button_pressed_mode(0);
         } else if (!sender && curr_scene_id != scene) { // receiver transition
             <<< "scene transition detected!" >>>;
             _scene_transition_01_receiver();

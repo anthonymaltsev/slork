@@ -22,7 +22,7 @@ public class GameTrak
     float lastAxis[HISTORY][6];
     float axis[6];
 
-    0 => int button_ever_pressed;
+    0 => int button_pressed_mode;
 
     fun @construct() {
         __init(0);
@@ -35,6 +35,14 @@ public class GameTrak
     fun @construct(int device_in, float deadzone_in) {
         deadzone_in => DEADZONE;
         __init(device_in);
+    }
+
+    fun void set_button_pressed_mode(int mode) {
+        mode => button_pressed_mode;
+    }
+
+    fun int get_button_pressed_mode() {
+        return button_pressed_mode;
     }
 
 
@@ -101,13 +109,13 @@ public class GameTrak
                 else if( trak_msg.isButtonDown() )
                 {
                     <<< "button", trak_msg.which, "down" >>>;
-                    1 => button_ever_pressed;
+                    1 => button_pressed_mode;
                 }
                 
                 else if( trak_msg.isButtonUp() )
                 {
                     <<< "button", trak_msg.which, "up" >>>;
-                    1 => button_ever_pressed;
+                    1 => button_pressed_mode;
                 }
 
                 _update_history();
@@ -173,7 +181,7 @@ public class GameTrak
                     // <<< "kb down @ ", kb_msg.which >>>;
                     if (kb_msg.which == 5) { // b
                         <<< "button down", "" >>>;
-                        1 => button_ever_pressed;
+                        1 => button_pressed_mode;
                     }
                 }
                 else if (kb_msg.isButtonUp()) {
