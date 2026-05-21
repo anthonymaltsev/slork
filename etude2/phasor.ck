@@ -12,7 +12,7 @@ public class Droner {
         0.7 => lp.Q;
         0.02 => r1.mix;
         0.015 => r2.mix;
-        0.15 => mix.gain;
+        0.1 => mix.gain;
 
         r2 => outchan;
 

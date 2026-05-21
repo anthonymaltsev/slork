@@ -8,6 +8,8 @@ pushd ~/slork/users/ant/etude2
 
 # kb_device=$(chuck --probe 2>&1 | awk '/keyboard/{kb=1} kb && /Apple Internal Keyboard/{gsub(/[][]/, "", $2); print $2; exit}')
 
+open score.jpg
+
 if [ "$#" -lt 1 ]; then
     chuck -c8 shackles_driver.ck
 elif [ "$#" -lt 2 ]; then

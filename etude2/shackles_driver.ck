@@ -58,6 +58,10 @@ fun void _scene0() {
     Shackle left("data/chain.wav", 0, gt, scene_bus);
     Shackle right("data/scrape.wav", 3, gt, scene_bus);
 
+    while (!unfaded) {
+        20::ms => now;
+    }
+
     ShackleDrone drone1("data/spookpad.wav", 0.5, scene_bus);
     ShackleDrone drone2("data/spookpad.wav", 0.3, scene_bus);
 
