@@ -8,11 +8,12 @@ public class Droner {
 
     fun @construct(UGen outchan) {
         [1.0, 0.25, 0.0, 0.08, 0.0, 0.04] => osc.coefs;
+        0 => osc.gain;
         2200 => lp.freq;
         0.7 => lp.Q;
         0.02 => r1.mix;
         0.015 => r2.mix;
-        0.1 => mix.gain;
+        0.03 => mix.gain;
 
         r2 => outchan;
 
@@ -69,7 +70,8 @@ public class Droner {
 
     fun void play_pattern(float freq) {
         spork ~ _play_pattern(freq);
-        Math.random2f(0.95, 1.05) * 3.6::second => now;
+        // Math.random2f(0.95, 1.05) * 3.6::second => now;
+        3.6::second => now;
     }
 
     fun void _play_pattern(float freq) {
