@@ -104,6 +104,21 @@ public class Unshackle {
         }
     }
 
+    // manual constructor: no GameTrak, no auto-plucking — for one-shot play_note() use
+    fun @construct(UGen outchan) {
+        lp.set(4000, 0.7);
+        0.7 => mix.gain;
+        0.9 => inst.sustain;
+        0.8 => inst.pickupPosition;
+        rev => outchan;
+    }
+
+    // pluck a single note once (used as a one-shot accent, e.g. on the scene-1 cut)
+    fun void play_note(int midi_note) {
+        Std.mtof(midi_note) => inst.freq;
+        inst.pluck(0.8);
+    }
+
     // clamped linear function from k1 to k2 domain, v1 to v2 range
     // must be k2 > k1
     fun float _clamp_linear(float x, float k1, float v1, float k2, float v2) {

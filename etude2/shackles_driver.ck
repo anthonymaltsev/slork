@@ -41,7 +41,7 @@ if (me.args() > 0 && (me.arg(0) == "s" || me.arg(0) == "sl")) {
 } else if (me.args() > 0){
     Std.atoi(me.arg(0)) => my_index;
     port => oin.port;
-    oin.addAddress(scene_uri + ", iif"); // scene, scene_fade
+    oin.addAddress(scene_uri + ", iiifff"); // scene, scene_instruction_index, unfaded, drone_fade, instr_fade, scene_fade
     port => oin2.port;
     oin2.addAddress(pattern_uri + ", i"); // play_index
 } else {
@@ -58,17 +58,17 @@ if (me.args() > 0 && (me.arg(0) == "s" || me.arg(0) == "sl")) {
 [
     // scene 0
     [
-        "Wait for the piece to begin (conductor press button when ready!)",
-        "YOU: Hold still!\nDANCERS: jerky movements",
-        "YOU: Hold still!\nDANCERS: stop",
-        "YOU: Repeatedly yank the GT back toward yourself, 'pulling' dancers down.\nDANCERS: Collapse to floor.",
-        "YOU: Conductor initiate fade, hold still!\nDANCERS: hold still!",
+        ""//Wait for the piece to begin (conductor press button when ready!)",
+        ""//YOU: Hold still!\nDANCERS: jerky movements",
+        ""//YOU: Hold still!\nDANCERS: stop",
+        ""//YOU: Repeatedly yank the GT back toward yourself, 'pulling' dancers down.\nDANCERS: Collapse to floor.",
+        ""//YOU: Conductor initiate fade, hold still!\nDANCERS: hold still!",
         ""
     ],
     // scene 1
     [
-        "YOU: Hold still\nDANCERS: arise into smooth movements",
-        "YOU: Begin to rise, floating the GT\nDANCERS: continue smoothly.",
+        ""//YOU: Hold still\nDANCERS: arise into smooth movements",
+        ""//YOU: Begin to rise, floating the GT\nDANCERS: continue smoothly.",
         "",
         "",
         "",
@@ -78,9 +78,14 @@ if (me.args() > 0 && (me.arg(0) == "s" || me.arg(0) == "sl")) {
 
 // scene in {0,1}: 0 is chains, 1 is pleasant
 0 => int scene;
+0.1 => float drone_sus_level;
+0.1 => float instr_sus_level;
+1. => float drone_fade;
+instr_sus_level => float instr_fade;
 0. => float scene_fade;
 
-Gain scene_bus => dac;
+Gain instr_bus => Gain scene_bus => dac;
+Gain drone_bus => scene_bus;
 scene_fade => scene_bus.gain;
 
 Shred @ curr_scene;
@@ -100,18 +105,22 @@ fun void play_scene(int i) {
 fun void _scene0() {
     if (sender)
         spork ~ _scene0_instructions_timer();
-    ShackleDrone drone1("data/spookpad.wav", 0.5, scene_bus);
-    ShackleDrone drone2("data/spookpad.wav", 0.3, scene_bus);
+    ShackleDrone drone1("data/spookpad.wav", 0.5, drone_bus);
+    ShackleDrone drone2("data/spookpad.wav", 0.3, drone_bus);
 
     while (!unfaded) {
         20::ms => now;
     }
 
-    Shackle left("data/chain.wav", 0, gt, scene_bus);
-    Shackle right("data/scrape.wav", 3, gt, scene_bus);
+
+    Shackle left("data/chain.wav", 0, gt, instr_bus);
+    Shackle right("data/scrape.wav", 3, gt, instr_bus);
 
     while (true) {
-        1::second => now;
+        // 1::second => now;
+        if (sender)
+            _cut_drone_up_instr_and_fade_sender(200::ms, 4::second, 8::second);
+        2::second => now;
     }
 }
 fun void _scene0_instructions_timer() {
@@ -129,7 +138,7 @@ fun void _scene0_instructions_timer() {
 fun void _scene1() {
     if (sender)
         spork ~ _scene1_instructions_timer();
-    Droner drone(scene_bus);
+    Droner drone(drone_bus);
 
     // Unshackle left(0, gt, scene_bus);
     // Unshackle right(3, gt, scene_bus);
@@ -137,19 +146,22 @@ fun void _scene1() {
     spork ~ drone.play_drone(Std.mtof(71), 0.75, 50::ms, 150::ms, 0.85);
     8::second => now;
 
-    Mellotron left(0, gt, scene_bus);
-    Mellotron right(3, gt, scene_bus);
-    24::second => now;
+    Mellotron left(0, gt, instr_bus);
+    Mellotron right(3, gt, instr_bus);
 
-    spork ~ _scene1_pattern_player();
+    spork ~ _scene1_pattern_player(24::second);
 
     while (true) {
-        1::second => now;
+        // 1::second => now;
+        if (sender)
+            _cut_drone_up_instr_and_fade_sender(200::ms, 4::second, 8::second);
+        2::second => now;
     }
 }
 
-fun void _scene1_pattern_player() {
-    Droner pattern(scene_bus);
+fun void _scene1_pattern_player(dur wait_before_start) {
+    wait_before_start => now;
+    Droner pattern(drone_bus);
     if (sender) {
         0 => int curr_ind;
         while (true) {
@@ -200,6 +212,53 @@ fun void _unfade_sender(dur unfade_time) {
     1. => scene_fade;
 }
 
+LiSa kick => Gain accent_bus => LPF accent_lpf => scene_bus;
+0.4 => accent_bus.gain;
+3000 => accent_lpf.freq;
+0.7 => accent_lpf.Q;
+0.7 => kick.gain;
+kick.loop(0, 0);
+2. => kick.rate;
+
+SndBuf kick_src;
+"data/open_hat_1.wav" => kick_src.read;
+kick_src.samples()::samp => kick.duration;
+for (0 => int i; i < kick_src.samples(); i++) {
+    kick.valueAt(kick_src.valueAt(i), i::samp);
+}
+
+Unshackle accent(accent_bus);
+
+fun void _cut_drone_up_instr_and_fade_sender(dur cut_time, dur cut_dur, dur fade_up) {
+    // some transition noise
+    if (scene == 1) {
+        accent.play_note(72);
+    } else {
+        0::samp => kick.playPos;
+        1 => kick.play;
+    }
+    1::ms => dur step;
+    (cut_time/step) $ int => int cut_steps;
+    for (0 => int i; i <= cut_steps; i++) {
+        1. - (1 - drone_sus_level) * (i $ float) / (cut_steps $ float) => drone_fade;
+        instr_sus_level + (1. - instr_sus_level) * (i $ float) / (cut_steps $ float) => instr_fade;
+        step => now;
+    }
+    1. => instr_fade;
+    drone_sus_level => drone_fade;
+
+    cut_dur => now;
+    
+    (fade_up/step) $ int => int fade_up_steps;
+    for (0 => int i; i <= fade_up_steps; i++) {
+        1 - (1 - instr_sus_level) * (i $ float) / (fade_up_steps $ float) => instr_fade;
+        drone_sus_level + (1 - drone_sus_level) * (i $ float) / (fade_up_steps $ float) => drone_fade;
+        step => now;
+    }
+    instr_sus_level => instr_fade;
+    1 => drone_fade;
+}
+
 fun void _scene_transition_01_sender(dur fade_time_out, dur silence_dur, dur fade_time_in) {
     5::ms => dur step;
     (fade_time_out/step) $ int => int fade_out_steps;
@@ -210,6 +269,8 @@ fun void _scene_transition_01_sender(dur fade_time_out, dur silence_dur, dur fad
     0. => scene_fade;
     curr_scene.exit();
     1 => scene;
+    instr_sus_level => instr_fade;
+    1. => drone_fade;
 
     silence_dur => now;
 
@@ -232,7 +293,9 @@ fun void _scene_transition_01_receiver() {
 fun void _scene_fade_listener() {
     while (true) {
         scene_fade => scene_bus.gain;
-        10::ms => now;
+        drone_fade => drone_bus.gain;
+        instr_fade => instr_bus.gain;
+        1::ms => now;
         // <<< "scene bus gain: ", scene_bus.gain()>>>;
     }
 }
@@ -269,6 +332,7 @@ fun void log_state() {
     while (true) {
         <<< gt.axis[0], gt.axis[1], gt.axis[2], gt.axis[3], gt.axis[4], gt.axis[5] >>> ;
         <<<"\nscene: ", scene, "\nscene_fade:", scene_fade >>>;
+        <<<"instr_fade: ", instr_fade, "\ndrone_fade:", drone_fade >>>;
         <<<scene_instructions[scene][scene_instruction_index], "">>>;
         100::ms => now;
     }
@@ -282,6 +346,9 @@ while( true )
         xmit.start(scene_uri);
         scene => xmit.add; //updated in scene transition, sporked above
         scene_instruction_index => xmit.add;
+        unfaded => xmit.add;
+        drone_fade => xmit.add;
+        instr_fade => xmit.add;
         scene_fade => xmit.add; //same
         xmit.send();
         10::ms => now;
@@ -294,7 +361,10 @@ while( true )
         { 
             omsg.getInt(0) => scene;
             omsg.getInt(1) => scene_instruction_index;
-            omsg.getFloat(2) => scene_fade;
+            omsg.getInt(2) => unfaded;
+            omsg.getFloat(3) => drone_fade;
+            omsg.getFloat(4) => instr_fade;
+            omsg.getFloat(5) => scene_fade;
         }
     }
 }
