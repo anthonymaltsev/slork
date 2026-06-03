@@ -41,7 +41,7 @@ if (me.args() > 0 && (me.arg(0) == "s" || me.arg(0) == "sl")) {
 } else if (me.args() > 0){
     Std.atoi(me.arg(0)) => my_index;
     port => oin.port;
-    oin.addAddress(scene_uri + ", iiifff"); // scene, scene_instruction_index, unfaded, drone_fade, instr_fade, scene_fade
+    oin.addAddress(scene_uri + ", iiiiiifff"); // scene, scene_instruction_index, unfaded, add_shackles, add_mellotrons, final_faded, drone_fade, instr_fade, scene_fade
     port => oin2.port;
     oin2.addAddress(pattern_uri + ", i"); // play_index
 } else {
@@ -52,29 +52,36 @@ if (me.args() > 0 && (me.arg(0) == "s" || me.arg(0) == "sl")) {
 //------------------------- scene setup ----------------------------------
 
 // start silent and unfade. first button press is unfade, second is scene transition
-0 => int unfaded; // first button pressed?
-0 => int scene_transitioned; // second button pressed?
+0 => int unfaded; // started?
+0 => int scene_transitioned; // scene 0->1 transition?
+0 => int add_shackles; // scene 0: add  shackles
+0 => int add_mellotrons; // scene 1  add mellotrons
+0 => int final_faded; // scene 1 final fade
+0 => int button_pressed;
 0 => int scene_instruction_index;
 [
-    // scene 0
+    // scene 0 (chains)
     [
-        ""//Wait for the piece to begin (conductor press button when ready!)",
-        ""//YOU: Hold still!\nDANCERS: jerky movements",
-        ""//YOU: Hold still!\nDANCERS: stop",
-        ""//YOU: Repeatedly yank the GT back toward yourself, 'pulling' dancers down.\nDANCERS: Collapse to floor.",
-        ""//YOU: Conductor initiate fade, hold still!\nDANCERS: hold still!",
-        ""
+        "Wait for the piece to begin\n(conductor will press to start when ready, once dancers have entered the circle and are Rodin)",
+        "DANCERS: stand still, waiting for assistants to attach tethers \nASSISTANTS: attach your tethers to your dancer",
+        "DANCERS: statue - cower from a flame \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - feel inadequate \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - a bug is crawling up your leg \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - the weight of the world is on your shoulders \nASSISTANTS: gargoyle mode, be still",
     ],
-    // scene 1
+    // scene 1 (pleasant)
     [
-        ""//YOU: Hold still\nDANCERS: arise into smooth movements",
-        ""//YOU: Begin to rise, floating the GT\nDANCERS: continue smoothly.",
-        "",
-        "",
-        "",
+        "DANCERS: arise into smooth, floating movement \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - you are a speck of dust \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - you are cradling the baby Jesus \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - you are a butterfly \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - you are a beam of light \nASSISTANTS: gargoyle mode, be still",
         "",
     ]
 ] @=> string scene_instructions[][];
+
+4 => int scene_0_statue_poses;
+4 => int scene_1_statue_poses;
 
 // scene in {0,1}: 0 is chains, 1 is pleasant
 0 => int scene;
@@ -112,27 +119,36 @@ fun void _scene0() {
         20::ms => now;
     }
 
+    while (!add_shackles) {
+        20::ms => now;
+    }
 
     Shackle left("data/chain.wav", 0, gt, instr_bus);
     Shackle right("data/scrape.wav", 3, gt, instr_bus);
 
-    while (true) {
+    for (0 => int i; i < scene_0_statue_poses; 1 +=> i) {
         // 1::second => now;
         if (sender)
-            _cut_drone_up_instr_and_fade_sender(200::ms, 4::second, 8::second);
-        2::second => now;
+            _cut_drone_up_instr_and_fade_sender(200::ms, 10::second, 18::second);
+        1800::ms => now; //30s total
+    }
+
+    while (true) {
+        1::second => now;
     }
 }
 fun void _scene0_instructions_timer() {
     0 => scene_instruction_index;
     while (scene_fade == 0) 10::ms => now;
     1 => scene_instruction_index;
-    40::second => now;
+    while (!add_shackles) 10::ms => now;
     2 => scene_instruction_index;
-    10::second => now;
+    30::second => now;
     3 => scene_instruction_index;
-    20::second => now;
+    30::second => now;
     4 => scene_instruction_index;
+    30::second => now;
+    5 => scene_instruction_index;
 }
 
 fun void _scene1() {
@@ -144,18 +160,27 @@ fun void _scene1() {
     // Unshackle right(3, gt, scene_bus);
 
     spork ~ drone.play_drone(Std.mtof(71), 0.75, 50::ms, 150::ms, 0.85);
-    8::second => now;
+
+    while (!add_mellotrons) {
+        20::ms => now;
+    }
 
     Mellotron left(0, gt, instr_bus);
     Mellotron right(3, gt, instr_bus);
+    // Shackle right("data/Cloudbank.wav", 3, gt, instr_bus);
+    // right.set_grain_interval_0_1(500, 250);
 
     spork ~ _scene1_pattern_player(24::second);
 
-    while (true) {
+    for (0 => int i; i < scene_1_statue_poses; 1 +=> i) {
         // 1::second => now;
         if (sender)
-            _cut_drone_up_instr_and_fade_sender(200::ms, 4::second, 8::second);
-        2::second => now;
+            _cut_drone_up_instr_and_fade_sender(200::ms, 10::second, 18::second);
+        1800::ms => now; //30s total
+    }
+
+    while (true) {
+        1::second => now;
     }
 }
 
@@ -198,8 +223,24 @@ fun void _scene1_pattern_player(dur wait_before_start) {
 
 fun void _scene1_instructions_timer() {
     0 => scene_instruction_index;
-    40::second => now;
+    while (!add_mellotrons) 10::ms => now;
     1 => scene_instruction_index;
+    30::second => now;
+    2 => scene_instruction_index;
+    30::second => now;
+    3 => scene_instruction_index;
+    30::second => now;
+    4 => scene_instruction_index;
+}
+
+fun void _final_fade_sender(dur fade_time) {
+    5::ms => dur step;
+    (fade_time/step) $ int => int fade_steps;
+    for (0 => int i; i <= fade_steps; i++) {
+        (1 - (i $ float) / (fade_steps $ float)) => scene_fade;
+        step => now;
+    }
+    0. => scene_fade;
 }
 
 fun void _unfade_sender(dur unfade_time) {
@@ -268,6 +309,7 @@ fun void _scene_transition_01_sender(dur fade_time_out, dur silence_dur, dur fad
     }
     0. => scene_fade;
     curr_scene.exit();
+    0 => scene_instruction_index;
     1 => scene;
     instr_sus_level => instr_fade;
     1. => drone_fade;
@@ -285,6 +327,7 @@ fun void _scene_transition_01_sender(dur fade_time_out, dur silence_dur, dur fad
 
 fun void _scene_transition_01_receiver() {
     curr_scene.exit();
+    0 => scene_instruction_index;
     1 => scene;
     1 => curr_scene_id;
     play_scene(1);
@@ -306,17 +349,50 @@ play_scene(0);
 
 // -------------------------- main loops ------------------------------
 
+fun void space_bar_listener() {
+    Hid kb;
+    HidMsg kb_msg;
+    if (!kb.openKeyboard(0)) {
+        <<< "space_bar_listener: couldn't open keyboard", "" >>>;
+        me.exit();
+    }
+    <<< "space bar listener launched", "" >>>;
+    while (true) {
+        kb => now;
+        while (kb.recv(kb_msg)) {
+            if (kb_msg.isButtonDown() && kb_msg.which == 44) { // space bar
+                <<< "space bar pressed", "" >>>;
+                1 => button_pressed;
+            }
+        }
+    }
+}
+spork ~ space_bar_listener();
+
 fun void listen_for_scene_progression() {
     while( true ) {
-        if (sender && !unfaded && gt.get_button_pressed_mode()) { // unfade
+        if (sender && !unfaded && button_pressed) { // press 1: unfade
             _unfade_sender(8::second);
             1 => unfaded;
-            gt.set_button_pressed_mode(0);
-        } else if (sender && unfaded && !scene_transitioned && gt.get_button_pressed_mode()) { // sender transition
+            0 => button_pressed;
+        } else if (sender && unfaded && !add_shackles && button_pressed) { // press 2: bring in shackles
+            1 => add_shackles;
+            <<< "add shackles!" >>>;
+            0 => button_pressed;
+        } else if (sender && add_shackles && !scene_transitioned && button_pressed) { // press 3: scene 0->1 transition
             1 => scene_transitioned;
             <<< "scene transition detected!" >>>;
             _scene_transition_01_sender(2::second, 1::second, 12::second);
-            gt.set_button_pressed_mode(0);
+            0 => button_pressed;
+        } else if (sender && scene_transitioned && !add_mellotrons && button_pressed) { // press 4: bring in mellotrons
+            1 => add_mellotrons;
+            <<< "add mellotrons!" >>>;
+            0 => button_pressed;
+        } else if (sender && add_mellotrons && !final_faded && button_pressed) { // press 5: final fade out
+            1 => final_faded;
+            <<< "final fade out!" >>>;
+            _final_fade_sender(1::second);
+            0 => button_pressed;
         } else if (!sender && curr_scene_id != scene) { // receiver transition
             <<< "scene transition detected!" >>>;
             _scene_transition_01_receiver();
@@ -347,6 +423,9 @@ while( true )
         scene => xmit.add; //updated in scene transition, sporked above
         scene_instruction_index => xmit.add;
         unfaded => xmit.add;
+        add_shackles => xmit.add;
+        add_mellotrons => xmit.add;
+        final_faded => xmit.add;
         drone_fade => xmit.add;
         instr_fade => xmit.add;
         scene_fade => xmit.add; //same
@@ -362,9 +441,12 @@ while( true )
             omsg.getInt(0) => scene;
             omsg.getInt(1) => scene_instruction_index;
             omsg.getInt(2) => unfaded;
-            omsg.getFloat(3) => drone_fade;
-            omsg.getFloat(4) => instr_fade;
-            omsg.getFloat(5) => scene_fade;
+            omsg.getInt(3) => add_shackles;
+            omsg.getInt(4) => add_mellotrons;
+            omsg.getInt(5) => final_faded;
+            omsg.getFloat(6) => drone_fade;
+            omsg.getFloat(7) => instr_fade;
+            omsg.getFloat(8) => scene_fade;
         }
     }
 }

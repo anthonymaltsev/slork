@@ -101,9 +101,15 @@ public class Shackle {
         }
     }
 
+    200. => float grain_interval_val0;
+    15. => float grain_interval_val1;
+    fun void set_grain_interval_0_1(float val0, float val1) {
+        val0 => grain_interval_val0;
+        val1 => grain_interval_val1;
+    }
     // [0,1] => [200,15]
     fun dur grain_interval() {
-        return (15. + (1. - mag) * 185.)::ms;
+        return (grain_interval_val1 + (1. - mag) * (grain_interval_val0 - grain_interval_val1))::ms;
     }
 
     fun void grain() {
