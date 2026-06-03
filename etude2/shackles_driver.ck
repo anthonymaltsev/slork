@@ -92,8 +92,26 @@ instr_sus_level => float instr_fade;
 0. => float scene_fade;
 
 Gain instr_bus => Gain scene_bus => dac;
-Gain drone_bus => scene_bus;
+Gain drone_bus => Gain drone_dirt => scene_bus;
 scene_fade => scene_bus.gain;
+
+fun void drone_mod() {
+    Modulate mod => blackhole;
+    1.0 => mod.vibratoGain;
+    0.4 => mod.randomGain;
+
+    10::samp => dur step;
+    while (true) {
+        Math.clampf(drone_fade * drone_fade * drone_fade, 0., 2.) => float k;
+        k * 0.85 => float depth;
+        0.5 + k * 8. => float rate;
+
+        rate => mod.vibratoRate;
+        Math.clampf(1. + depth * mod.last(), 0., 2.) => drone_dirt.gain;
+        step => now;
+    }
+}
+spork ~ drone_mod();
 
 Shred @ curr_scene;
 0 => int curr_scene_id;
@@ -112,8 +130,8 @@ fun void play_scene(int i) {
 fun void _scene0() {
     if (sender)
         spork ~ _scene0_instructions_timer();
-    ShackleDrone drone1("data/spookpad.wav", 0.5, drone_bus);
-    ShackleDrone drone2("data/spookpad.wav", 0.3, drone_bus);
+    ShackleDrone drone1("data/spookpad.wav", gt, 0.5, drone_bus);
+    ShackleDrone drone2("data/spookpad.wav", gt, 0.3, drone_bus);
 
     while (!unfaded) {
         20::ms => now;
@@ -129,8 +147,8 @@ fun void _scene0() {
     for (0 => int i; i < scene_0_statue_poses; 1 +=> i) {
         // 1::second => now;
         if (sender)
-            _cut_drone_up_instr_and_fade_sender(200::ms, 10::second, 18::second);
-        1800::ms => now; //30s total
+            _cut_drone_up_instr_and_fade_sender(i, 200::ms, 8::second, 12::second);
+        9.8::second => now; //30s total
     }
 
     while (true) {
@@ -161,22 +179,29 @@ fun void _scene1() {
 
     spork ~ drone.play_drone(Std.mtof(71), 0.75, 50::ms, 150::ms, 0.85);
 
+    Gain cloud_bus => NRev rev => drone_bus;
+    0.04 => cloud_bus.gain;
+    0.25 => rev.mix;
+    Shackle left("data/Cloudbank.wav", 3, gt, cloud_bus, 1);
+    Shackle right("data/Cloudbank.wav", 3, gt, cloud_bus, 1);
+    left.set_grain_interval_0_1(200, 50);
+    // right.set_grain_interval_0_1(500, 250);
+    right.set_grain_interval_0_1(300, 70);
+
     while (!add_mellotrons) {
         20::ms => now;
     }
 
-    Mellotron left(0, gt, instr_bus);
-    Mellotron right(3, gt, instr_bus);
-    // Shackle right("data/Cloudbank.wav", 3, gt, instr_bus);
-    // right.set_grain_interval_0_1(500, 250);
+    Mellotron sleft(0, gt, instr_bus);
+    Mellotron sright(3, gt, instr_bus);
 
     spork ~ _scene1_pattern_player(24::second);
 
     for (0 => int i; i < scene_1_statue_poses; 1 +=> i) {
         // 1::second => now;
         if (sender)
-            _cut_drone_up_instr_and_fade_sender(200::ms, 10::second, 18::second);
-        1800::ms => now; //30s total
+            _cut_drone_up_instr_and_fade_sender(i, 200::ms, 8::second, 12::second);
+        9.8::second => now; //30s total
     }
 
     while (true) {
@@ -270,7 +295,7 @@ for (0 => int i; i < kick_src.samples(); i++) {
 
 Unshackle accent(accent_bus);
 
-fun void _cut_drone_up_instr_and_fade_sender(dur cut_time, dur cut_dur, dur fade_up) {
+fun void _cut_drone_up_instr_and_fade_sender(int cut_index, dur cut_time, dur cut_dur, dur fade_up) {
     // some transition noise
     if (scene == 1) {
         accent.play_note(72);
@@ -279,25 +304,29 @@ fun void _cut_drone_up_instr_and_fade_sender(dur cut_time, dur cut_dur, dur fade
         1 => kick.play;
     }
     1::ms => dur step;
+
+    1. + 0.06 * cut_index => float drone_top_out;
+    1. => float instr_top_out;
+
     (cut_time/step) $ int => int cut_steps;
     for (0 => int i; i <= cut_steps; i++) {
-        1. - (1 - drone_sus_level) * (i $ float) / (cut_steps $ float) => drone_fade;
-        instr_sus_level + (1. - instr_sus_level) * (i $ float) / (cut_steps $ float) => instr_fade;
+        drone_top_out - (drone_top_out - drone_sus_level) * (i $ float) / (cut_steps $ float) => drone_fade;
+        instr_sus_level + (instr_top_out - instr_sus_level) * (i $ float) / (cut_steps $ float) => instr_fade;
         step => now;
     }
-    1. => instr_fade;
+    instr_top_out => instr_fade;
     drone_sus_level => drone_fade;
 
     cut_dur => now;
     
     (fade_up/step) $ int => int fade_up_steps;
     for (0 => int i; i <= fade_up_steps; i++) {
-        1 - (1 - instr_sus_level) * (i $ float) / (fade_up_steps $ float) => instr_fade;
-        drone_sus_level + (1 - drone_sus_level) * (i $ float) / (fade_up_steps $ float) => drone_fade;
+        instr_top_out - (instr_top_out - instr_sus_level) * (i $ float) / (fade_up_steps $ float) => instr_fade;
+        drone_sus_level + (drone_top_out - drone_sus_level) * (i $ float) / (fade_up_steps $ float) => drone_fade;
         step => now;
     }
     instr_sus_level => instr_fade;
-    1 => drone_fade;
+    drone_top_out => drone_fade;
 }
 
 fun void _scene_transition_01_sender(dur fade_time_out, dur silence_dur, dur fade_time_in) {
