@@ -64,18 +64,18 @@ if (me.args() > 0 && (me.arg(0) == "s" || me.arg(0) == "sl")) {
     [
         "Wait for the piece to begin\n(conductor will press to start when ready, once dancers have entered the circle and are Rodin)",
         "DANCERS: stand still, waiting for assistants to attach tethers \nASSISTANTS: attach your tethers to your dancer",
-        "DANCERS: statue - cower from a flame \nASSISTANTS: gargoyle mode, be still",
-        "DANCERS: statue - feel inadequate \nASSISTANTS: gargoyle mode, be still",
-        "DANCERS: statue - a bug is crawling up your leg \nASSISTANTS: gargoyle mode, be still",
-        "DANCERS: statue - the weight of the world is on your shoulders \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - stiff 5 year old pooped pants \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - pretzel urn \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - orpheus is sad with hands up \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - elbow popped, horrified \nASSISTANTS: gargoyle mode, be still",
     ],
     // scene 1 (pleasant)
     [
         "DANCERS: arise into smooth, floating movement \nASSISTANTS: gargoyle mode, be still",
-        "DANCERS: statue - you are a speck of dust \nASSISTANTS: gargoyle mode, be still",
-        "DANCERS: statue - you are cradling the baby Jesus \nASSISTANTS: gargoyle mode, be still",
-        "DANCERS: statue - you are a butterfly \nASSISTANTS: gargoyle mode, be still",
-        "DANCERS: statue - you are a beam of light \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - suave arm inspection \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - squat and pop out \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - cat on scratch post \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - sensual hand out \nASSISTANTS: gargoyle mode, be still",
         "",
     ]
 ] @=> string scene_instructions[][];
