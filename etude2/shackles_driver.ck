@@ -68,6 +68,7 @@ if (me.args() > 0 && (me.arg(0) == "s" || me.arg(0) == "sl")) {
         "DANCERS: statue - pretzel urn \nASSISTANTS: gargoyle mode, be still",
         "DANCERS: statue - orpheus is sad with hands up \nASSISTANTS: gargoyle mode, be still",
         "DANCERS: statue - elbow popped, horrified \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - hold it!!!!\nASSISTANTS: JERKING TIME!!!!!!!!",
     ],
     // scene 1 (pleasant)
     [
@@ -76,6 +77,7 @@ if (me.args() > 0 && (me.arg(0) == "s" || me.arg(0) == "sl")) {
         "DANCERS: statue - squat and pop out \nASSISTANTS: gargoyle mode, be still",
         "DANCERS: statue - cat on scratch post \nASSISTANTS: gargoyle mode, be still",
         "DANCERS: statue - sensual hand out \nASSISTANTS: gargoyle mode, be still",
+        "DANCERS: statue - hold it!!!!\nASSISTANTS: FLOATING TIME!!!!!!!!",
         "",
     ]
 ] @=> string scene_instructions[][];
@@ -91,8 +93,8 @@ if (me.args() > 0 && (me.arg(0) == "s" || me.arg(0) == "sl")) {
 instr_sus_level => float instr_fade;
 0. => float scene_fade;
 
-Gain instr_bus => Gain scene_bus => dac;
-Gain drone_bus => Gain drone_dirt => scene_bus;
+Gain instr_bus => Gain instr_bus2 => Gain scene_bus => dac;
+Gain drone_bus => Gain drone_bus2 => Gain drone_dirt => scene_bus;
 scene_fade => scene_bus.gain;
 
 fun void drone_mod() {
@@ -130,9 +132,13 @@ fun void play_scene(int i) {
 fun void _scene0() {
     if (sender)
         spork ~ _scene0_instructions_timer();
+    
+    1.5 => drone_bus2.gain;
+    1.5 => instr_bus2.gain;
+    
     ShackleDrone drone1("data/spookpad.wav", gt, 0.5, drone_bus);
     ShackleDrone drone2("data/spookpad.wav", gt, 0.3, drone_bus);
-
+    
     while (!unfaded) {
         20::ms => now;
     }
@@ -167,12 +173,17 @@ fun void _scene0_instructions_timer() {
     4 => scene_instruction_index;
     30::second => now;
     5 => scene_instruction_index;
+    30::second => now;
+    6 => scene_instruction_index;
 }
 
 fun void _scene1() {
     if (sender)
         spork ~ _scene1_instructions_timer();
     Droner drone(drone_bus);
+    
+    1.0 => drone_bus2.gain;
+    1.0 => instr_bus2.gain;
 
     // Unshackle left(0, gt, scene_bus);
     // Unshackle right(3, gt, scene_bus);
@@ -256,6 +267,8 @@ fun void _scene1_instructions_timer() {
     3 => scene_instruction_index;
     30::second => now;
     4 => scene_instruction_index;
+    30::second => now;
+    5 => scene_instruction_index;
 }
 
 fun void _final_fade_sender(dur fade_time) {
@@ -420,7 +433,7 @@ fun void listen_for_scene_progression() {
         } else if (sender && add_mellotrons && !final_faded && button_pressed) { // press 5: final fade out
             1 => final_faded;
             <<< "final fade out!" >>>;
-            _final_fade_sender(1::second);
+            _final_fade_sender(10::second);
             0 => button_pressed;
         } else if (!sender && curr_scene_id != scene) { // receiver transition
             <<< "scene transition detected!" >>>;
@@ -438,6 +451,7 @@ fun void log_state() {
         <<< gt.axis[0], gt.axis[1], gt.axis[2], gt.axis[3], gt.axis[4], gt.axis[5] >>> ;
         <<<"\nscene: ", scene, "\nscene_fade:", scene_fade >>>;
         <<<"instr_fade: ", instr_fade, "\ndrone_fade:", drone_fade >>>;
+        <<<"instr_bus2.gain: ", instr_bus2.gain(), "\ndrone_bus2.gain:", drone_bus2.gain() >>>;
         <<<scene_instructions[scene][scene_instruction_index], "">>>;
         100::ms => now;
     }
