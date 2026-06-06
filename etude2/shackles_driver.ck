@@ -390,11 +390,14 @@ spork ~ _scene_fade_listener();
 play_scene(0);
 
 // -------------------------- main loops ------------------------------
-
+0 => int kb_device;
+if (me.args() > 2) {
+    Std.atoi(me.arg(2)) => kb_device;
+}
 fun void space_bar_listener() {
     Hid kb;
     HidMsg kb_msg;
-    if (!kb.openKeyboard(0)) {
+    if (!kb.openKeyboard(kb_device)) {
         <<< "space_bar_listener: couldn't open keyboard", "" >>>;
         me.exit();
     }

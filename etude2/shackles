@@ -6,7 +6,7 @@ osascript -e "set Volume 5"
 pushd ~/slork/users/ant/etude2
 # pushd ~/college/spring26/cs170/slork/etude2
 
-# kb_device=$(chuck --probe 2>&1 | awk '/keyboard/{kb=1} kb && /Apple Internal Keyboard/{gsub(/[][]/, "", $2); print $2; exit}')
+kb_device=$(chuck --probe 2>&1 | awk '/keyboard/{kb=1} kb && /Apple Internal Keyboard/{gsub(/[][]/, "", $2); print $2; exit}')
 
 open score.jpg
 
@@ -15,7 +15,7 @@ if [ "$#" -lt 1 ]; then
 elif [ "$#" -lt 2 ]; then
     chuck -c8 shackles_driver.ck:"$1"
 else 
-    chuck -c8 shackles_driver.ck:"$1":"$2"
+    chuck -c8 shackles_driver.ck:"$1":"$2":$kb_device
 fi
 
 popd
